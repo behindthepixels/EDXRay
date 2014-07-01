@@ -21,8 +21,8 @@
   <ItemGroup>
     <ClInclude Include="Core\Camera.h" />
     <ClInclude Include="Core\Renderer.h" />
+    <ClInclude Include="Core\Sampler.h" />
     <ClInclude Include="ForwardDecl.h" />
-    <ClInclude Include="Sampler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp" />

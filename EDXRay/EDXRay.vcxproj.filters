@@ -16,21 +16,18 @@
     <Filter Include="Source Files\Core">
       <UniqueIdentifier>{bda4358e-f2c0-4f4b-8612-029f03d70a5e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Samplers">
-      <UniqueIdentifier>{e214e6a7-78cd-46be-909f-a361de7bf967}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Core\Renderer.h">
-      <Filter>Source Files\Core</Filter>
-    </ClInclude>
     <ClInclude Include="ForwardDecl.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sampler.h">
-      <Filter>Source Files\Samplers</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Camera.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Renderer.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Sampler.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
   </ItemGroup>
