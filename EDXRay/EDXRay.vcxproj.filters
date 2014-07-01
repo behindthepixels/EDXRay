@@ -35,5 +35,8 @@
     <ClCompile Include="Core\Renderer.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Camera.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

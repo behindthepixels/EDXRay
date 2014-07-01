@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Camera.h"
+#include "../ForwardDecl.h"
 
 namespace EDX
 {
@@ -10,6 +10,7 @@ namespace EDX
 		{
 		public:
 			Camera* mpCamera;
+
 		};
 	}
 }

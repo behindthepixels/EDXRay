@@ -25,6 +25,7 @@
     <ClInclude Include="ForwardDecl.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
