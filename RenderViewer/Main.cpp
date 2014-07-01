@@ -1,15 +1,10 @@
+#include <Windows.h>
+#include <gl/GL.h>
 
 #include "Windows/Window.h"
 #include "Windows/Application.h"
 
-#include <gl/GL.h>
-
-#include "Core/Renderer.h"
-
 using namespace EDX;
-using namespace EDX::RayTracer;
-
-Renderer gRenderer;
 
 void OnInit(Object* pSender, EventArgs args)
 {
