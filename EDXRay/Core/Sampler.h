@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EDXPrerequisites.h"
+#include "../ForwardDecl.h"
 
 namespace EDX
 {
@@ -15,13 +16,14 @@ namespace EDX
 
 		struct Sample : public CameraSample
 		{
-
+			float* pSamples1D;
+			Vector2* pSamples2D;
 		};
 
-		class Sampler
+		class SobolSampler
 		{
 		public:
-			int 
+			void GenerateSamples(Sample* pSamples);
 		};
 	}
 }

@@ -30,12 +30,18 @@
     <ClInclude Include="Core\Sampler.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Film.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Camera.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Sampler.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ForwardDecl.h"
+#include "Memory/RefPtr.h"
 
 namespace EDX
 {
@@ -9,8 +10,9 @@ namespace EDX
 		class Renderer
 		{
 		public:
-			Camera* mpCamera;
-
+			RefPtr<Camera>			mpCamera;
+			RefPtr<SobolSampler>	mpSampler;
+			RefPtr<Film>			mpFilm;
 		};
 	}
 }
