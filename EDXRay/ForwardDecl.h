@@ -4,14 +4,12 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		class Vector2;
-		class Vector3;
-
+		struct RenderJobParams;
 		class Camera;
 		class Film;
 
 		struct CameraSample;
 		struct Sample;
-		class SobolSampler;
+		class Sampler;
 	}
 }

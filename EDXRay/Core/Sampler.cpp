@@ -4,7 +4,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		void SobolSampler::GenerateSamples(Sample* pSamples)
+		void Sampler::GenerateSamples(Sample* pSamples)
 		{
 			pSamples = new Sample[10];
 		}

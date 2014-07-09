@@ -16,6 +16,9 @@
     <Filter Include="Source Files\Core">
       <UniqueIdentifier>{bda4358e-f2c0-4f4b-8612-029f03d70a5e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Sampler">
+      <UniqueIdentifier>{c29c9d66-b91b-4c42-86e1-a346812dc77b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ForwardDecl.h">
@@ -27,10 +30,13 @@
     <ClInclude Include="Core\Renderer.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Sampler.h">
+    <ClInclude Include="Core\Film.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Film.h">
+    <ClInclude Include="Core\Config.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Sampler.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
   </ItemGroup>

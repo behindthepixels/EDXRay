@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EDXPrerequisites.h"
+
 #include "../ForwardDecl.h"
 #include "Memory/RefPtr.h"
 
@@ -9,10 +11,20 @@ namespace EDX
 	{
 		class Renderer
 		{
+		protected:
+			RefPtr<Camera>	mpCamera;
+			RefPtr<Sampler>	mpSampler;
+			RefPtr<Film>	mpFilm;
+
 		public:
-			RefPtr<Camera>			mpCamera;
-			RefPtr<SobolSampler>	mpSampler;
-			RefPtr<Film>			mpFilm;
+			Renderer()
+			{
+			}
+			
+			void Initialize(const RenderJobParams& params);
+
+			void RenderFrame();
+			void RenderImage();
 		};
 	}
 }

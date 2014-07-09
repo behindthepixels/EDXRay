@@ -13,6 +13,8 @@ namespace EDX
 			float mLensRadius, mFocalPlaneDist;
 			float mImagePlaneDist;
 
+
+
 		public:
 			void GenerateRay(const CameraSample& sample, Ray* pRay) const;
 		};
