@@ -25,11 +25,13 @@
     <ClInclude Include="Core\Renderer.h" />
     <ClInclude Include="Core\Sampler.h" />
     <ClInclude Include="ForwardDecl.h" />
+    <ClInclude Include="Sampler\RandomSampler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
     <ClCompile Include="Core\Sampler.cpp" />
+    <ClCompile Include="Sampler\RandomSampler.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E1EA1801-EFB1-4CB8-A69C-505AC0ACCCEA}</ProjectGuid>

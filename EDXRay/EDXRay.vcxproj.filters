@@ -39,6 +39,9 @@
     <ClInclude Include="Core\Sampler.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Sampler\RandomSampler.h">
+      <Filter>Source Files\Sampler</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -49,6 +52,9 @@
     </ClCompile>
     <ClCompile Include="Core\Sampler.cpp">
       <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler\RandomSampler.cpp">
+      <Filter>Source Files\Sampler</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

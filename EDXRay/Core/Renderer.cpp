@@ -21,6 +21,8 @@ namespace EDX
 				params.CameraParams.FieldOfView,
 				params.CameraParams.NearClip,
 				params.CameraParams.FarClip);
+
+
 		}
 
 		void Renderer::RenderFrame()
