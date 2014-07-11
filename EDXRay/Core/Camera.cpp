@@ -1,4 +1,7 @@
 #include "Camera.h"
+#include "Sampler.h"
+#include "Sampling.h"
+
 
 namespace EDX
 {
@@ -23,7 +26,28 @@ namespace EDX
 
 		void Camera::GenerateRay(const CameraSample& sample, Ray* pRay) const
 		{
-			*pRay = Ray();
+			Vector3 camCoord = Matrix::TransformPoint(Vector3(sample.imageX, sample.imageY, 0.0f), mRasterToCamera);
+
+			pRay->mOrg = Vector3::ZERO;
+			pRay->mDir = Math::Normalize(camCoord);
+
+			if (mLensRadius > 0.0f)
+			{
+				float fFocalHit = mFocalPlaneDist / -pRay->mDir.z;
+				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
+
+				float fU, fV;
+				Sampling::ConcentricSampleDisk(sample.lensU, sample.lensV, &fU, &fV);
+				fU *= mLensRadius;
+				fV *= mLensRadius;
+
+				pRay->mOrg = Vector3(fU, fV, 0.0f);
+				pRay->mDir = Math::Normalize(ptFocal - pRay->mOrg);
+			}
+
+			*pRay = Matrix::TransformRay(*pRay, mViewInv);
+			pRay->mMin = float(Math::EDX_EPSILON);
+			pRay->mMax = float(Math::EDX_INFINITY);
 		}
 	}
 }

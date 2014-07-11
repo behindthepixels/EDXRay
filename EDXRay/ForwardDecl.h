@@ -12,4 +12,6 @@ namespace EDX
 		struct Sample;
 		class Sampler;
 	}
+
+	class RandomGen;
 }

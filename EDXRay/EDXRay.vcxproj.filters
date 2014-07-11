@@ -42,6 +42,9 @@
     <ClInclude Include="Sampler\RandomSampler.h">
       <Filter>Source Files\Sampler</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Sampling.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">

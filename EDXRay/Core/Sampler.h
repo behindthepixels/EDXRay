@@ -1,11 +1,9 @@
 #pragma once
 
 #include "EDXPrerequisites.h"
-
-#include "../ForwardDecl.h"
 #include "Math/Vec2.h"
 
-#include "RNG/Random.h"
+#include "../ForwardDecl.h"
 
 namespace EDX
 {
@@ -18,39 +16,22 @@ namespace EDX
 			float time;
 		};
 
-		struct Sample1D
-		{
-			float u;
-		};
-		struct Sample1DArray
-		{
-			Sample1D*	pVals;
-			uint		size;
-
-			Sample1DArray(int _size) : size(_size) { pVals = new Sample1D[size]; }
-			~Sample1DArray() {}
-		};
-
-		struct Sample2D
-		{
-			float u, v;
-		};
-		struct Sample2DArray
-		{
-			Sample2D*	pVals;
-			uint		size;
-
-			Sample2DArray(int _size) : size(_size) { pVals = new Sample2D[size]; }
-			~Sample2DArray() {}
-		};
-
 		struct Sample : public CameraSample
 		{
-			vector<Sample1DArray> samples1D;
-			vector<Sample2DArray> samples2D;
+			float* p1D;
+			Vector2* p2D;
 
-			inline int Request1DArray(int iCount) { samples1D.push_back(Sample1DArray(iCount)); return samples1D.size() - 1; }
-			inline int Request2DArray(int iCount) { samples2D.push_back(Sample2DArray(iCount)); return samples2D.size() - 1; }
+			int count1D, count2D;
+
+			Sample()
+				: count1D(0)
+				, count2D(0)
+			{
+			}
+
+			inline int Request1DArray(int count) { count1D += count; return count1D - 1; }
+			inline int Request2DArray(int count) { count2D += count; return count2D - 1; }
+			void Validate();
 		};
 
 		class Sampler
