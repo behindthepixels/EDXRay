@@ -22,7 +22,7 @@ namespace EDX
 			Metropolis
 		};
 
-		struct RenderJobParams
+		struct RenderJobDesc
 		{
 			struct
 			{
@@ -41,7 +41,7 @@ namespace EDX
 			uint			SamplesPerPixel;
 			vector<string>	ModelPaths;
 
-			RenderJobParams()
+			RenderJobDesc()
 			{
 				CameraParams.Pos = Vector3::ZERO;
 				CameraParams.Target = Vector3::UNIT_Z;

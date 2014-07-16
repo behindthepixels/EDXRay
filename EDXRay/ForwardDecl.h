@@ -4,7 +4,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		struct RenderJobParams;
+		struct RenderJobDesc;
 		class Camera;
 		class Film;
 

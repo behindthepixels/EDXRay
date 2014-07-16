@@ -16,12 +16,14 @@ namespace EDX
 			RefPtr<Sampler>	mpSampler;
 			RefPtr<Film>	mpFilm;
 
+			RenderJobDesc mJobDesc;
+
 		public:
 			Renderer()
 			{
 			}
 			
-			void Initialize(const RenderJobParams& params);
+			void Initialize(const RenderJobDesc& desc);
 
 			void RenderFrame();
 			void RenderImage();

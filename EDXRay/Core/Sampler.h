@@ -38,6 +38,7 @@ namespace EDX
 		{
 		public:
 			virtual void GenerateSamples(Sample* pSamples, RandomGen& random) = 0;
+			virtual ~Sampler() {}
 		};
 	}
 }
