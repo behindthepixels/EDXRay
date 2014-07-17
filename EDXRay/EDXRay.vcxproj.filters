@@ -59,5 +59,8 @@
     <ClCompile Include="Sampler\RandomSampler.cpp">
       <Filter>Source Files\Sampler</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Film.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

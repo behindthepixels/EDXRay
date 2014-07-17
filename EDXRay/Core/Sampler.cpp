@@ -1,6 +1,5 @@
 #include "Sampler.h"
 
-#include "Math/Vec2.h"
 #include "Memory/Memory.h"
 #include "RNG/Random.h"
 

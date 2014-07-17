@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 
+#include "Config.h"
 #include "../ForwardDecl.h"
 #include "Memory/RefPtr.h"
 
@@ -27,6 +28,9 @@ namespace EDX
 
 			void RenderFrame();
 			void RenderImage();
+
+			const Color* GetFrameBuffer() const;;
+			const RenderJobDesc GetJobDesc() const { return mJobDesc; }
 		};
 	}
 }

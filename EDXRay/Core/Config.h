@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EDXPrerequisites.h"
-#include "Math/Vec3.h"
+#include "Math/Vector.h"
 
 namespace EDX
 {
@@ -43,6 +43,9 @@ namespace EDX
 
 			RenderJobDesc()
 			{
+				ImageWidth = 1280;
+				ImageHeight = 800;
+
 				CameraParams.Pos = Vector3::ZERO;
 				CameraParams.Target = Vector3::UNIT_Z;
 				CameraParams.Up = Vector3::UNIT_Y;

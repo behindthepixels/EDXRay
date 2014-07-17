@@ -2,13 +2,13 @@
 #include "Camera.h"
 #include "Sampler.h"
 #include "Film.h"
+#include "Graphics/Color.h"
 #include "Config.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
-
 		void Renderer::Initialize(const RenderJobDesc& desc)
 		{
 			mJobDesc = desc;
@@ -28,7 +28,8 @@ namespace EDX
 				desc.CameraParams.LensRadius,
 				desc.CameraParams.FocusPlaneDist);
 
-
+			mpFilm = new Film;
+			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
 		}
 
 		void Renderer::RenderFrame()
@@ -37,16 +38,30 @@ namespace EDX
 			{
 				for (auto x = 0; x < mJobDesc.ImageWidth; x++)
 				{
-					Sample* 
+					Sample sample;
+					sample.imageX = x;
+					sample.imageY = y;
 					Ray ray;
-					mpCamera->GenerateRay()
+					mpCamera->GenerateRay(sample, &ray);
+
+					mpFilm->AddSample(x, y, Color(ray.mDir.x, ray.mDir.y, ray.mDir.z));
 				}
 			}
 		}
 
 		void Renderer::RenderImage()
 		{
+			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
+			{
+				RenderFrame();
+				mpFilm->IncreSampleCount();
+				mpFilm->ScaleToPixel();
+			}
+		}
 
+		const Color* Renderer::GetFrameBuffer() const
+		{
+			return mpFilm->GetPixelBuffer();
 		}
 	}
 }

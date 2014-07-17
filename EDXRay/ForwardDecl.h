@@ -14,4 +14,5 @@ namespace EDX
 	}
 
 	class RandomGen;
+	class Color;
 }

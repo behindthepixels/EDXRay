@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../ForwardDecl.h"
-#include "Graphics/Color.h"
+#include "Memory/Array.h"
 
 namespace EDX
 {
@@ -11,16 +11,26 @@ namespace EDX
 		{
 		protected:
 			int mWidth, mHeight;
-			Color* mpDisplayBuffer;
-			Color* mpAccumulateBuffer;
+			int mSampleCount;
+			Array<2, Color> mpPixelBuffer;
+			Array<2, Color> mpAccumulateBuffer;
 
 		public:
-			Color* GetDisplayBuffer() const { return mpDisplayBuffer; }
-
-			void Accumulate(int x, int y, const Color& color)
+			~Film()
 			{
-				mpAccumulateBuffer[y * mWidth + x] += color;
+				Release();
 			}
+
+			void Init(int width, int height);
+			void Resize(int width, int height);
+			void Release();
+			void Clear();
+
+			void AddSample(int x, int y, Color sample);
+			void ScaleToPixel();
+			inline void IncreSampleCount() { mSampleCount++; }
+
+			const Color* GetPixelBuffer() const { return mpPixelBuffer.Data(); }
 		};
 	}
 }
