@@ -45,6 +45,9 @@
     <ClInclude Include="Core\Sampling.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\TaskScheduler.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">

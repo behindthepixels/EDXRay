@@ -25,6 +25,7 @@
     <ClInclude Include="Core\Renderer.h" />
     <ClInclude Include="Core\Sampler.h" />
     <ClInclude Include="Core\Sampling.h" />
+    <ClInclude Include="Core\TaskScheduler.h" />
     <ClInclude Include="ForwardDecl.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
   </ItemGroup>

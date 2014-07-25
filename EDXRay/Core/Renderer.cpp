@@ -30,21 +30,27 @@ namespace EDX
 
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
+
+			mTaskScheduler.Init(desc.ImageWidth, desc.ImageHeight);
 		}
 
 		void Renderer::RenderFrame()
 		{
-			for (auto y = 0; y < mJobDesc.ImageHeight; y++)
+			RenderTask* pTask;
+			while (mTaskScheduler.GetNextTask(pTask))
 			{
-				for (auto x = 0; x < mJobDesc.ImageWidth; x++)
+				for (auto y = pTask->minY; y < pTask->maxY; y++)
 				{
-					Sample sample;
-					sample.imageX = x;
-					sample.imageY = y;
-					Ray ray;
-					mpCamera->GenerateRay(sample, &ray);
+					for (auto x = pTask->minX; x < pTask->maxX; x++)
+					{
+						Sample sample;
+						sample.imageX = x;
+						sample.imageY = y;
+						Ray ray;
+						mpCamera->GenerateRay(sample, &ray);
 
-					mpFilm->AddSample(x, y, Color(ray.mDir.x, ray.mDir.y, ray.mDir.z));
+						mpFilm->AddSample(x, y, Color(ray.mDir.x, ray.mDir.y, ray.mDir.z));
+					}
 				}
 			}
 		}
