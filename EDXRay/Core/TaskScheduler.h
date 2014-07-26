@@ -1,3 +1,5 @@
+#pragma once
+
 #include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
 #include "Windows/Thread.h"
@@ -27,6 +29,8 @@ namespace EDX
 			uint mCurrentTaskIdx;
 			EDXLock mLock;
 
+			vector<HANDLE>	mFinishEvent;
+
 		public:
 			void Init(const int x, const int y)
 			{
@@ -44,6 +48,12 @@ namespace EDX
 
 						mTasks.push_back(RenderTask(minX, minY, maxX, maxY));
 					}
+				}
+
+				mFinishEvent.resize(DetectCPUCount());
+				for (auto& it : mFinishEvent)
+				{
+					it = CreateEvent(NULL, TRUE, FALSE, NULL);
 				}
 			}
 

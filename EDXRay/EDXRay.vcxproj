@@ -23,6 +23,7 @@
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\Film.h" />
     <ClInclude Include="Core\Renderer.h" />
+    <ClInclude Include="Core\RenderThread.h" />
     <ClInclude Include="Core\Sampler.h" />
     <ClInclude Include="Core\Sampling.h" />
     <ClInclude Include="Core\TaskScheduler.h" />
@@ -33,6 +34,7 @@
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\Film.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
+    <ClCompile Include="Core\RenderThread.cpp" />
     <ClCompile Include="Core\Sampler.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
   </ItemGroup>

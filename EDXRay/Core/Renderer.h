@@ -6,6 +6,7 @@
 #include "../ForwardDecl.h"
 #include "Memory/RefPtr.h"
 #include "TaskScheduler.h"
+#include "RenderThread.h"
 
 namespace EDX
 {
@@ -21,6 +22,7 @@ namespace EDX
 			RenderJobDesc	mJobDesc;
 
 			TaskScheduler	mTaskScheduler;
+			vector<RenderThread> mThreads;
 
 		public:
 			Renderer()
@@ -31,6 +33,8 @@ namespace EDX
 
 			void RenderFrame();
 			void RenderImage();
+
+			void LaunchRenderThreads();
 
 			const Color* GetFrameBuffer() const;
 			const RenderJobDesc GetJobDesc() const { return mJobDesc; }

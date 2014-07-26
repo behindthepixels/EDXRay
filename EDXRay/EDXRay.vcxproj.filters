@@ -48,6 +48,9 @@
     <ClInclude Include="Core\TaskScheduler.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\RenderThread.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files\Sampler</Filter>
     </ClCompile>
     <ClCompile Include="Core\Film.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderThread.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>

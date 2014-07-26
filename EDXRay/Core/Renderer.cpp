@@ -32,6 +32,12 @@ namespace EDX
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
 
 			mTaskScheduler.Init(desc.ImageWidth, desc.ImageHeight);
+
+			mThreads.resize(DetectCPUCount());
+			for (auto& it : mThreads)
+			{
+				it.SetRenderer(this);
+			}
 		}
 
 		void Renderer::RenderFrame()
@@ -60,8 +66,18 @@ namespace EDX
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
 				RenderFrame();
+
 				mpFilm->IncreSampleCount();
 				mpFilm->ScaleToPixel();
+				mTaskScheduler.ResetTaskIdx();
+			}
+		}
+
+		void Renderer::LaunchRenderThreads()
+		{
+			for (auto& it : mThreads)
+			{
+				it.Launch();
 			}
 		}
 
