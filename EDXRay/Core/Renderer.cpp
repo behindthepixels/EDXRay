@@ -34,10 +34,15 @@ namespace EDX
 			mTaskScheduler.Init(desc.ImageWidth, desc.ImageHeight);
 
 			mThreads.resize(DetectCPUCount());
+			uint id = 0;
 			for (auto& it : mThreads)
 			{
-				it.SetRenderer(this);
+				it.Init(this, id++);
 			}
+		}
+
+		Renderer::~Renderer()
+		{
 		}
 
 		void Renderer::RenderFrame()
@@ -61,15 +66,25 @@ namespace EDX
 			}
 		}
 
-		void Renderer::RenderImage()
+		void Renderer::RenderImage(int threadId)
 		{
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
+				// Sync barrier before render
+				mTaskScheduler.SyncThreadsPreRender(threadId);
+
 				RenderFrame();
 
-				mpFilm->IncreSampleCount();
-				mpFilm->ScaleToPixel();
-				mTaskScheduler.ResetTaskIdx();
+				// Sync barrier afrer render
+				mTaskScheduler.SyncThreadsPostRender(threadId);
+
+				// One thread only
+				if (threadId == 0)
+				{
+					mpFilm->IncreSampleCount();
+					mpFilm->ScaleToPixel();
+					mTaskScheduler.ResetTasks();
+				}
 			}
 		}
 

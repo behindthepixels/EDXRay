@@ -21,6 +21,7 @@ namespace EDX
 
 			RenderJobDesc	mJobDesc;
 
+			// Tile-based multi-threading
 			TaskScheduler	mTaskScheduler;
 			vector<RenderThread> mThreads;
 
@@ -28,11 +29,12 @@ namespace EDX
 			Renderer()
 			{
 			}
+			~Renderer();
 			
 			void Initialize(const RenderJobDesc& desc);
 
 			void RenderFrame();
-			void RenderImage();
+			void RenderImage(int threadId);
 
 			void LaunchRenderThreads();
 

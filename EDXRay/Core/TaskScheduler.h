@@ -29,7 +29,11 @@ namespace EDX
 			uint mCurrentTaskIdx;
 			EDXLock mLock;
 
-			vector<HANDLE>	mFinishEvent;
+			uint mThreadCount;
+			std::atomic_int mPreRenderSyncedCount, mPostRenderSyncedCount;
+			vector<HANDLE>	mPreRenderEvent;
+			vector<HANDLE>	mPostRenderEvent;
+			bool mAllTaskFinished;
 
 		public:
 			void Init(const int x, const int y)
@@ -50,11 +54,19 @@ namespace EDX
 					}
 				}
 
-				mFinishEvent.resize(DetectCPUCount());
-				for (auto& it : mFinishEvent)
+				mThreadCount = DetectCPUCount();
+				mPreRenderEvent.resize(mThreadCount);
+				mPostRenderEvent.resize(mThreadCount);
+				for (auto& it : mPreRenderEvent)
 				{
 					it = CreateEvent(NULL, TRUE, FALSE, NULL);
 				}
+				for (auto& it : mPostRenderEvent)
+				{
+					it = CreateEvent(NULL, TRUE, FALSE, NULL);
+				}
+
+				mAllTaskFinished = false;
 			}
 
 			bool GetNextTask(RenderTask*& pTask)
@@ -64,16 +76,55 @@ namespace EDX
 				if (mCurrentTaskIdx < mTasks.size())
 					pTask = &mTasks[mCurrentTaskIdx];
 				else
-					pTask = nullptr;
+					return false;
 
 				mCurrentTaskIdx++;
 
-				return pTask != nullptr;
+				return true;
 			}
 
-			void ResetTaskIdx()
+			void SyncThreadsPreRender(int threadId)
+			{
+				SetEvent(mPreRenderEvent[threadId]);
+				while (WaitForMultipleObjects(mThreadCount, mPreRenderEvent.data(), true, 0) == WAIT_TIMEOUT)
+				{
+				}
+
+				mPreRenderSyncedCount++;
+
+				if (mPreRenderSyncedCount == mThreadCount)
+				{
+					mPreRenderSyncedCount = 0;
+					for (auto& it : mPreRenderEvent)
+					{
+						ResetEvent(it);
+					}
+				}
+			}
+
+			void SyncThreadsPostRender(int threadId)
+			{
+				SetEvent(mPostRenderEvent[threadId]);
+				while (WaitForMultipleObjects(mThreadCount, mPostRenderEvent.data(), true, 0) == WAIT_TIMEOUT)
+				{
+				}
+
+				mPostRenderSyncedCount++;
+
+				if (mPostRenderSyncedCount == mThreadCount)
+				{
+					mPostRenderSyncedCount = 0;
+					for (auto& it : mPostRenderEvent)
+					{
+						ResetEvent(it);
+					}
+				}
+			}
+
+			void ResetTasks()
 			{
 				mCurrentTaskIdx = 0;
+				mAllTaskFinished = false;
 			}
 		};
 	}

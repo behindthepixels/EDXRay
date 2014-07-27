@@ -15,12 +15,14 @@ namespace EDX
 		{
 		public:
 			void WorkLoop();
-			void SetRenderer(Renderer* pRenderer)
+			void Init(Renderer* pRenderer, uint id)
 			{
 				mpRenderer = pRenderer;
+				mId = id;
 			}
 
 		private:
+			uint		mId;
 			Renderer*	mpRenderer;
 			MemoryArena mMemory;
 			RandomGen	mRendom;

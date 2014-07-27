@@ -7,7 +7,7 @@ namespace EDX
 	{
 		void RenderThread::WorkLoop()
 		{
-			mpRenderer->RenderImage();
+			mpRenderer->RenderImage(mId);
 
 			SelfTermnate();
 		}

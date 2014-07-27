@@ -21,11 +21,11 @@ void OnInit(Object* pSender, EventArgs args)
 	RenderJobDesc desc;
 	desc.ImageWidth = 1280;
 	desc.ImageHeight = 800;
-	desc.SamplesPerPixel = 1;
+	desc.SamplesPerPixel = 16;
 	desc.CameraParams.FieldOfView = 90;
 	gpRenderer->Initialize(desc);
 
-	gpRenderer->RenderImage();
+	gpRenderer->LaunchRenderThreads();
 }
 
 void OnRender(Object* pSender, EventArgs args)
