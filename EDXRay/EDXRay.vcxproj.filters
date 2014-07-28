@@ -19,6 +19,9 @@
     <Filter Include="Source Files\Sampler">
       <UniqueIdentifier>{c29c9d66-b91b-4c42-86e1-a346812dc77b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Tracer">
+      <UniqueIdentifier>{f1af3c02-abd0-45ac-8864-f5317e3d86a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ForwardDecl.h">
@@ -49,6 +52,21 @@
       <Filter>Source Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\RenderThread.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Scene.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Primitive.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Tracer\Triangle.h">
+      <Filter>Source Files\Tracer</Filter>
+    </ClInclude>
+    <ClInclude Include="Tracer\BVH.h">
+      <Filter>Source Files\Tracer</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DifferentialGeom.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
   </ItemGroup>

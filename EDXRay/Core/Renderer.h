@@ -16,6 +16,7 @@ namespace EDX
 		{
 		protected:
 			RefPtr<Camera>	mpCamera;
+			RefPtr<Scene>	mpScene;
 			RefPtr<Sampler>	mpSampler;
 			RefPtr<Film>	mpFilm;
 

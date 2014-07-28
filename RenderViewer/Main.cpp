@@ -10,7 +10,7 @@
 using namespace EDX;
 using namespace EDX::RayTracer;
 
-Renderer* gpRenderer = nullptr;
+RefPtr<Renderer> gpRenderer = nullptr;
 
 void OnInit(Object* pSender, EventArgs args)
 {
@@ -51,7 +51,7 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 
 void OnRelease(Object* pSender, EventArgs args)
 {
-	SafeDelete(gpRenderer);
+	gpRenderer.Dereference();
 }
 
 

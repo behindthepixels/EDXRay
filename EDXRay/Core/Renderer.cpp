@@ -1,7 +1,9 @@
 #include "Renderer.h"
 #include "Camera.h"
+#include "Scene.h"
 #include "Sampler.h"
 #include "Film.h"
+#include "DifferentialGeom.h"
 #include "Graphics/Color.h"
 #include "Config.h"
 
@@ -59,6 +61,16 @@ namespace EDX
 						sample.imageY = y;
 						Ray ray;
 						mpCamera->GenerateRay(sample, &ray);
+
+						Intersection isect;
+						if (mpScene->Intersect(ray, &isect))
+						{
+							// Shade pixel
+						}
+						else
+						{
+							// Process environmental map
+						}
 
 						mpFilm->AddSample(x, y, Color(ray.mDir.x, ray.mDir.y, ray.mDir.z));
 					}
