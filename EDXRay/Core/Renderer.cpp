@@ -15,6 +15,7 @@ namespace EDX
 		{
 			mJobDesc = desc;
 
+			// Initalize camera
 			if (!mpCamera)
 			{
 				mpCamera = new Camera();
@@ -29,6 +30,9 @@ namespace EDX
 				desc.CameraParams.FarClip,
 				desc.CameraParams.LensRadius,
 				desc.CameraParams.FocusPlaneDist);
+
+			// Initialize scene
+			mpScene = new Scene;
 
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
@@ -63,16 +67,17 @@ namespace EDX
 						mpCamera->GenerateRay(sample, &ray);
 
 						Intersection isect;
+						Color L;
 						if (mpScene->Intersect(ray, &isect))
 						{
-							// Shade pixel
+							L = Color(isect.mDist);
 						}
 						else
 						{
-							// Process environmental map
+							L = Color::BLACK;
 						}
 
-						mpFilm->AddSample(x, y, Color(ray.mDir.x, ray.mDir.y, ray.mDir.z));
+						mpFilm->AddSample(x, y, L);
 					}
 				}
 			}
@@ -87,7 +92,7 @@ namespace EDX
 
 				RenderFrame();
 
-				// Sync barrier afrer render
+				// Sync barrier after render
 				mTaskScheduler.SyncThreadsPostRender(threadId);
 
 				// One thread only

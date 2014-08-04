@@ -17,6 +17,8 @@ namespace EDX
 		class Intersection;
 		class DifferentialGeom;
 		class Primitive;
+		class TriangleMesh;
+		class BVH2;
 		class BVH4;
 	}
 

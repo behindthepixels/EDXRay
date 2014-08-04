@@ -60,13 +60,13 @@
     <ClInclude Include="Core\Primitive.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Tracer\Triangle.h">
-      <Filter>Source Files\Tracer</Filter>
-    </ClInclude>
-    <ClInclude Include="Tracer\BVH.h">
-      <Filter>Source Files\Tracer</Filter>
-    </ClInclude>
     <ClInclude Include="Core\DifferentialGeom.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Tracer\BVH2.h">
+      <Filter>Source Files\Tracer</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\TriangleMesh.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
   </ItemGroup>
@@ -87,6 +87,15 @@
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderThread.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\TriangleMesh.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Primitive.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Scene.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>

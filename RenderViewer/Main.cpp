@@ -6,6 +6,11 @@
 #include <gl/GL.h>
 
 #include "Core/Renderer.h"
+#include "Core/Scene.h"
+#include "Core/Primitive.h"
+#include "Core/TriangleMesh.h"
+
+#include <memory>
 
 using namespace EDX;
 using namespace EDX::RayTracer;
@@ -21,9 +26,15 @@ void OnInit(Object* pSender, EventArgs args)
 	RenderJobDesc desc;
 	desc.ImageWidth = 1280;
 	desc.ImageHeight = 800;
-	desc.SamplesPerPixel = 16;
-	desc.CameraParams.FieldOfView = 90;
+	desc.SamplesPerPixel = 1;
+	desc.CameraParams.FieldOfView = 45;
 	gpRenderer->Initialize(desc);
+
+	Scene* pScene = gpRenderer->GetScene().Ptr();
+	TriangleMesh* pMesh = new TriangleMesh;
+	pMesh->LoadSphere(1.0f, Vector3(0.0f, 0.0f, 10.5f));
+
+	pScene->AddPrimitive(new Primitive(pMesh));
 
 	gpRenderer->LaunchRenderThreads();
 }
@@ -54,11 +65,9 @@ void OnRelease(Object* pSender, EventArgs args)
 	gpRenderer.Dereference();
 }
 
-
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdShow)
 {
 	Application::Init(hInst);
-
 	Window* mainWindow = new GLWindow;
 	mainWindow->SetMainLoop(NotifyEvent(OnRender));
 	mainWindow->SetInit(NotifyEvent(OnInit));

@@ -30,17 +30,20 @@
     <ClInclude Include="Core\Sampling.h" />
     <ClInclude Include="Core\Scene.h" />
     <ClInclude Include="Core\TaskScheduler.h" />
+    <ClInclude Include="Core\TriangleMesh.h" />
     <ClInclude Include="ForwardDecl.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
-    <ClInclude Include="Tracer\BVH.h" />
-    <ClInclude Include="Tracer\Triangle.h" />
+    <ClInclude Include="Tracer\BVH2.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\Film.cpp" />
+    <ClCompile Include="Core\Primitive.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
     <ClCompile Include="Core\RenderThread.cpp" />
     <ClCompile Include="Core\Sampler.cpp" />
+    <ClCompile Include="Core\Scene.cpp" />
+    <ClCompile Include="Core\TriangleMesh.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

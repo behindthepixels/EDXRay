@@ -41,6 +41,7 @@ namespace EDX
 
 			const Color* GetFrameBuffer() const;
 			const RenderJobDesc GetJobDesc() const { return mJobDesc; }
+			RefPtr<Scene> GetScene() { return mpScene; }
 		};
 	}
 }

@@ -86,7 +86,7 @@ namespace EDX
 			void SyncThreadsPreRender(int threadId)
 			{
 				SetEvent(mPreRenderEvent[threadId]);
-				while (WaitForMultipleObjects(mThreadCount, mPreRenderEvent.data(), true, 0) == WAIT_TIMEOUT)
+				while (WaitForMultipleObjects(mThreadCount, mPreRenderEvent.data(), true, 20) == WAIT_TIMEOUT)
 				{
 				}
 
@@ -105,7 +105,7 @@ namespace EDX
 			void SyncThreadsPostRender(int threadId)
 			{
 				SetEvent(mPostRenderEvent[threadId]);
-				while (WaitForMultipleObjects(mThreadCount, mPostRenderEvent.data(), true, 0) == WAIT_TIMEOUT)
+				while (WaitForMultipleObjects(mThreadCount, mPostRenderEvent.data(), true, 20) == WAIT_TIMEOUT)
 				{
 				}
 

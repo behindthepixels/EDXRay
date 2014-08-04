@@ -3,7 +3,6 @@
 #include "EDXPrerequisites.h"
 
 #include "../ForwardDecl.h"
-#include "Primitive.h"
 #include "Memory/RefPtr.h"
 
 namespace EDX
@@ -13,12 +12,17 @@ namespace EDX
 		class Scene
 		{
 		private:
-			vector<Primitive>	mPrimitives;
-			RefPtr<BVH4>			mBVH;
+			vector<RefPtr<Primitive>>	mPrimitives;
+			RefPtr<BVH2>				mAccel;
 
 		public:
 			bool Intersect(const Ray& ray, Intersection* pIsect) const;
-			bool Occluded(const Ray& ray) const;
+			bool Occluded(const Ray& ray) const
+			{
+
+			}
+
+			void AddPrimitive(Primitive* pPrim);
 		};
 	}
 }
