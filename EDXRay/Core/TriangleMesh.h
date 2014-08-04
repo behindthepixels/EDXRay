@@ -39,13 +39,26 @@ namespace EDX
 				const Vector3& rot = Vector3::ZERO);
 
 			void LoadSphere(const float radius,
+				const int slices = 64,
+				const int stacks = 64,
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO);
 
+			// Accessor for geometry
 			Vector3 GetPositionAt(uint idx) const;
 			Vector3 GetNormalAt(uint idx) const;
 			Vector2 GetTexcoordAt(uint idx) const;
+
+			// For extraction
+			const Vector3* GetPositionBuffer() const
+			{
+				return mpPositionBuffer;
+			}
+			const uint* GetIndexBuffer() const
+			{
+				return mpIndexBuffer;
+			}
 
 			uint GetTriangleCount() const
 			{

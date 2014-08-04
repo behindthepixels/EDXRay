@@ -32,7 +32,7 @@ void OnInit(Object* pSender, EventArgs args)
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	TriangleMesh* pMesh = new TriangleMesh;
-	pMesh->LoadSphere(1.0f, Vector3(0.0f, 0.0f, 10.5f));
+	pMesh->LoadSphere(1.0f, 4, 4, Vector3(0.0f, 0.0f, 10.5f));
 
 	pScene->AddPrimitive(new Primitive(pMesh));
 

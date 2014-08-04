@@ -22,6 +22,11 @@ namespace EDX
 			{
 
 			}
+
+			const TriangleMesh* GetMesh() const
+			{
+				return mpMesh.Ptr();
+			}
 		};
 	}
 }

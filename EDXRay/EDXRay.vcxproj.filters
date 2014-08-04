@@ -63,11 +63,14 @@
     <ClInclude Include="Core\DifferentialGeom.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Tracer\BVH2.h">
-      <Filter>Source Files\Tracer</Filter>
-    </ClInclude>
     <ClInclude Include="Core\TriangleMesh.h">
       <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Tracer\Triangle.h">
+      <Filter>Source Files\Tracer</Filter>
+    </ClInclude>
+    <ClInclude Include="Tracer\BVH.h">
+      <Filter>Source Files\Tracer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -97,6 +100,9 @@
     </ClCompile>
     <ClCompile Include="Core\Scene.cpp">
       <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Tracer\BVH.cpp">
+      <Filter>Source Files\Tracer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

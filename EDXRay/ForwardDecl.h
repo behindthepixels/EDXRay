@@ -18,6 +18,8 @@ namespace EDX
 		class DifferentialGeom;
 		class Primitive;
 		class TriangleMesh;
+		struct BuildTriangle;
+		struct BuildVertex;
 		class BVH2;
 		class BVH4;
 	}

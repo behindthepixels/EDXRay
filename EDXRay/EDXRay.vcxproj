@@ -33,7 +33,8 @@
     <ClInclude Include="Core\TriangleMesh.h" />
     <ClInclude Include="ForwardDecl.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
-    <ClInclude Include="Tracer\BVH2.h" />
+    <ClInclude Include="Tracer\BVH.h" />
+    <ClInclude Include="Tracer\Triangle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Camera.cpp" />
@@ -45,6 +46,7 @@
     <ClCompile Include="Core\Scene.cpp" />
     <ClCompile Include="Core\TriangleMesh.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
+    <ClCompile Include="Tracer\BVH.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E1EA1801-EFB1-4CB8-A69C-505AC0ACCCEA}</ProjectGuid>

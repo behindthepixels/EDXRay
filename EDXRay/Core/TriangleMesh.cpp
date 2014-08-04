@@ -16,12 +16,14 @@ namespace EDX
 		}
 
 		void TriangleMesh::LoadSphere(const float radius,
+			const int slices,
+			const int stacks,
 			const Vector3& pos,
 			const Vector3& scl,
 			const Vector3& rot)
 		{
 			ObjMesh mesh;
-			mesh.LoadSphere(pos, scl, rot, radius);
+			mesh.LoadSphere(pos, scl, rot, radius, slices, stacks);
 
 			// Init vertex buffer data
 			mVertexCount = mesh.GetVertexCount();

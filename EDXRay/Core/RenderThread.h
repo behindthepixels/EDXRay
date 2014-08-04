@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "Windows/Thread.h"
+#include "Memory/RefPtr.h"
 #include "Memory/Memory.h"
 #include "RNG/Random.h"
 
@@ -15,15 +16,11 @@ namespace EDX
 		{
 		public:
 			void WorkLoop();
-			void Init(Renderer* pRenderer, uint id)
-			{
-				mpRenderer = pRenderer;
-				mId = id;
-			}
+			void Init(Renderer* pRenderer, uint id);
 
 		private:
-			uint		mId;
 			Renderer*	mpRenderer;
+			uint		mId;
 			MemoryArena mMemory;
 			RandomGen	mRendom;
 		};

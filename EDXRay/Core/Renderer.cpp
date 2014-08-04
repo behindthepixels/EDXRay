@@ -107,6 +107,8 @@ namespace EDX
 
 		void Renderer::LaunchRenderThreads()
 		{
+			mpScene->InitAccelerator();
+
 			for (auto& it : mThreads)
 			{
 				it.Launch();
