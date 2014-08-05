@@ -35,6 +35,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pMesh->LoadSphere(1.0f, 4, 4, Vector3(0.0f, 0.0f, 10.5f));
 
 	pScene->AddPrimitive(new Primitive(pMesh));
+	pScene->InitAccelerator();
 
 	gpRenderer->LaunchRenderThreads();
 }

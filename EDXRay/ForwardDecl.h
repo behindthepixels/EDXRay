@@ -25,6 +25,7 @@ namespace EDX
 	}
 
 	class RandomGen;
+	class MemoryArena;
 	class Color;
 	class Ray;
 }

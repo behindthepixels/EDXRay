@@ -27,14 +27,26 @@ namespace EDX
 
 		struct BuildVertex
 		{
-			float x, y, z;
+			Vector3 pos;
 			int pad;
 
-			BuildVertex(float _x = 0, float _y = 0, float _z = 0)
-				: x(_x)
-				, y(_y)
-				, z(_z)
+			BuildVertex(float x = 0, float y = 0, float z = 0)
+				: pos(x, y, z)
 			{
+			}
+		};
+
+		struct TriangleInfo
+		{
+			int idx;
+			Vector3 centroid;
+			BoundingBox bbox;
+
+			TriangleInfo(int _idx = 0, const BoundingBox& box = BoundingBox())
+				: idx(idx)
+				, bbox(box)
+			{
+				centroid = bbox.Centroid();
 			}
 		};
 
@@ -43,12 +55,17 @@ namespace EDX
 		public:
 			struct Node
 			{
+				int primOffset;
+				int primCount;
 
+				BoundingBox leftBounds;
+				BoundingBox rightBounds;
+				Node* pChilds[2];
 			};
 
 		private:
-			BuildVertex*	mpVertices;
-			BuildTriangle*	mpTriangleIndices;
+			BuildVertex*	mpBuildVertices;
+			BuildTriangle*	mpBuildIndices;
 			int mBuildVertexCount;
 			int mBuildTriangleCount;
 
@@ -56,8 +73,8 @@ namespace EDX
 
 		public:
 			BVH2()
-				: mpVertices(nullptr)
-				, mpTriangleIndices(nullptr)
+				: mpBuildVertices(nullptr)
+				, mpBuildIndices(nullptr)
 				, mBuildVertexCount(0)
 				, mBuildTriangleCount(0)
 			{
@@ -67,15 +84,19 @@ namespace EDX
 				Destroy();
 			}
 
-			void Build(const vector<RefPtr<Primitive>>& prims);
+			void	Construct(const vector<RefPtr<Primitive>>& prims);
+			Node*	RecursiveBuildNode(vector<TriangleInfo>& buildInfo,
+				const int startIdx,
+				const int endIdx,
+				MemoryArena& memory);
 
 		private:
 			void ExtractGeometry(const vector<RefPtr<Primitive>>& prims);
 
 			void Destroy()
 			{
-				SafeDeleteArray(mpVertices);
-				SafeDeleteArray(mpTriangleIndices);
+				SafeDeleteArray(mpBuildVertices);
+				SafeDeleteArray(mpBuildIndices);
 			}
 		};
 	}

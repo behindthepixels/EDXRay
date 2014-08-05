@@ -31,7 +31,7 @@ namespace EDX
 		void Scene::InitAccelerator()
 		{
 			mAccel = new BVH2();
-			mAccel->Build(mPrimitives);
+			mAccel->Construct(mPrimitives);
 		}
 	}
 }
