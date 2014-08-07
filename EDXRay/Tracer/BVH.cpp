@@ -3,6 +3,7 @@
 #include "../Core/TriangleMesh.h"
 
 #include "Memory/Memory.h"
+#include <algorithm>
 
 namespace EDX
 {
@@ -40,19 +41,54 @@ namespace EDX
 			// Alloc space for the current node
 			Node* pNode = memory.Alloc<Node>();
 			*pNode = Node();
-
-			// Compute bounds for current node
-			BoundingBox nodeBounds;
-			for (auto i = startIdx; i < endIdx; i++)
-				nodeBounds = Math::Union(nodeBounds, buildInfo[i].bbox);
 			
 			auto numTriangles = endIdx - startIdx;
-			if (numTriangles <= 1 || depth > MaxDepth)
+			if (numTriangles <= 1 || depth > MaxDepth) // Create a leaf if triangle count is 1 or depth exceeds maximum
 			{
-				pNode->InitLeaf();
+				int* pLeafTris = memory.Alloc<int>(numTriangles);
+				for (auto i = startIdx; i < endIdx; i++)
+					pLeafTris[i] = buildInfo[i].idx;
+
+				pNode->InitLeaf(pLeafTris, numTriangles);
 			}
-			else
+			else // Split the node and create an interior
 			{
+				// Compute bounds and centroid bounds for current node
+				BoundingBox nodeBounds, centroidBounds;
+				for (auto i = startIdx; i < endIdx; i++)
+				{
+					nodeBounds = Math::Union(nodeBounds, buildInfo[i].bbox);
+					centroidBounds = Math::Union(centroidBounds, buildInfo[i].centroid);
+				}
+
+				// Get split dimension
+				int dim = centroidBounds.MaximumExtent();
+				// Create leaf node if maximum extent is zero
+				if (centroidBounds.mMin[dim] == centroidBounds.mMax[dim])
+				{
+					int* pLeafTris = memory.Alloc<int>(numTriangles);
+					for (auto i = startIdx; i < endIdx; i++)
+						pLeafTris[i] = buildInfo[i].idx;
+
+					pNode->InitLeaf(pLeafTris, numTriangles);
+					return pNode;
+				}
+
+				// Partition primitives
+				int mid = 0;
+				mid = (startIdx + endIdx) / 2;
+				std::nth_element(&buildInfo[startIdx], &buildInfo[mid], &buildInfo[endIdx - 1] + 1,
+					[dim](const TriangleInfo& lhs, const TriangleInfo& rhs)
+				{
+					return lhs.centroid[dim] < rhs.centroid[dim];
+				});
+
+
+				pNode->InitInterior();
+
+				// Binning
+				const int MaxBins = 32;
+				int numBins = Math::Min(MaxBins, int(4.0f + 0.05f * numTriangles));
 
 			}
 

@@ -55,18 +55,17 @@ namespace EDX
 		public:
 			struct Node
 			{
-				int primOffset;
+				int* pIndices;
 				int primCount;
 
 				BoundingBox leftBounds;
 				BoundingBox rightBounds;
 				Node* pChilds[2];
 
-				void InitLeaf(int offset, int count, const BoundingBox& bounds)
+				void InitLeaf(int* pIdx, int count)
 				{
-					primOffset = offset;
+					pIndices = pIdx;
 					primCount = count;
-					leftBounds = bounds;
 					pChilds[0] = pChilds[1] = nullptr;
 				}
 				void InitInterior(const BoundingBox& lBounds, const BoundingBox& rBounds)
