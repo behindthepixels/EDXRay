@@ -61,6 +61,19 @@ namespace EDX
 				BoundingBox leftBounds;
 				BoundingBox rightBounds;
 				Node* pChilds[2];
+
+				void InitLeaf(int offset, int count, const BoundingBox& bounds)
+				{
+					primOffset = offset;
+					primCount = count;
+					leftBounds = bounds;
+					pChilds[0] = pChilds[1] = nullptr;
+				}
+				void InitInterior(const BoundingBox& lBounds, const BoundingBox& rBounds)
+				{
+					leftBounds = lBounds;
+					rightBounds = rBounds;
+				}
 			};
 
 		private:
@@ -71,12 +84,15 @@ namespace EDX
 
 			BoundingBox mBounds;
 
+			const int MaxDepth;
+
 		public:
 			BVH2()
 				: mpBuildVertices(nullptr)
 				, mpBuildIndices(nullptr)
 				, mBuildVertexCount(0)
 				, mBuildTriangleCount(0)
+				, MaxDepth(128)
 			{
 			}
 			~BVH2()
@@ -88,6 +104,7 @@ namespace EDX
 			Node*	RecursiveBuildNode(vector<TriangleInfo>& buildInfo,
 				const int startIdx,
 				const int endIdx,
+				const int depth,
 				MemoryArena& memory);
 
 		private:

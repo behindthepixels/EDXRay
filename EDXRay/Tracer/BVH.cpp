@@ -28,18 +28,34 @@ namespace EDX
 
 			MemoryArena memory;
 			
-			Node* pRoot = RecursiveBuildNode(buildInfo, 0, mBuildTriangleCount, memory);
+			Node* pRoot = RecursiveBuildNode(buildInfo, 0, mBuildTriangleCount, 0, memory);
 		}
 
 		BVH2::Node* BVH2::RecursiveBuildNode(vector<TriangleInfo>& buildInfo,
 			const int startIdx,
 			const int endIdx,
+			const int depth,
 			MemoryArena& memory)
 		{
+			// Alloc space for the current node
 			Node* pNode = memory.Alloc<Node>();
 			*pNode = Node();
+
+			// Compute bounds for current node
+			BoundingBox nodeBounds;
+			for (auto i = startIdx; i < endIdx; i++)
+				nodeBounds = Math::Union(nodeBounds, buildInfo[i].bbox);
 			
-			auto numTriangle = endIdx - startIdx;
+			auto numTriangles = endIdx - startIdx;
+			if (numTriangles <= 1 || depth > MaxDepth)
+			{
+				pNode->InitLeaf();
+			}
+			else
+			{
+
+			}
+
 
 
 

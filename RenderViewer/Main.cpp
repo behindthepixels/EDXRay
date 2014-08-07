@@ -68,6 +68,9 @@ void OnRelease(Object* pSender, EventArgs args)
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdShow)
 {
+	char* a;
+	a = 0;
+	int s = sizeof(a);
 	Application::Init(hInst);
 	Window* mainWindow = new GLWindow;
 	mainWindow->SetMainLoop(NotifyEvent(OnRender));
