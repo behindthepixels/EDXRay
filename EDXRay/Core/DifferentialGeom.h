@@ -9,7 +9,7 @@ namespace EDX
 		class Intersection
 		{
 		public:
-			int		mPrimId;
+			int		mPrimId, mTriId;
 			float	mU, mV;
 			float	mDist;
 

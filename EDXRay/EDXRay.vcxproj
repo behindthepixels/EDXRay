@@ -34,7 +34,7 @@
     <ClInclude Include="ForwardDecl.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
     <ClInclude Include="Tracer\BVH.h" />
-    <ClInclude Include="Tracer\Triangle.h" />
+    <ClInclude Include="Tracer\Triangle4.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Camera.cpp" />

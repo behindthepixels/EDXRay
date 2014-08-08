@@ -19,10 +19,7 @@ namespace EDX
 			Scene();
 
 			bool Intersect(const Ray& ray, Intersection* pIsect) const;
-			bool Occluded(const Ray& ray) const
-			{
-
-			}
+			bool Occluded(const Ray& ray) const;
 
 			void AddPrimitive(Primitive* pPrim);
 

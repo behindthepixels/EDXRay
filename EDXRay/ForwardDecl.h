@@ -22,6 +22,7 @@ namespace EDX
 		struct BuildVertex;
 		class BVH2;
 		class BVH4;
+		class Triangle4;
 	}
 
 	class RandomGen;

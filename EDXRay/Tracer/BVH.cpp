@@ -1,6 +1,8 @@
 #include "BVH.h"
 #include "../Core/Primitive.h"
 #include "../Core/TriangleMesh.h"
+#include "../Core/DifferentialGeom.h"
+#include "Triangle4.h"
 
 #include "Memory/Memory.h"
 #include <algorithm>
@@ -23,58 +25,89 @@ namespace EDX
 				box = Math::Union(box, mpBuildVertices[mpBuildIndices[i].idx2].pos);
 				box = Math::Union(box, mpBuildVertices[mpBuildIndices[i].idx3].pos);
 
-				buildInfo[i] = TriangleInfo(i, box);
+				buildInfo.push_back(TriangleInfo(i, box));
 				mBounds = Math::Union(mBounds, box);
 			}
 
 			MemoryArena memory;
-			
-			Node* pRoot = RecursiveBuildNode(buildInfo, 0, mBuildTriangleCount, 0, memory);
+
+			// Alloc space for the root BuildNode
+			BuildNode* pBuildRoot = memory.Alloc<BuildNode>();
+			mNodeCount = RecursiveBuildBuildNode(pBuildRoot, buildInfo, 0, mBuildTriangleCount, 0, memory);
+
+			mpRoot = new Node[mNodeCount];
+			uint offset = 0;
+			LinearizeNodes(pBuildRoot, &offset);
 		}
 
-		BVH2::Node* BVH2::RecursiveBuildNode(vector<TriangleInfo>& buildInfo,
+		uint BVH2::RecursiveBuildBuildNode(BuildNode* pNode,
+			vector<TriangleInfo>& buildInfo,
 			const int startIdx,
 			const int endIdx,
 			const int depth,
 			MemoryArena& memory)
 		{
-			// Alloc space for the current node
-			Node* pNode = memory.Alloc<Node>();
-			*pNode = Node();
-			
+			*pNode = BuildNode();
+			uint leftCount = 0, rightCount = 0;
 			auto numTriangles = endIdx - startIdx;
-			if (numTriangles <= 1 || depth > MaxDepth) // Create a leaf if triangle count is 1 or depth exceeds maximum
-			{
-				int* pLeafTris = memory.Alloc<int>(numTriangles);
-				for (auto i = startIdx; i < endIdx; i++)
-					pLeafTris[i] = buildInfo[i].idx;
 
-				pNode->InitLeaf(pLeafTris, numTriangles);
-			}
-			else // Split the node and create an interior
+			auto CreateLeaf = [&]
 			{
-				// Compute bounds and centroid bounds for current node
-				BoundingBox nodeBounds, centroidBounds;
-				for (auto i = startIdx; i < endIdx; i++)
+				uint packedCount = (numTriangles + 3) / 4;
+				uint infoIdx = startIdx;
+
+				Triangle4* pTri4 = memory.Alloc<Triangle4>(packedCount);
+				for (auto i = 0; i < packedCount; i++)
 				{
-					nodeBounds = Math::Union(nodeBounds, buildInfo[i].bbox);
-					centroidBounds = Math::Union(centroidBounds, buildInfo[i].centroid);
+					BuildVertex triangles[4][3] = { 0 };
+					BuildTriangle indices[4] = { 0 };
+					uint count = 0;
+					for (; count < 4; count++)
+					{
+						if (infoIdx >= endIdx)
+							break;
+
+						indices[count] = mpBuildIndices[buildInfo[infoIdx++].idx];
+						const Vector3& vt1 = mpBuildVertices[indices[count].idx1].pos;
+						const Vector3& vt2 = mpBuildVertices[indices[count].idx2].pos;
+						const Vector3& vt3 = mpBuildVertices[indices[count].idx3].pos;
+
+						triangles[count][0].pos = vt1;
+						triangles[count][1].pos = vt2;
+						triangles[count][2].pos = vt3;
+					}
+
+					pTri4[i].Pack(triangles, indices, count);
 				}
+
+				pNode->InitLeaf(pTri4, packedCount);
+			};
+
+			if (numTriangles <= 4 || depth > MaxDepth) // Create a leaf if triangle count is 1 or depth exceeds maximum
+			{
+				CreateLeaf();
+			}
+			else // Split the BuildNode and create an interior
+			{
+				// Compute centroid bounds for current BuildNode
+				BoundingBox centroidBounds;
+				for (auto i = startIdx; i < endIdx; i++)
+					centroidBounds = Math::Union(centroidBounds, buildInfo[i].centroid);
 
 				// Get split dimension
 				int dim = centroidBounds.MaximumExtent();
-				// Create leaf node if maximum extent is zero
+				// Create leaf BuildNode if maximum extent is zero
 				if (centroidBounds.mMin[dim] == centroidBounds.mMax[dim])
 				{
-					int* pLeafTris = memory.Alloc<int>(numTriangles);
-					for (auto i = startIdx; i < endIdx; i++)
-						pLeafTris[i] = buildInfo[i].idx;
-
-					pNode->InitLeaf(pLeafTris, numTriangles);
-					return pNode;
+					CreateLeaf();
+					return 1;
 				}
 
 				// Partition primitives
+				// Binning
+				//const int MaxBins = 32;
+				//int numBins = Math::Min(MaxBins, int(4.0f + 0.05f * numTriangles));
+
 				int mid = 0;
 				mid = (startIdx + endIdx) / 2;
 				std::nth_element(&buildInfo[startIdx], &buildInfo[mid], &buildInfo[endIdx - 1] + 1,
@@ -83,20 +116,60 @@ namespace EDX
 					return lhs.centroid[dim] < rhs.centroid[dim];
 				});
 
+				// Compute left and right bounds
+				BoundingBox leftBounds, rightBounds;
+				for (auto i = startIdx; i < mid; i++)
+					leftBounds = Math::Union(leftBounds, buildInfo[i].bbox);
+				for (auto i = mid; i < endIdx; i++)
+					rightBounds = Math::Union(rightBounds, buildInfo[i].bbox);
 
-				pNode->InitInterior();
 
-				// Binning
-				const int MaxBins = 32;
-				int numBins = Math::Min(MaxBins, int(4.0f + 0.05f * numTriangles));
+				BuildNode* pLeft = memory.Alloc<BuildNode>();
+				BuildNode* pRight = memory.Alloc<BuildNode>();
+				pNode->InitInterior(leftBounds, rightBounds, pLeft, pRight);
 
+				leftCount = RecursiveBuildBuildNode(pLeft, buildInfo, startIdx, mid, depth + 1, memory);
+				rightCount = RecursiveBuildBuildNode(pRight, buildInfo, mid, endIdx, depth + 1, memory);
 			}
 
+			return leftCount + rightCount + 1;
+		}
 
+		uint BVH2::LinearizeNodes(BuildNode* pBuildNode, uint* pOffset)
+		{
+			Node* pNode = &mpRoot[*pOffset];
 
+			pNode->minMaxBoundsX[0] = pBuildNode->leftBounds.mMin.x;
+			pNode->minMaxBoundsX[1] = pBuildNode->rightBounds.mMin.x;
+			pNode->minMaxBoundsX[2] = pBuildNode->leftBounds.mMax.x;
+			pNode->minMaxBoundsX[3] = pBuildNode->rightBounds.mMax.x;
 
+			pNode->minMaxBoundsY[0] = pBuildNode->leftBounds.mMin.y;
+			pNode->minMaxBoundsY[1] = pBuildNode->rightBounds.mMin.y;
+			pNode->minMaxBoundsY[2] = pBuildNode->leftBounds.mMax.y;
+			pNode->minMaxBoundsY[3] = pBuildNode->rightBounds.mMax.y;
 
-			return pNode;
+			pNode->minMaxBoundsZ[0] = pBuildNode->leftBounds.mMin.z;
+			pNode->minMaxBoundsZ[1] = pBuildNode->rightBounds.mMin.z;
+			pNode->minMaxBoundsZ[2] = pBuildNode->leftBounds.mMax.z;
+			pNode->minMaxBoundsZ[3] = pBuildNode->rightBounds.mMax.z;
+
+			uint currOffset = (*pOffset)++;
+
+			if (pBuildNode->primCount > 0) // Create leaf node
+			{
+				pNode->triangleCount = pBuildNode->primCount;
+				pNode->pTriangles = new Triangle4[pNode->triangleCount];
+				memcpy(pNode->pTriangles, pBuildNode->pTriangles, pNode->triangleCount * sizeof(Triangle4));
+			}
+			else // Interior
+			{
+				pNode->pTriangles = nullptr;
+				LinearizeNodes(pBuildNode->pChildren[0], pOffset);
+				pNode->secondChildOffset = LinearizeNodes(pBuildNode->pChildren[1], pOffset);
+			}
+
+			return currOffset;
 		}
 
 		void BVH2::ExtractGeometry(const vector<RefPtr<Primitive>>& prims)
@@ -143,6 +216,104 @@ namespace EDX
 
 			assert(mBuildVertexCount == vertexBufSize);
 			assert(mBuildTriangleCount == triangleBufSize);
+		}
+
+		bool BVH2::Intersect(const Ray& ray, Intersection* pIsect) const
+		{
+			const IntSSE identity = _mm_set_epi8(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+			const IntSSE swap = _mm_set_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
+			const IntSSE shuffleX = ray.mDir.x >= 0 ? identity : swap;
+			const IntSSE shuffleY = ray.mDir.y >= 0 ? identity : swap;
+			const IntSSE shuffleZ = ray.mDir.z >= 0 ? identity : swap;
+
+			const IntSSE pn = IntSSE(0x00000000, 0x00000000, 0x80000000, 0x80000000);
+			const Vec3f_SSE norg(-ray.mOrg.x, -ray.mOrg.y, -ray.mOrg.z);
+			const Vec3f_SSE rdir = Vec3f_SSE(FloatSSE(1.0f / ray.mDir.x) ^ pn, FloatSSE(1.0f / ray.mDir.y) ^ pn, FloatSSE(1.0f / ray.mDir.z) ^ pn);
+			FloatSSE nearFar(ray.mMin, ray.mMin, -ray.mMax, -ray.mMax);
+
+			struct TravStackItem
+			{
+				float dist;
+				int index;
+			};
+			TravStackItem TodoStack[64];
+			uint stackTop = 0, nodeIdx = 0;
+
+			bool hit = false;
+			while (true)
+			{
+				const Node* pNode = &mpRoot[nodeIdx];
+
+				// Interior node
+				if (pNode->pTriangles == nullptr)
+				{
+					const FloatSSE tNearFarX = (SSE::Shuffle8(pNode->minMaxBoundsX, shuffleX) + norg.x) * rdir.x;
+					const FloatSSE tNearFarY = (SSE::Shuffle8(pNode->minMaxBoundsY, shuffleY) + norg.y) * rdir.y;
+					const FloatSSE tNearFarZ = (SSE::Shuffle8(pNode->minMaxBoundsZ, shuffleZ) + norg.z) * rdir.z;
+					const FloatSSE tNearFar = SSE::Max(SSE::Max(tNearFarX, tNearFarY), SSE::Max(tNearFarZ, nearFar)) ^ pn;
+					const BoolSSE lrhit = tNearFar <= SSE::Shuffle8(tNearFar, swap);
+
+					if (lrhit[0] != 0 && lrhit[1] != 0)
+					{
+						if (tNearFar[0] < tNearFar[1]) // First child first
+						{
+							TodoStack[stackTop].index = pNode->secondChildOffset;
+							TodoStack[stackTop].dist = tNearFar[1];
+							stackTop++;
+							nodeIdx = nodeIdx + 1;
+						}
+						else
+						{
+							TodoStack[stackTop].index = nodeIdx + 1;
+							TodoStack[stackTop].dist = tNearFar[0];
+							stackTop++;
+							nodeIdx = pNode->secondChildOffset;
+						}
+					}
+					else if (lrhit[0] != 0)
+					{
+						nodeIdx = nodeIdx + 1;
+					}
+					else if (lrhit[1] != 0)
+					{
+						nodeIdx = pNode->secondChildOffset;
+					}
+					else // If miss the node's bounds
+					{
+						do
+						{
+							if (stackTop == 0)
+								return hit;
+							stackTop--;
+							nodeIdx = TodoStack[stackTop].index;
+						} while (TodoStack[stackTop].dist > pIsect->mDist);
+					}
+				}
+				else // Leaf node
+				{
+					for (auto i = 0; i < pNode->triangleCount; i++)
+					{
+						if (pNode->pTriangles[i].Intersect(ray, pIsect))
+							hit = true;
+					}
+					nearFar = SSE::Shuffle<0, 1, 2, 3>(nearFar, -pIsect->mDist);
+
+					do
+					{
+						if (stackTop == 0)
+							return hit;
+						stackTop--;
+						nodeIdx = TodoStack[stackTop].index;
+					} while (TodoStack[stackTop].dist > pIsect->mDist);
+				}
+			}
+
+			return hit;
+		}
+
+		bool BVH2::Occluded(const Ray& ray) const
+		{
+			return false;
 		}
 	}
 }

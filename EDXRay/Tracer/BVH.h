@@ -4,6 +4,7 @@
 #include "Memory/RefPtr.h"
 #include "Memory/Memory.h"
 #include "Math/BoundingBox.h"
+#include "SIMD/SSE.h"
 #include "../ForwardDecl.h"
 
 namespace EDX
@@ -12,10 +13,10 @@ namespace EDX
 	{
 		struct BuildTriangle
 		{
-			int idx1, idx2, idx3;
-			int meshIdx, triIdx;
+			uint idx1, idx2, idx3;
+			uint meshIdx, triIdx;
 
-			BuildTriangle(int i1 = 0, int i2 = 0, int i3 = 0, int m = 0, int t = 0)
+			BuildTriangle(uint i1 = 0, uint i2 = 0, uint i3 = 0, uint m = 0, uint t = 0)
 				: idx1(i1)
 				, idx2(i2)
 				, idx3(i3)
@@ -38,12 +39,12 @@ namespace EDX
 
 		struct TriangleInfo
 		{
-			int idx;
+			uint idx;
 			Vector3 centroid;
 			BoundingBox bbox;
 
-			TriangleInfo(int _idx = 0, const BoundingBox& box = BoundingBox())
-				: idx(idx)
+			TriangleInfo(uint _idx = 0, const BoundingBox& box = BoundingBox())
+				: idx(_idx)
 				, bbox(box)
 			{
 				centroid = bbox.Centroid();
@@ -53,37 +54,66 @@ namespace EDX
 		class BVH2
 		{
 		public:
-			struct Node
+			struct BuildNode
 			{
-				int* pIndices;
-				int primCount;
+				Triangle4* pTriangles;
+				uint primCount;
 
 				BoundingBox leftBounds;
 				BoundingBox rightBounds;
-				Node* pChilds[2];
+				BuildNode* pChildren[2];
 
-				void InitLeaf(int* pIdx, int count)
+				void InitLeaf(Triangle4* pTris, uint count)
 				{
-					pIndices = pIdx;
+					pTriangles = pTris;
 					primCount = count;
-					pChilds[0] = pChilds[1] = nullptr;
+					pChildren[0] = pChildren[1] = nullptr;
 				}
-				void InitInterior(const BoundingBox& lBounds, const BoundingBox& rBounds)
+				void InitInterior(const BoundingBox& lBounds, const BoundingBox& rBounds, BuildNode* pLeft, BuildNode* pRight)
 				{
+					pTriangles = nullptr;
+					primCount = 0;
 					leftBounds = lBounds;
 					rightBounds = rBounds;
+					pChildren[0] = pLeft;
+					pChildren[1] = pRight;
+				}
+			};
+
+			struct Node
+			{
+				FloatSSE minMaxBoundsX;
+				FloatSSE minMaxBoundsY;
+				FloatSSE minMaxBoundsZ;
+
+				union
+				{
+					uint secondChildOffset;
+					uint triangleCount;
+				};
+
+				Triangle4* pTriangles;
+
+				Node()
+					: pTriangles(nullptr)
+				{
+				}
+				~Node()
+				{
 				}
 			};
 
 		private:
+			Node*			mpRoot;
+			uint			mNodeCount;
 			BuildVertex*	mpBuildVertices;
 			BuildTriangle*	mpBuildIndices;
-			int mBuildVertexCount;
-			int mBuildTriangleCount;
+			uint mBuildVertexCount;
+			uint mBuildTriangleCount;
 
 			BoundingBox mBounds;
 
-			const int MaxDepth;
+			const uint MaxDepth;
 
 		public:
 			BVH2()
@@ -99,15 +129,20 @@ namespace EDX
 				Destroy();
 			}
 
-			void	Construct(const vector<RefPtr<Primitive>>& prims);
-			Node*	RecursiveBuildNode(vector<TriangleInfo>& buildInfo,
+			void Construct(const vector<RefPtr<Primitive>>& prims);
+			bool Intersect(const Ray& ray, Intersection* pIsect) const;
+			bool Occluded(const Ray& ray) const;
+
+		private:
+			uint RecursiveBuildBuildNode(BuildNode* pBuildNode,
+				vector<TriangleInfo>& buildInfo,
 				const int startIdx,
 				const int endIdx,
 				const int depth,
 				MemoryArena& memory);
 
-		private:
 			void ExtractGeometry(const vector<RefPtr<Primitive>>& prims);
+			uint LinearizeNodes(BuildNode* pNode, uint* piOffset);
 
 			void Destroy()
 			{

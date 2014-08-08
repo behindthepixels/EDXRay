@@ -12,15 +12,12 @@ namespace EDX
 
 		bool Scene::Intersect(const Ray& ray, Intersection* pIsect) const
 		{
-			bool hit = false;
-			for (auto i = 0; i < mPrimitives.size(); i++)
-			{
-				auto it = mPrimitives[i].Ptr();
-				if (it->Intersect(ray, pIsect))
-					hit = true;
-			}
+			return mAccel->Intersect(ray, pIsect);
+		}
 
-			return hit;
+		bool Scene::Occluded(const Ray& ray) const
+		{
+			return mAccel->Occluded(ray);
 		}
 
 		void Scene::AddPrimitive(Primitive* pPrim)
