@@ -2,6 +2,7 @@
 
 #include "SIMD/SSE.h"
 #include "BVH.h"
+#include "../Core/DifferentialGeom.h"
 
 namespace EDX
 {
@@ -10,6 +11,7 @@ namespace EDX
 		class Triangle4
 		{
 		private:
+			int triangleCount;
 			// 224
 			Vec3f_SSE	mVertices0;
 			Vec3f_SSE	mEdges1;
@@ -125,6 +127,12 @@ namespace EDX
 
 				return true;
 			}
+		};
+
+		struct Triangle4Node
+		{
+			int triangleCount;
+			Triangle4 tri4;
 		};
 	}
 }

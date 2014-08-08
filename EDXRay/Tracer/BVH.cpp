@@ -33,9 +33,9 @@ namespace EDX
 
 			// Alloc space for the root BuildNode
 			BuildNode* pBuildRoot = memory.Alloc<BuildNode>();
-			mNodeCount = RecursiveBuildBuildNode(pBuildRoot, buildInfo, 0, mBuildTriangleCount, 0, memory);
+			mTreeBufSize = RecursiveBuildBuildNode(pBuildRoot, buildInfo, 0, mBuildTriangleCount, 0, memory);
 
-			mpRoot = new Node[mNodeCount];
+			mpRoot = AllocAligned<Node>(mTreeBufSize, 64);
 			uint offset = 0;
 			LinearizeNodes(pBuildRoot, &offset);
 		}
@@ -48,7 +48,7 @@ namespace EDX
 			MemoryArena& memory)
 		{
 			*pNode = BuildNode();
-			uint leftCount = 0, rightCount = 0;
+			uint currCount = 0, leftCount = 0, rightCount = 0;
 			auto numTriangles = endIdx - startIdx;
 
 			auto CreateLeaf = [&]
@@ -81,6 +81,7 @@ namespace EDX
 				}
 
 				pNode->InitLeaf(pTri4, packedCount);
+				currCount = 4 * packedCount;
 			};
 
 			if (numTriangles <= 4 || depth > MaxDepth) // Create a leaf if triangle count is 1 or depth exceeds maximum
@@ -100,7 +101,7 @@ namespace EDX
 				if (centroidBounds.mMin[dim] == centroidBounds.mMax[dim])
 				{
 					CreateLeaf();
-					return 1;
+					return currCount;
 				}
 
 				// Partition primitives
@@ -130,9 +131,10 @@ namespace EDX
 
 				leftCount = RecursiveBuildBuildNode(pLeft, buildInfo, startIdx, mid, depth + 1, memory);
 				rightCount = RecursiveBuildBuildNode(pRight, buildInfo, mid, endIdx, depth + 1, memory);
+				currCount = 1;
 			}
 
-			return leftCount + rightCount + 1;
+			return leftCount + rightCount + currCount;
 		}
 
 		uint BVH2::LinearizeNodes(BuildNode* pBuildNode, uint* pOffset)
@@ -154,17 +156,25 @@ namespace EDX
 			pNode->minMaxBoundsZ[2] = pBuildNode->leftBounds.mMax.z;
 			pNode->minMaxBoundsZ[3] = pBuildNode->rightBounds.mMax.z;
 
-			uint currOffset = (*pOffset)++;
+			uint currOffset = (*pOffset);
+			if (currOffset > mTreeBufSize)
+				currOffset = currOffset;
 
 			if (pBuildNode->primCount > 0) // Create leaf node
 			{
-				pNode->triangleCount = pBuildNode->primCount;
-				pNode->pTriangles = new Triangle4[pNode->triangleCount];
-				memcpy(pNode->pTriangles, pBuildNode->pTriangles, pNode->triangleCount * sizeof(Triangle4));
+				Triangle4Node* pLeafNode = (Triangle4Node*)pNode;
+				for (auto i = 0; i < pBuildNode->primCount; i++)
+				{
+					pLeafNode[i].triangleCount = pBuildNode->primCount - i;
+					memcpy(&pLeafNode[i].tri4, &pBuildNode->pTriangles[i], sizeof(Triangle4));
+				}
+
+				(*pOffset) += 4 * pBuildNode->primCount;
 			}
 			else // Interior
 			{
-				pNode->pTriangles = nullptr;
+				pNode->triangleCount = 0;
+				(*pOffset)++;
 				LinearizeNodes(pBuildNode->pChildren[0], pOffset);
 				pNode->secondChildOffset = LinearizeNodes(pBuildNode->pChildren[1], pOffset);
 			}
@@ -245,7 +255,7 @@ namespace EDX
 				const Node* pNode = &mpRoot[nodeIdx];
 
 				// Interior node
-				if (pNode->pTriangles == nullptr)
+				if (pNode->triangleCount == 0)
 				{
 					const FloatSSE tNearFarX = (SSE::Shuffle8(pNode->minMaxBoundsX, shuffleX) + norg.x) * rdir.x;
 					const FloatSSE tNearFarY = (SSE::Shuffle8(pNode->minMaxBoundsY, shuffleY) + norg.y) * rdir.y;
@@ -291,9 +301,10 @@ namespace EDX
 				}
 				else // Leaf node
 				{
-					for (auto i = 0; i < pNode->triangleCount; i++)
+					Triangle4Node* pLeafNode = (Triangle4Node*)pNode;
+					for (auto i = 0; i < pLeafNode->triangleCount; i++)
 					{
-						if (pNode->pTriangles[i].Intersect(ray, pIsect))
+						if (pLeafNode[i].tri4.Intersect(ray, pIsect))
 							hit = true;
 					}
 					nearFar = SSE::Shuffle<0, 1, 2, 3>(nearFar, -pIsect->mDist);

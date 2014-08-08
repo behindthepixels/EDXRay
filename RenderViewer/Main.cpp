@@ -66,11 +66,17 @@ void OnRelease(Object* pSender, EventArgs args)
 	gpRenderer.Dereference();
 }
 
+#include "Tracer/Triangle4.h"
+
+
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdShow)
 {
-	char* a;
-	a = 0;
-	int s = sizeof(a);
+	int d = sizeof(BVH2::Node);
+	d = offsetof(BVH2::Node, minMaxBoundsX);
+	int ss = sizeof(Triangle4);
+	ss = 0;
+	int s = sizeof(Triangle4Node);
+	s = 0;
 	Application::Init(hInst);
 	Window* mainWindow = new GLWindow;
 	mainWindow->SetMainLoop(NotifyEvent(OnRender));

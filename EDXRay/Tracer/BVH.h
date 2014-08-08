@@ -82,30 +82,17 @@ namespace EDX
 
 			struct Node
 			{
+				uint triangleCount;
+				uint secondChildOffset;
+
 				FloatSSE minMaxBoundsX;
 				FloatSSE minMaxBoundsY;
 				FloatSSE minMaxBoundsZ;
-
-				union
-				{
-					uint secondChildOffset;
-					uint triangleCount;
-				};
-
-				Triangle4* pTriangles;
-
-				Node()
-					: pTriangles(nullptr)
-				{
-				}
-				~Node()
-				{
-				}
 			};
 
 		private:
 			Node*			mpRoot;
-			uint			mNodeCount;
+			uint			mTreeBufSize;
 			BuildVertex*	mpBuildVertices;
 			BuildTriangle*	mpBuildIndices;
 			uint mBuildVertexCount;
@@ -148,6 +135,7 @@ namespace EDX
 			{
 				SafeDeleteArray(mpBuildVertices);
 				SafeDeleteArray(mpBuildIndices);
+				FreeAligned(mpRoot);
 			}
 		};
 	}
