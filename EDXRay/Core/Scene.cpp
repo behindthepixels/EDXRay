@@ -1,6 +1,8 @@
 #include "Scene.h"
 #include "Primitive.h"
 #include "../Tracer/BVH.h"
+#include "TriangleMesh.h"
+#include "DifferentialGeom.h"
 
 namespace EDX
 {
@@ -18,6 +20,12 @@ namespace EDX
 		bool Scene::Occluded(const Ray& ray) const
 		{
 			return mAccel->Occluded(ray);
+		}
+
+		void Scene::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
+		{
+			assert(pDiffGeom);
+			mPrimitives[pDiffGeom->mPrimId]->GetMesh()->PostIntersect(ray, pDiffGeom);
 		}
 
 		void Scene::AddPrimitive(Primitive* pPrim)

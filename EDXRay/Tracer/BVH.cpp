@@ -38,6 +38,7 @@ namespace EDX
 			mpRoot = AllocAligned<Node>(mTreeBufSize, 64);
 			uint offset = 0;
 			LinearizeNodes(pBuildRoot, &offset);
+			assert(offset == mTreeBufSize);
 		}
 
 		uint BVH2::RecursiveBuildBuildNode(BuildNode* pNode,
@@ -157,8 +158,6 @@ namespace EDX
 			pNode->minMaxBoundsZ[3] = pBuildNode->rightBounds.mMax.z;
 
 			uint currOffset = (*pOffset);
-			if (currOffset > mTreeBufSize)
-				currOffset = currOffset;
 
 			if (pBuildNode->primCount > 0) // Create leaf node
 			{

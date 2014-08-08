@@ -32,9 +32,12 @@ void OnInit(Object* pSender, EventArgs args)
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	TriangleMesh* pMesh = new TriangleMesh;
-	pMesh->LoadSphere(1.0f, 32, 32, Vector3(0.0f, 0.0f, 10.5f));
+	pMesh->LoadSphere(1.0f, 32, 32, Vector3(-2.0f, 1.0f, 10.5f));
+	TriangleMesh* pMesh2 = new TriangleMesh;
+	pMesh2->LoadSphere(1.0f, 32, 32, Vector3(2.0f, 1.0f, 10.5f));
 
 	pScene->AddPrimitive(new Primitive(pMesh));
+	pScene->AddPrimitive(new Primitive(pMesh2));
 	pScene->InitAccelerator();
 
 	gpRenderer->LaunchRenderThreads();
@@ -66,17 +69,8 @@ void OnRelease(Object* pSender, EventArgs args)
 	gpRenderer.Dereference();
 }
 
-#include "Tracer/Triangle4.h"
-
-
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdShow)
 {
-	int d = sizeof(BVH2::Node);
-	d = offsetof(BVH2::Node, minMaxBoundsX);
-	int ss = sizeof(Triangle4);
-	ss = 0;
-	int s = sizeof(Triangle4Node);
-	s = 0;
 	Application::Init(hInst);
 	Window* mainWindow = new GLWindow;
 	mainWindow->SetMainLoop(NotifyEvent(OnRender));

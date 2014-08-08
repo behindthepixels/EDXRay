@@ -11,8 +11,6 @@ namespace EDX
 		class Triangle4
 		{
 		private:
-			int triangleCount;
-			// 224
 			Vec3f_SSE	mVertices0;
 			Vec3f_SSE	mEdges1;
 			Vec3f_SSE	mEdges2;

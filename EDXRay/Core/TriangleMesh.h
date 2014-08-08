@@ -45,6 +45,8 @@ namespace EDX
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO);
 
+			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
+
 			// Accessor for geometry
 			Vector3 GetPositionAt(uint idx) const;
 			Vector3 GetNormalAt(uint idx) const;

@@ -13,9 +13,9 @@ namespace EDX
 		struct CameraSample;
 		struct Sample;
 		class Sampler;
-		class RayDifferential;
 		class Intersection;
 		class DifferentialGeom;
+		class Frame;
 		class Primitive;
 		class TriangleMesh;
 		struct BuildTriangle;
@@ -29,4 +29,5 @@ namespace EDX
 	class MemoryArena;
 	class Color;
 	class Ray;
+	class RayDifferential;
 }

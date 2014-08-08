@@ -13,6 +13,10 @@ namespace EDX
 			float mLensRadius, mFocalPlaneDist;
 			float mImagePlaneDist;
 
+			// Differential
+			Vector3 mDxCam;
+			Vector3 mDyCam;
+
 		public:
 			void Init(const Vector3& pos,
 				const Vector3& tar,
@@ -24,7 +28,10 @@ namespace EDX
 				const float farClip = 1000.0f,
 				const float lensR = 0.0f,
 				const float focalDist = 0.0f);
+
+			void Resize(int width, int height);
 			void GenerateRay(const CameraSample& sample, Ray* pRay) const;
+			void GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const;
 		};
 	}
 }

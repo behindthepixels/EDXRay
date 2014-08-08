@@ -24,6 +24,14 @@ namespace EDX
 			mFocalPlaneDist = focalDist;
 		}
 
+		void Camera::Resize(int width, int height)
+		{
+			EDX::Camera::Resize(width, height);
+
+			mDxCam = Matrix::TransformPoint(Vector3::UNIT_X, mRasterToCamera) - Matrix::TransformPoint(Vector3::ZERO, mRasterToCamera);
+			mDyCam = Matrix::TransformPoint(Vector3::UNIT_Y, mRasterToCamera) - Matrix::TransformPoint(Vector3::ZERO, mRasterToCamera);
+		}
+
 		void Camera::GenerateRay(const CameraSample& sample, Ray* pRay) const
 		{
 			Vector3 camCoord = Matrix::TransformPoint(Vector3(sample.imageX, sample.imageY, 0.0f), mRasterToCamera);
@@ -46,6 +54,37 @@ namespace EDX
 			}
 
 			*pRay = Matrix::TransformRay(*pRay, mViewInv);
+			pRay->mMin = float(Math::EDX_EPSILON);
+			pRay->mMax = float(Math::EDX_INFINITY);
+		}
+
+		void Camera::GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const
+		{
+			Vector3 camCoord = Matrix::TransformPoint(Vector3(sample.imageX, sample.imageY, 0.0f), mRasterToCamera);
+
+			pRay->mOrg = Vector3::ZERO;
+			pRay->mDir = Math::Normalize(camCoord);
+
+			if (mLensRadius > 0.0f)
+			{
+				float fFocalHit = mFocalPlaneDist / -pRay->mDir.z;
+				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
+
+				float u, v;
+				Sampling::ConcentricSampleDisk(sample.lensU, sample.lensV, &u, &v);
+				u *= mLensRadius;
+				v *= mLensRadius;
+
+				pRay->mOrg = Vector3(u, v, 0.0f);
+				pRay->mDir = Math::Normalize(ptFocal - pRay->mOrg);
+			}
+
+			pRay->mDxOrg = pRay->mDyOrg = pRay->mOrg;
+			pRay->mDxDir = Math::Normalize(camCoord + mDxCam);
+			pRay->mDyDir = Math::Normalize(camCoord + mDyCam);
+			pRay->mbHasDifferential = true;
+
+			*pRay = Matrix::TransformRayDiff(*pRay, mViewInv);
 			pRay->mMin = float(Math::EDX_EPSILON);
 			pRay->mMax = float(Math::EDX_INFINITY);
 		}

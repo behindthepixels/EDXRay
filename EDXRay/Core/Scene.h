@@ -21,6 +21,8 @@ namespace EDX
 			bool Intersect(const Ray& ray, Intersection* pIsect) const;
 			bool Occluded(const Ray& ray) const;
 
+			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
+
 			void AddPrimitive(Primitive* pPrim);
 
 			void InitAccelerator();

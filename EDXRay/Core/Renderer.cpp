@@ -63,14 +63,15 @@ namespace EDX
 						Sample sample;
 						sample.imageX = x;
 						sample.imageY = y;
-						Ray ray;
-						mpCamera->GenerateRay(sample, &ray);
+						RayDifferential ray;
+						mpCamera->GenRayDifferential(sample, &ray);
 
-						Intersection isect;
+						DifferentialGeom diffGeom;
 						Color L;
-						if (mpScene->Intersect(ray, &isect))
+						if (mpScene->Intersect(ray, &diffGeom))
 						{
-							L = Color(isect.mDist);
+							mpScene->PostIntersect(ray, &diffGeom);
+							L = Color(diffGeom.mTexcoord.u, diffGeom.mTexcoord.v, 0.0f);
 						}
 						else
 						{

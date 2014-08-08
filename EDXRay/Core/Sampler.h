@@ -2,9 +2,7 @@
 
 #include "EDXPrerequisites.h"
 
-#include "Math/Vec2.h"
-#include "Math/Vec3.h"
-#include "Math/Vec4.h"
+#include "Math/Vector.h"
 #include "../ForwardDecl.h"
 
 namespace EDX
