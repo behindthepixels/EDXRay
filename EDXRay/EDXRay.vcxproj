@@ -23,6 +23,7 @@
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\Film.h" />
     <ClInclude Include="Core\DifferentialGeom.h" />
+    <ClInclude Include="Core\Integrator.h" />
     <ClInclude Include="Core\Primitive.h" />
     <ClInclude Include="Core\Renderer.h" />
     <ClInclude Include="Core\RenderThread.h" />
@@ -32,6 +33,7 @@
     <ClInclude Include="Core\TaskScheduler.h" />
     <ClInclude Include="Core\TriangleMesh.h" />
     <ClInclude Include="ForwardDecl.h" />
+    <ClInclude Include="Integrators\DirectLighting.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
     <ClInclude Include="Tracer\BVH.h" />
     <ClInclude Include="Tracer\Triangle4.h" />
@@ -45,6 +47,7 @@
     <ClCompile Include="Core\Sampler.cpp" />
     <ClCompile Include="Core\Scene.cpp" />
     <ClCompile Include="Core\TriangleMesh.cpp" />
+    <ClCompile Include="Integrators\DirectLighting.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
     <ClCompile Include="Tracer\BVH.cpp" />
   </ItemGroup>

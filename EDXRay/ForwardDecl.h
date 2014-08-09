@@ -9,7 +9,7 @@ namespace EDX
 		class Camera;
 		class Scene;
 		class Film;
-
+		class Integrator;
 		struct CameraSample;
 		struct Sample;
 		class Sampler;

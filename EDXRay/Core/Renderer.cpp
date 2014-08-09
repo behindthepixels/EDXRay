@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "Scene.h"
+#include "../Integrators/DirectLighting.h"
 #include "Sampler.h"
 #include "Film.h"
 #include "DifferentialGeom.h"
@@ -33,6 +34,7 @@ namespace EDX
 
 			// Initialize scene
 			mpScene = new Scene;
+			mpIntegrator = new DirectLightingIntegrator;
 
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
@@ -51,7 +53,7 @@ namespace EDX
 		{
 		}
 
-		void Renderer::RenderFrame()
+		void Renderer::RenderFrame(RandomGen& random, MemoryArena& memory)
 		{
 			RenderTask* pTask;
 			while (mTaskScheduler.GetNextTask(pTask))
@@ -66,17 +68,7 @@ namespace EDX
 						RayDifferential ray;
 						mpCamera->GenRayDifferential(sample, &ray);
 
-						DifferentialGeom diffGeom;
-						Color L;
-						if (mpScene->Intersect(ray, &diffGeom))
-						{
-							mpScene->PostIntersect(ray, &diffGeom);
-							L = Color(diffGeom.mTexcoord.u, diffGeom.mTexcoord.v, 0.0f);
-						}
-						else
-						{
-							L = Color::BLACK;
-						}
+						Color L = mpIntegrator->Li(ray, mpScene.Ptr(), &sample, random, memory);
 
 						mpFilm->AddSample(x, y, L);
 					}
@@ -84,14 +76,14 @@ namespace EDX
 			}
 		}
 
-		void Renderer::RenderImage(int threadId)
+		void Renderer::RenderImage(int threadId, RandomGen& random, MemoryArena& memory)
 		{
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
 				// Sync barrier before render
 				mTaskScheduler.SyncThreadsPreRender(threadId);
 
-				RenderFrame();
+				RenderFrame(random, memory);
 
 				// Sync barrier after render
 				mTaskScheduler.SyncThreadsPostRender(threadId);

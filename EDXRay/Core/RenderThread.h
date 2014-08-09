@@ -22,7 +22,7 @@ namespace EDX
 			Renderer*	mpRenderer;
 			uint		mId;
 			MemoryArena mMemory;
-			RandomGen	mRendom;
+			RandomGen	mRandom;
 		};
 	}
 }

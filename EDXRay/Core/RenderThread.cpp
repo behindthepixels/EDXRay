@@ -13,7 +13,7 @@ namespace EDX
 
 		void RenderThread::WorkLoop()
 		{
-			mpRenderer->RenderImage(mId);
+			mpRenderer->RenderImage(mId, mRandom, mMemory);
 
 			SelfTermnate();
 		}

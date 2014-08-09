@@ -16,11 +16,14 @@
     <Filter Include="Source Files\Core">
       <UniqueIdentifier>{bda4358e-f2c0-4f4b-8612-029f03d70a5e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Sampler">
-      <UniqueIdentifier>{c29c9d66-b91b-4c42-86e1-a346812dc77b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Tracer">
       <UniqueIdentifier>{f1af3c02-abd0-45ac-8864-f5317e3d86a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Integrators">
+      <UniqueIdentifier>{751de711-8bda-4f22-a2cd-976f68076b67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Samplers">
+      <UniqueIdentifier>{c29c9d66-b91b-4c42-86e1-a346812dc77b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -43,7 +46,7 @@
       <Filter>Source Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Sampler\RandomSampler.h">
-      <Filter>Source Files\Sampler</Filter>
+      <Filter>Source Files\Samplers</Filter>
     </ClInclude>
     <ClInclude Include="Core\Sampling.h">
       <Filter>Source Files\Core</Filter>
@@ -72,6 +75,12 @@
     <ClInclude Include="Tracer\Triangle4.h">
       <Filter>Source Files\Tracer</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Integrator.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Integrators\DirectLighting.h">
+      <Filter>Source Files\Integrators</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -84,7 +93,7 @@
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Sampler\RandomSampler.cpp">
-      <Filter>Source Files\Sampler</Filter>
+      <Filter>Source Files\Samplers</Filter>
     </ClCompile>
     <ClCompile Include="Core\Film.cpp">
       <Filter>Source Files\Core</Filter>
@@ -103,6 +112,9 @@
     </ClCompile>
     <ClCompile Include="Tracer\BVH.cpp">
       <Filter>Source Files\Tracer</Filter>
+    </ClCompile>
+    <ClCompile Include="Integrators\DirectLighting.cpp">
+      <Filter>Source Files\Integrators</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

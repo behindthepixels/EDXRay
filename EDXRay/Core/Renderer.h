@@ -17,6 +17,7 @@ namespace EDX
 		protected:
 			RefPtr<Camera>	mpCamera;
 			RefPtr<Scene>	mpScene;
+			RefPtr<Integrator> mpIntegrator;
 			RefPtr<Sampler>	mpSampler;
 			RefPtr<Film>	mpFilm;
 
@@ -34,8 +35,8 @@ namespace EDX
 			
 			void Initialize(const RenderJobDesc& desc);
 
-			void RenderFrame();
-			void RenderImage(int threadId);
+			void RenderFrame(RandomGen& random, MemoryArena& memory);
+			void RenderImage(int threadId, RandomGen& random, MemoryArena& memory);
 
 			void LaunchRenderThreads();
 
