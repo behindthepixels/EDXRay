@@ -121,7 +121,7 @@ namespace EDX
 			bool Occluded(const Ray& ray) const;
 
 		private:
-			uint RecursiveBuildBuildNode(BuildNode* pBuildNode,
+			void RecursiveBuildBuildNode(BuildNode* pBuildNode,
 				vector<TriangleInfo>& buildInfo,
 				const int startIdx,
 				const int endIdx,

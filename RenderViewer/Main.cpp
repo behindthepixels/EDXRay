@@ -64,6 +64,16 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 	glLoadIdentity();
 }
 
+void OnMouseEvent(Object* pSender, MouseEventArgs args)
+{
+
+}
+
+void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
+{
+
+}
+
 void OnRelease(Object* pSender, EventArgs args)
 {
 	gpRenderer.Dereference();
@@ -77,6 +87,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdS
 	mainWindow->SetInit(NotifyEvent(OnInit));
 	mainWindow->SetResize(ResizeEvent(OnResize));
 	mainWindow->SetRelease(NotifyEvent(OnRelease));
+	mainWindow->SetMouseHandler(MouseEvent(OnMouseEvent));
+	mainWindow->SetkeyboardHandler(KeyboardEvent(OnKeyboardEvent));
 
 	mainWindow->Create(L"EDXRay", 1280, 800);
 

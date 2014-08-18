@@ -33,7 +33,7 @@ namespace EDX
 
 			// Alloc space for the root BuildNode
 			BuildNode* pBuildRoot = memory.Alloc<BuildNode>();
-			mTreeBufSize = RecursiveBuildBuildNode(pBuildRoot, buildInfo, 0, mBuildTriangleCount, 0, memory);
+			RecursiveBuildBuildNode(pBuildRoot, buildInfo, 0, mBuildTriangleCount, 0, memory);
 
 			mpRoot = AllocAligned<Node>(mTreeBufSize, 64);
 			uint offset = 0;
@@ -41,7 +41,7 @@ namespace EDX
 			assert(offset == mTreeBufSize);
 		}
 
-		uint BVH2::RecursiveBuildBuildNode(BuildNode* pNode,
+		void BVH2::RecursiveBuildBuildNode(BuildNode* pNode,
 			vector<TriangleInfo>& buildInfo,
 			const int startIdx,
 			const int endIdx,
@@ -49,7 +49,6 @@ namespace EDX
 			MemoryArena& memory)
 		{
 			*pNode = BuildNode();
-			uint currCount = 0, leftCount = 0, rightCount = 0;
 			auto numTriangles = endIdx - startIdx;
 
 			auto CreateLeaf = [&]
@@ -82,7 +81,7 @@ namespace EDX
 				}
 
 				pNode->InitLeaf(pTri4, packedCount);
-				currCount = 4 * packedCount;
+				mTreeBufSize += 4 * packedCount;
 			};
 
 			if (numTriangles <= 4 || depth > MaxDepth) // Create a leaf if triangle count is 1 or depth exceeds maximum
@@ -102,7 +101,7 @@ namespace EDX
 				if (centroidBounds.mMin[dim] == centroidBounds.mMax[dim])
 				{
 					CreateLeaf();
-					return currCount;
+					return;
 				}
 
 				// Partition primitives
@@ -130,12 +129,12 @@ namespace EDX
 				BuildNode* pRight = memory.Alloc<BuildNode>();
 				pNode->InitInterior(leftBounds, rightBounds, pLeft, pRight);
 
-				leftCount = RecursiveBuildBuildNode(pLeft, buildInfo, startIdx, mid, depth + 1, memory);
-				rightCount = RecursiveBuildBuildNode(pRight, buildInfo, mid, endIdx, depth + 1, memory);
-				currCount = 1;
+				RecursiveBuildBuildNode(pLeft, buildInfo, startIdx, mid, depth + 1, memory);
+				RecursiveBuildBuildNode(pRight, buildInfo, mid, endIdx, depth + 1, memory);
+				mTreeBufSize += 1;
 			}
 
-			return leftCount + rightCount + currCount;
+			return;
 		}
 
 		uint BVH2::LinearizeNodes(BuildNode* pBuildNode, uint* pOffset)

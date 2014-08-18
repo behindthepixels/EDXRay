@@ -81,6 +81,9 @@
     <ClInclude Include="Integrators\DirectLighting.h">
       <Filter>Source Files\Integrators</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Light.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
