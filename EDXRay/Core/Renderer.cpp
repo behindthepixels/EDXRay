@@ -6,6 +6,7 @@
 #include "Film.h"
 #include "DifferentialGeom.h"
 #include "Graphics/Color.h"
+#include "RenderTask.h"
 #include "Config.h"
 
 namespace EDX
@@ -39,15 +40,9 @@ namespace EDX
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
 
-			mTilescheduler.Init(desc.ImageWidth, desc.ImageHeight);
+			mTaskSync.Init(desc.ImageWidth, desc.ImageHeight);
 
-			mThreads.resize(DetectCPUCount());
-			uint id = 0;
-			for (auto& it : mThreads)
-			{
-				it.Init(this, id++);
-				it.mpScheduler = &mThreadScheduler;
-			}
+			mThreadScheduler.InitTAndLaunchThreads();
 		}
 
 		Renderer::~Renderer()
@@ -57,7 +52,7 @@ namespace EDX
 		void Renderer::RenderFrame(RandomGen& random, MemoryArena& memory)
 		{
 			RenderTile* pTask;
-			while (mTilescheduler.GetNextTask(pTask))
+			while (mTaskSync.GetNextTask(pTask))
 			{
 				for (auto y = pTask->minY; y < pTask->maxY; y++)
 				{
@@ -82,31 +77,31 @@ namespace EDX
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
 				// Sync barrier before render
-				mTilescheduler.SyncThreadsPreRender(threadId);
+				mTaskSync.SyncThreadsPreRender(threadId);
 
 				RenderFrame(random, memory);
 
 				// Sync barrier after render
-				mTilescheduler.SyncThreadsPostRender(threadId);
+				mTaskSync.SyncThreadsPostRender(threadId);
 
 				// One thread only
 				if (threadId == 0)
 				{
 					mpFilm->IncreSampleCount();
 					mpFilm->ScaleToPixel();
-					mTilescheduler.ResetTasks();
+					mTaskSync.ResetTasks();
 				}
 			}
 		}
 
 		void Renderer::LaunchRenderThreads()
 		{
-			for (auto& it : mThreads)
+			for (auto i = 0; i < mThreadScheduler.GetThreadCount(); i++)
 			{
-				it.Launch();
-			}
+				mTasks.push_back(new RenderTask(this));
 
-			mThreadScheduler.AddTasks(Task((Task::TaskFunc)&RenderTask::Run));
+				mThreadScheduler.AddTasks(Task((Task::TaskFunc)&RenderTask::_Render, mTasks[i]));
+			}
 		}
 
 		const Color* Renderer::GetFrameBuffer() const

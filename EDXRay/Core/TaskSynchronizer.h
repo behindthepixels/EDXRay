@@ -22,11 +22,11 @@ namespace EDX
 			}
 		};
 
-		class TaskScheduler
+		class TaskSynchronizer
 		{
 		private:
 			vector<RenderTile> mTiles;
-			uint mCurrentTaskIdx;
+			uint mCurrentTileIdx;
 			EDXLock mLock;
 
 			uint mThreadCount;
@@ -39,7 +39,7 @@ namespace EDX
 			void Init(const int x, const int y)
 			{
 				mTiles.clear();
-				mCurrentTaskIdx = 0;
+				mCurrentTileIdx = 0;
 
 				for (int i = 0; i < y; i += RenderTile::TILE_SIZE)
 				{
@@ -73,12 +73,12 @@ namespace EDX
 			{
 				EDXLockApply cs(mLock);
 
-				if (mCurrentTaskIdx < mTiles.size())
-					pTask = &mTiles[mCurrentTaskIdx];
+				if (mCurrentTileIdx < mTiles.size())
+					pTask = &mTiles[mCurrentTileIdx];
 				else
 					return false;
 
-				mCurrentTaskIdx++;
+				mCurrentTileIdx++;
 
 				return true;
 			}
@@ -123,7 +123,7 @@ namespace EDX
 
 			void ResetTasks()
 			{
-				mCurrentTaskIdx = 0;
+				mCurrentTileIdx = 0;
 				mAllTaskFinished = false;
 			}
 		};

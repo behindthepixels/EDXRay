@@ -5,8 +5,7 @@
 #include "Config.h"
 #include "../ForwardDecl.h"
 #include "Memory/RefPtr.h"
-#include "TaskScheduler.h"
-#include "RenderThread.h"
+#include "TaskSynchronizer.h"
 
 namespace EDX
 {
@@ -24,9 +23,9 @@ namespace EDX
 			RenderJobDesc	mJobDesc;
 
 			// Tile-based multi-threading
-			TaskScheduler	mTilescheduler;
+			TaskSynchronizer mTaskSync;
 			ThreadScheduler	mThreadScheduler;
-			vector<RenderThread> mThreads;
+			vector<RefPtr<RenderTask>> mTasks;
 
 		public:
 			Renderer()

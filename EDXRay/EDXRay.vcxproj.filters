@@ -51,12 +51,6 @@
     <ClInclude Include="Core\Sampling.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\TaskScheduler.h">
-      <Filter>Source Files\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\RenderThread.h">
-      <Filter>Source Files\Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Scene.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
@@ -84,6 +78,12 @@
     <ClInclude Include="Core\Light.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\TaskSynchronizer.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderTask.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -99,9 +99,6 @@
       <Filter>Source Files\Samplers</Filter>
     </ClCompile>
     <ClCompile Include="Core\Film.cpp">
-      <Filter>Source Files\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\RenderThread.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\TriangleMesh.cpp">

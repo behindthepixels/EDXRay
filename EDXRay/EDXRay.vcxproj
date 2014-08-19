@@ -27,11 +27,11 @@
     <ClInclude Include="Core\Light.h" />
     <ClInclude Include="Core\Primitive.h" />
     <ClInclude Include="Core\Renderer.h" />
-    <ClInclude Include="Core\RenderThread.h" />
+    <ClInclude Include="Core\RenderTask.h" />
     <ClInclude Include="Core\Sampler.h" />
     <ClInclude Include="Core\Sampling.h" />
     <ClInclude Include="Core\Scene.h" />
-    <ClInclude Include="Core\TaskScheduler.h" />
+    <ClInclude Include="Core\TaskSynchronizer.h" />
     <ClInclude Include="Core\TriangleMesh.h" />
     <ClInclude Include="ForwardDecl.h" />
     <ClInclude Include="Integrators\DirectLighting.h" />
@@ -44,7 +44,6 @@
     <ClCompile Include="Core\Film.cpp" />
     <ClCompile Include="Core\Primitive.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
-    <ClCompile Include="Core\RenderThread.cpp" />
     <ClCompile Include="Core\Sampler.cpp" />
     <ClCompile Include="Core\Scene.cpp" />
     <ClCompile Include="Core\TriangleMesh.cpp" />
