@@ -24,5 +24,19 @@ namespace EDX
 			MemoryArena mMemory;
 			RandomGen	mRandom;
 		};
+
+		struct RenderTaskParams
+		{
+			Renderer*	mpRenderer;
+			uint		mId;
+			MemoryArena mMemory;
+			RandomGen	mRandom;
+		};
+
+		class RenderTask
+		{
+		public:
+			void Run(RenderTaskParams* pArgs, int idx);
+		};
 	}
 }

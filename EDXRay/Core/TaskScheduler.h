@@ -8,12 +8,12 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		struct RenderTask
+		struct RenderTile
 		{
 			int minX, minY, maxX, maxY;
 			static const int TILE_SIZE = 32;
 
-			RenderTask(int _minX, int _minY, int _maxX, int _maxY)
+			RenderTile(int _minX, int _minY, int _maxX, int _maxY)
 				: minX(_minX)
 				, minY(_minY)
 				, maxX(_maxX)
@@ -25,7 +25,7 @@ namespace EDX
 		class TaskScheduler
 		{
 		private:
-			vector<RenderTask> mTasks;
+			vector<RenderTile> mTiles;
 			uint mCurrentTaskIdx;
 			EDXLock mLock;
 
@@ -38,19 +38,19 @@ namespace EDX
 		public:
 			void Init(const int x, const int y)
 			{
-				mTasks.clear();
+				mTiles.clear();
 				mCurrentTaskIdx = 0;
 
-				for (int i = 0; i < y; i += RenderTask::TILE_SIZE)
+				for (int i = 0; i < y; i += RenderTile::TILE_SIZE)
 				{
-					for (int j = 0; j < x; j += RenderTask::TILE_SIZE)
+					for (int j = 0; j < x; j += RenderTile::TILE_SIZE)
 					{
 						int minX = j, minY = i;
-						int maxX = j + RenderTask::TILE_SIZE, maxY = i + RenderTask::TILE_SIZE;
+						int maxX = j + RenderTile::TILE_SIZE, maxY = i + RenderTile::TILE_SIZE;
 						maxX = maxX <= x ? maxX : x;
 						maxY = maxY <= y ? maxY : y;
 
-						mTasks.push_back(RenderTask(minX, minY, maxX, maxY));
+						mTiles.push_back(RenderTile(minX, minY, maxX, maxY));
 					}
 				}
 
@@ -69,12 +69,12 @@ namespace EDX
 				mAllTaskFinished = false;
 			}
 
-			bool GetNextTask(RenderTask*& pTask)
+			bool GetNextTask(RenderTile*& pTask)
 			{
 				EDXLockApply cs(mLock);
 
-				if (mCurrentTaskIdx < mTasks.size())
-					pTask = &mTasks[mCurrentTaskIdx];
+				if (mCurrentTaskIdx < mTiles.size())
+					pTask = &mTiles[mCurrentTaskIdx];
 				else
 					return false;
 

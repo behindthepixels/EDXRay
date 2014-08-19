@@ -24,7 +24,8 @@ namespace EDX
 			RenderJobDesc	mJobDesc;
 
 			// Tile-based multi-threading
-			TaskScheduler	mTaskScheduler;
+			TaskScheduler	mTilescheduler;
+			ThreadScheduler	mThreadScheduler;
 			vector<RenderThread> mThreads;
 
 		public:

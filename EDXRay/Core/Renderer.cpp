@@ -39,13 +39,14 @@ namespace EDX
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
 
-			mTaskScheduler.Init(desc.ImageWidth, desc.ImageHeight);
+			mTilescheduler.Init(desc.ImageWidth, desc.ImageHeight);
 
 			mThreads.resize(DetectCPUCount());
 			uint id = 0;
 			for (auto& it : mThreads)
 			{
 				it.Init(this, id++);
+				it.mpScheduler = &mThreadScheduler;
 			}
 		}
 
@@ -55,8 +56,8 @@ namespace EDX
 
 		void Renderer::RenderFrame(RandomGen& random, MemoryArena& memory)
 		{
-			RenderTask* pTask;
-			while (mTaskScheduler.GetNextTask(pTask))
+			RenderTile* pTask;
+			while (mTilescheduler.GetNextTask(pTask))
 			{
 				for (auto y = pTask->minY; y < pTask->maxY; y++)
 				{
@@ -81,19 +82,19 @@ namespace EDX
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
 				// Sync barrier before render
-				mTaskScheduler.SyncThreadsPreRender(threadId);
+				mTilescheduler.SyncThreadsPreRender(threadId);
 
 				RenderFrame(random, memory);
 
 				// Sync barrier after render
-				mTaskScheduler.SyncThreadsPostRender(threadId);
+				mTilescheduler.SyncThreadsPostRender(threadId);
 
 				// One thread only
 				if (threadId == 0)
 				{
 					mpFilm->IncreSampleCount();
 					mpFilm->ScaleToPixel();
-					mTaskScheduler.ResetTasks();
+					mTilescheduler.ResetTasks();
 				}
 			}
 		}
@@ -104,6 +105,8 @@ namespace EDX
 			{
 				it.Launch();
 			}
+
+			mThreadScheduler.AddTasks(Task((Task::TaskFunc)&RenderTask::Run));
 		}
 
 		const Color* Renderer::GetFrameBuffer() const

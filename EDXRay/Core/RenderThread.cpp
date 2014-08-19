@@ -17,5 +17,10 @@ namespace EDX
 
 			SelfTermnate();
 		}
+
+		void RenderTask::Run(RenderTaskParams* pArgs, int idx)
+		{
+			pArgs->mpRenderer->RenderImage(pArgs->mId, pArgs->mRandom, pArgs->mMemory);
+		}
 	}
 }
