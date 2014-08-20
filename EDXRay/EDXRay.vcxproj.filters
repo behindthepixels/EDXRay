@@ -84,6 +84,9 @@
     <ClInclude Include="Core\RenderTask.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Tracer\BVHBuildTask.h">
+      <Filter>Source Files\Tracer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">

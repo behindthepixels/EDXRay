@@ -5,7 +5,10 @@
 #include "Memory/Memory.h"
 #include "Math/BoundingBox.h"
 #include "SIMD/SSE.h"
+#include "Windows/Thread.h"
 #include "../ForwardDecl.h"
+
+#include <atomic>
 
 namespace EDX
 {
@@ -92,7 +95,7 @@ namespace EDX
 
 		private:
 			Node*			mpRoot;
-			uint			mTreeBufSize;
+			std::atomic_int	mTreeBufSize;
 			BuildVertex*	mpBuildVertices;
 			BuildTriangle*	mpBuildIndices;
 			uint mBuildVertexCount;
@@ -101,6 +104,10 @@ namespace EDX
 			BoundingBox mBounds;
 
 			const uint MaxDepth;
+
+			vector<RefPtr<BuildTask>> mBuildTasks;
+			EDXLock mMemLock;
+			EDXLock mTaskLock;
 
 		public:
 			BVH2()
@@ -117,16 +124,17 @@ namespace EDX
 			}
 
 			void Construct(const vector<RefPtr<Primitive>>& prims);
-			bool Intersect(const Ray& ray, Intersection* pIsect) const;
-			bool Occluded(const Ray& ray) const;
-
-		private:
-			void RecursiveBuildBuildNode(BuildNode* pBuildNode,
+			void RecursiveBuildNode(BuildNode* pBuildNode,
 				vector<TriangleInfo>& buildInfo,
 				const int startIdx,
 				const int endIdx,
 				const int depth,
 				MemoryArena& memory);
+
+			bool Intersect(const Ray& ray, Intersection* pIsect) const;
+			bool Occluded(const Ray& ray) const;
+
+		private:
 
 			void ExtractGeometry(const vector<RefPtr<Primitive>>& prims);
 			uint LinearizeNodes(BuildNode* pNode, uint* piOffset);

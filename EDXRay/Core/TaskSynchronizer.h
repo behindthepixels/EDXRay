@@ -3,6 +3,7 @@
 #include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
 #include "Windows/Thread.h"
+#include <atomic>
 
 namespace EDX
 {

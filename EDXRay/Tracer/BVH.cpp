@@ -1,11 +1,11 @@
 #include "BVH.h"
+#include "BVHBuildTask.h"
 #include "../Core/Primitive.h"
 #include "../Core/TriangleMesh.h"
 #include "../Core/DifferentialGeom.h"
 #include "Triangle4.h"
 
 #include "Memory/Memory.h"
-#include <algorithm>
 
 namespace EDX
 {
@@ -33,7 +33,9 @@ namespace EDX
 
 			// Alloc space for the root BuildNode
 			BuildNode* pBuildRoot = memory.Alloc<BuildNode>();
-			RecursiveBuildBuildNode(pBuildRoot, buildInfo, 0, mBuildTriangleCount, 0, memory);
+
+			RecursiveBuildNode(pBuildRoot, buildInfo, 0, mBuildTriangleCount, 0, memory);
+			ThreadScheduler::Instance()->JoinAllTasks();
 
 			mpRoot = AllocAligned<Node>(mTreeBufSize, 64);
 			uint offset = 0;
@@ -41,7 +43,7 @@ namespace EDX
 			assert(offset == mTreeBufSize);
 		}
 
-		void BVH2::RecursiveBuildBuildNode(BuildNode* pNode,
+		void BVH2::RecursiveBuildNode(BuildNode* pNode,
 			vector<TriangleInfo>& buildInfo,
 			const int startIdx,
 			const int endIdx,
@@ -56,7 +58,9 @@ namespace EDX
 				uint packedCount = (numTriangles + 3) / 4;
 				uint infoIdx = startIdx;
 
+				mMemLock.Lock();
 				Triangle4* pTri4 = memory.Alloc<Triangle4>(packedCount);
+				mMemLock.Unlock();
 				for (auto i = 0; i < packedCount; i++)
 				{
 					BuildVertex triangles[4][3] = { 0 };
@@ -106,16 +110,96 @@ namespace EDX
 
 				// Partition primitives
 				// Binning
-				//const int MaxBins = 32;
-				//int numBins = Math::Min(MaxBins, int(4.0f + 0.05f * numTriangles));
+				const int MaxBins = 32;
+				BoundingBox binBounds[MaxBins][3];
+				IntSSE counts[MaxBins];
+
+				const int numBins = Math::Min(MaxBins, int(4.0f + 0.05f * numTriangles));
+				for (auto i = startIdx; i < endIdx; i++)
+				{
+					Vector3i binIdx = Vector3i(centroidBounds.Offset(buildInfo[i].centroid) * numBins);
+					binIdx.x = Math::Clamp(binIdx.x, 0, numBins - 1);
+					binIdx.y = Math::Clamp(binIdx.y, 0, numBins - 1);
+					binIdx.z = Math::Clamp(binIdx.z, 0, numBins - 1);
+
+					counts[binIdx.x][0]++;
+					counts[binIdx.y][1]++;
+					counts[binIdx.z][2]++;
+					binBounds[binIdx.x][0] = Math::Union(binBounds[binIdx.x][0], buildInfo[i].bbox);
+					binBounds[binIdx.y][1] = Math::Union(binBounds[binIdx.y][1], buildInfo[i].bbox);
+					binBounds[binIdx.z][2] = Math::Union(binBounds[binIdx.z][2], buildInfo[i].bbox);
+				}
+
+				// Sweep from right to left to compute prefix sum of bounds and geometry count
+				IntSSE countRightSum[MaxBins];
+				FloatSSE rightAreaSum[MaxBins];
+				BoundingBox rightBoundsSum[MaxBins][3];
+				IntSSE currCount;
+				BoundingBox currBounds[3];
+				for (auto i = numBins - 1; i >= 0; i--)
+				{
+					currCount += counts[i];
+					countRightSum[i] = (currCount + IntSSE(3)) >> 2;
+
+					currBounds[0] = Math::Union(currBounds[0], binBounds[i][0]);
+					currBounds[1] = Math::Union(currBounds[1], binBounds[i][1]);
+					currBounds[2] = Math::Union(currBounds[2], binBounds[i][2]);
+					rightBoundsSum[i][0] = currBounds[0];
+					rightBoundsSum[i][1] = currBounds[1];
+					rightBoundsSum[i][2] = currBounds[2];
+					rightAreaSum[i][0] = rightBoundsSum[i][0].Area();
+					rightAreaSum[i][1] = rightBoundsSum[i][1].Area();
+					rightAreaSum[i][2] = rightBoundsSum[i][2].Area();
+				}
+
+				// Sweep from left to right and calculate SAH
+				currCount = IntSSE(Math::EDX_ZERO);
+				currBounds[0] = BoundingBox(); currBounds[1] = BoundingBox(); currBounds[2] = BoundingBox();
+				FloatSSE bestCost = FloatSSE(Math::EDX_INFINITY);
+				IntSSE bestSplitPos;
+				for (auto i = 1; i < numBins; i++)
+				{
+					auto j = i - 1;
+
+					currCount += counts[j];
+					const IntSSE leftCount = (currCount + IntSSE(3)) >> 2;;
+
+					currBounds[0] = Math::Union(currBounds[0], binBounds[j][0]);
+					currBounds[1] = Math::Union(currBounds[1], binBounds[j][1]);
+					currBounds[2] = Math::Union(currBounds[2], binBounds[j][2]);
+					const FloatSSE leftArea = FloatSSE(currBounds[0].Area(), currBounds[1].Area(), currBounds[2].Area(), currBounds[2].Area());
+					const FloatSSE totalArea = FloatSSE(rightBoundsSum[0][0].Area(), rightBoundsSum[0][1].Area(), rightBoundsSum[0][2].Area(), rightBoundsSum[0][2].Area());
+
+					const FloatSSE cost = ((FloatSSE(leftCount) * leftArea) + (FloatSSE(countRightSum[i]) * rightAreaSum[i])) /
+						(FloatSSE((numTriangles + 3) / 4) * totalArea);
+
+					bestSplitPos = SSE::Select(cost < bestCost, i, bestSplitPos);
+					bestCost = SSE::Select(cost < bestCost, cost, bestCost);
+				}
+
+				int bestDim;
+				int bestPos = 0;
+				for (auto i = 0; i < 3; i++)
+				{
+					if (bestCost[i] <= bestCost[3])
+					{
+						bestDim = i;
+						bestCost[3] = bestCost[i];
+						bestSplitPos[3] = bestSplitPos[i];
+					}
+				}
 
 				int mid = 0;
-				mid = (startIdx + endIdx) / 2;
-				std::nth_element(&buildInfo[startIdx], &buildInfo[mid], &buildInfo[endIdx - 1] + 1,
-					[dim](const TriangleInfo& lhs, const TriangleInfo& rhs)
+				auto EqualCountSplit = [&]
 				{
-					return lhs.centroid[dim] < rhs.centroid[dim];
-				});
+					mid = (startIdx + endIdx) / 2;
+					std::nth_element(&buildInfo[startIdx], &buildInfo[mid], &buildInfo[endIdx - 1] + 1,
+						[dim](const TriangleInfo& lhs, const TriangleInfo& rhs)
+					{
+						return lhs.centroid[dim] < rhs.centroid[dim];
+					});
+				};
+				//EqualCountSplit();
 
 				// Compute left and right bounds
 				BoundingBox leftBounds, rightBounds;
@@ -124,13 +208,31 @@ namespace EDX
 				for (auto i = mid; i < endIdx; i++)
 					rightBounds = Math::Union(rightBounds, buildInfo[i].bbox);
 
-
+				mMemLock.Lock();
 				BuildNode* pLeft = memory.Alloc<BuildNode>();
 				BuildNode* pRight = memory.Alloc<BuildNode>();
+				mMemLock.Unlock();
+
 				pNode->InitInterior(leftBounds, rightBounds, pLeft, pRight);
 
-				RecursiveBuildBuildNode(pLeft, buildInfo, startIdx, mid, depth + 1, memory);
-				RecursiveBuildBuildNode(pRight, buildInfo, mid, endIdx, depth + 1, memory);
+				if (true)
+				{
+					RecursiveBuildNode(pLeft, buildInfo, startIdx, mid, depth + 1, memory);
+					RecursiveBuildNode(pRight, buildInfo, mid, endIdx, depth + 1, memory);
+				}
+				else
+				{
+					BuildTask* pTaskLeft = new BuildTask(this, pLeft, buildInfo, startIdx, mid, depth + 1, memory);
+					BuildTask* pTaskRight = new BuildTask(this, pRight, buildInfo, mid, endIdx, depth + 1, memory);
+					{
+						EDXLockApply lock(mTaskLock);
+						mBuildTasks.push_back(pTaskLeft);
+						mBuildTasks.push_back(pTaskRight);
+					}
+					ThreadScheduler::Instance()->AddTasks(Task((Task::TaskFunc)&BuildTask::_Run, pTaskLeft));
+					ThreadScheduler::Instance()->AddTasks(Task((Task::TaskFunc)&BuildTask::_Run, pTaskRight));
+				}
+
 				mTreeBufSize += 1;
 			}
 

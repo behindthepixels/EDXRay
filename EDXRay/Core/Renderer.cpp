@@ -42,11 +42,12 @@ namespace EDX
 
 			mTaskSync.Init(desc.ImageWidth, desc.ImageHeight);
 
-			mThreadScheduler.InitTAndLaunchThreads();
+			ThreadScheduler::Instance()->InitTAndLaunchThreads();
 		}
 
 		Renderer::~Renderer()
 		{
+			ThreadScheduler::DeleteInstance();
 		}
 
 		void Renderer::RenderFrame(RandomGen& random, MemoryArena& memory)
@@ -94,13 +95,12 @@ namespace EDX
 			}
 		}
 
-		void Renderer::LaunchRenderThreads()
+		void Renderer::QueueRenderTasks()
 		{
-			for (auto i = 0; i < mThreadScheduler.GetThreadCount(); i++)
+			for (auto i = 0; i < ThreadScheduler::Instance()->GetThreadCount(); i++)
 			{
 				mTasks.push_back(new RenderTask(this));
-
-				mThreadScheduler.AddTasks(Task((Task::TaskFunc)&RenderTask::_Render, mTasks[i]));
+				ThreadScheduler::Instance()->AddTasks(Task((Task::TaskFunc)&RenderTask::_Render, mTasks[i]));
 			}
 		}
 

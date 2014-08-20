@@ -24,7 +24,6 @@ namespace EDX
 
 			// Tile-based multi-threading
 			TaskSynchronizer mTaskSync;
-			ThreadScheduler	mThreadScheduler;
 			vector<RefPtr<RenderTask>> mTasks;
 
 		public:
@@ -38,7 +37,7 @@ namespace EDX
 			void RenderFrame(RandomGen& random, MemoryArena& memory);
 			void RenderImage(int threadId, RandomGen& random, MemoryArena& memory);
 
-			void LaunchRenderThreads();
+			void QueueRenderTasks();
 
 			const Color* GetFrameBuffer() const;
 			const RenderJobDesc GetJobDesc() const { return mJobDesc; }

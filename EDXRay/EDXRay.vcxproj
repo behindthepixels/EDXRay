@@ -37,6 +37,7 @@
     <ClInclude Include="Integrators\DirectLighting.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
     <ClInclude Include="Tracer\BVH.h" />
+    <ClInclude Include="Tracer\BVHBuildTask.h" />
     <ClInclude Include="Tracer\Triangle4.h" />
   </ItemGroup>
   <ItemGroup>

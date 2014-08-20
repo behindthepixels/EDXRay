@@ -10,8 +10,6 @@
 #include "Core/Primitive.h"
 #include "Core/TriangleMesh.h"
 
-#include <memory>
-
 using namespace EDX;
 using namespace EDX::RayTracer;
 
@@ -32,15 +30,15 @@ void OnInit(Object* pSender, EventArgs args)
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	TriangleMesh* pMesh = new TriangleMesh;
-	pMesh->LoadSphere(1.0f, 32, 32, Vector3(-2.0f, 1.0f, 10.5f));
+	pMesh->LoadSphere(1.0f, 128, 128, Vector3(-2.0f, 1.0f, 10.5f));
 	TriangleMesh* pMesh2 = new TriangleMesh;
-	pMesh2->LoadSphere(1.0f, 32, 32, Vector3(2.0f, 1.0f, 10.5f));
+	pMesh2->LoadSphere(1.0f, 128, 128, Vector3(2.0f, 1.0f, 10.5f));
 
 	pScene->AddPrimitive(new Primitive(pMesh));
 	pScene->AddPrimitive(new Primitive(pMesh2));
 	pScene->InitAccelerator();
 
-	gpRenderer->LaunchRenderThreads();
+	gpRenderer->QueueRenderTasks();
 }
 
 void OnRender(Object* pSender, EventArgs args)

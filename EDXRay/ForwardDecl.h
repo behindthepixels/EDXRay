@@ -25,6 +25,7 @@ namespace EDX
 		class BVH4;
 		class Triangle4;
 		class RenderTask;
+		class BuildTask;
 	}
 
 	class RandomGen;

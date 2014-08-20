@@ -23,7 +23,7 @@ namespace EDX
 				
 			}
 
-			void Render(int idx)
+			__forceinline void Render(int idx)
 			{
 				mpRenderer->RenderImage(idx, mRandom, mMemory);
 			}
