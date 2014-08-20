@@ -66,6 +66,13 @@ namespace EDX
 				BoundingBox rightBounds;
 				BuildNode* pChildren[2];
 
+				BuildNode()
+					: primCount(0)
+					, pTriangles(nullptr)
+				{
+					pChildren[0] = pChildren[1] = nullptr;
+				}
+
 				void InitLeaf(Triangle4* pTris, uint count)
 				{
 					pTriangles = pTris;
@@ -137,7 +144,7 @@ namespace EDX
 		private:
 
 			void ExtractGeometry(const vector<RefPtr<Primitive>>& prims);
-			uint LinearizeNodes(BuildNode* pNode, uint* piOffset);
+			uint LinearizeNodes(const BuildNode* pNode, uint* piOffset);
 
 			void Destroy()
 			{

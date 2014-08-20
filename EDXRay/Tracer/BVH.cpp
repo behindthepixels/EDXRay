@@ -61,10 +61,11 @@ namespace EDX
 				mMemLock.Lock();
 				Triangle4* pTri4 = memory.Alloc<Triangle4>(packedCount);
 				mMemLock.Unlock();
+				*pTri4 = Triangle4();
 				for (auto i = 0; i < packedCount; i++)
 				{
-					BuildVertex triangles[4][3] = { 0 };
-					BuildTriangle indices[4] = { 0 };
+					BuildVertex triangles[4][3];
+					BuildTriangle indices[4];
 					uint count = 0;
 					for (; count < 4; count++)
 					{
@@ -264,7 +265,7 @@ namespace EDX
 			return;
 		}
 
-		uint BVH2::LinearizeNodes(BuildNode* pBuildNode, uint* pOffset)
+		uint BVH2::LinearizeNodes(const BuildNode* pBuildNode, uint* pOffset)
 		{
 			Node* pNode = &mpRoot[*pOffset];
 
