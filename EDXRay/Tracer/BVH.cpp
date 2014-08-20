@@ -52,10 +52,10 @@ namespace EDX
 		{
 			*pNode = BuildNode();
 			auto numTriangles = endIdx - startIdx;
+			uint packedCount = (numTriangles + 3) / 4;
 
 			auto CreateLeaf = [&]
 			{
-				uint packedCount = (numTriangles + 3) / 4;
 				uint infoIdx = startIdx;
 
 				mMemLock.Lock();
@@ -91,6 +91,7 @@ namespace EDX
 			if (numTriangles <= 4 || depth > MaxDepth) // Create a leaf if triangle count is 1 or depth exceeds maximum
 			{
 				CreateLeaf();
+				return;
 			}
 			else // Split the BuildNode and create an interior
 			{
@@ -108,9 +109,24 @@ namespace EDX
 					return;
 				}
 
+				//int mid = 0;
+				//auto EqualCountSplit = [&]
+				//{
+				//	mid = (startIdx + endIdx) / 2;
+				//	std::nth_element(&buildInfo[startIdx], &buildInfo[mid], &buildInfo[endIdx - 1] + 1,
+				//		[dim](const TriangleInfo& lhs, const TriangleInfo& rhs)
+				//	{
+				//		return lhs.centroid[dim] < rhs.centroid[dim];
+				//	});
+				//};
+
+				//EqualCountSplit();
+
 				// Partition primitives
 				// Binning
 				const int MaxBins = 32;
+				const float TraversalCost = 1.0f;
+				const float IntersectCost = 2.0f;
 				BoundingBox binBounds[MaxBins][3];
 				IntSSE counts[MaxBins];
 
@@ -131,7 +147,7 @@ namespace EDX
 				}
 
 				// Sweep from right to left to compute prefix sum of bounds and geometry count
-				IntSSE countRightSum[MaxBins];
+				IntSSE rightCountSum[MaxBins];
 				FloatSSE rightAreaSum[MaxBins];
 				BoundingBox rightBoundsSum[MaxBins][3];
 				IntSSE currCount;
@@ -139,7 +155,7 @@ namespace EDX
 				for (auto i = numBins - 1; i >= 0; i--)
 				{
 					currCount += counts[i];
-					countRightSum[i] = (currCount + IntSSE(3)) >> 2;
+					rightCountSum[i] = (currCount + IntSSE(3)) >> 2;
 
 					currBounds[0] = Math::Union(currBounds[0], binBounds[i][0]);
 					currBounds[1] = Math::Union(currBounds[1], binBounds[i][1]);
@@ -156,7 +172,8 @@ namespace EDX
 				currCount = IntSSE(Math::EDX_ZERO);
 				currBounds[0] = BoundingBox(); currBounds[1] = BoundingBox(); currBounds[2] = BoundingBox();
 				FloatSSE bestCost = FloatSSE(Math::EDX_INFINITY);
-				IntSSE bestSplitPos;
+				IntSSE bestPos;
+				const float totalArea = rightBoundsSum[0][0].Area();
 				for (auto i = 1; i < numBins; i++)
 				{
 					auto j = i - 1;
@@ -168,38 +185,46 @@ namespace EDX
 					currBounds[1] = Math::Union(currBounds[1], binBounds[j][1]);
 					currBounds[2] = Math::Union(currBounds[2], binBounds[j][2]);
 					const FloatSSE leftArea = FloatSSE(currBounds[0].Area(), currBounds[1].Area(), currBounds[2].Area(), currBounds[2].Area());
-					const FloatSSE totalArea = FloatSSE(rightBoundsSum[0][0].Area(), rightBoundsSum[0][1].Area(), rightBoundsSum[0][2].Area(), rightBoundsSum[0][2].Area());
 
-					const FloatSSE cost = ((FloatSSE(leftCount) * leftArea) + (FloatSSE(countRightSum[i]) * rightAreaSum[i])) /
-						(FloatSSE((numTriangles + 3) / 4) * totalArea);
+					const FloatSSE cost = FloatSSE(TraversalCost) + FloatSSE(IntersectCost) * ((FloatSSE(leftCount) * leftArea) + (FloatSSE(rightCountSum[i]) * rightAreaSum[i])) / totalArea;
 
-					bestSplitPos = SSE::Select(cost < bestCost, i, bestSplitPos);
+					bestPos = SSE::Select(cost < bestCost, i, bestPos);
 					bestCost = SSE::Select(cost < bestCost, cost, bestCost);
 				}
 
-				int bestDim;
-				int bestPos = 0;
+				int bestSplitDim;
+				int bestSplitPos;
+				float bestSplitCost = Math::EDX_INFINITY;
 				for (auto i = 0; i < 3; i++)
 				{
-					if (bestCost[i] <= bestCost[3])
+					if (bestCost[i] <= bestSplitCost)
 					{
-						bestDim = i;
-						bestCost[3] = bestCost[i];
-						bestSplitPos[3] = bestSplitPos[i];
+						bestSplitDim = i;
+						bestSplitCost = bestCost[i];
+						bestSplitPos = bestPos[i];
 					}
 				}
 
 				int mid = 0;
-				auto EqualCountSplit = [&]
+				if (bestSplitCost < IntersectCost * packedCount)
 				{
-					mid = (startIdx + endIdx) / 2;
-					std::nth_element(&buildInfo[startIdx], &buildInfo[mid], &buildInfo[endIdx - 1] + 1,
-						[dim](const TriangleInfo& lhs, const TriangleInfo& rhs)
+					TriangleInfo* pMid = std::partition(&buildInfo[startIdx], &buildInfo[endIdx - 1] + 1,
+						[&](const TriangleInfo& par) -> bool
 					{
-						return lhs.centroid[dim] < rhs.centroid[dim];
+						int binIdx = numBins * (par.centroid[bestSplitDim] - centroidBounds.mMin[bestSplitDim]) /
+							(centroidBounds.mMax[bestSplitDim] - centroidBounds.mMin[bestSplitDim]);
+
+						binIdx = Math::Clamp(binIdx, 0, numBins - 1);
+						return binIdx < bestSplitPos;
 					});
-				};
-				//EqualCountSplit();
+
+					mid = pMid - &buildInfo[0];
+				}
+				else
+				{
+					CreateLeaf();
+					return;
+				}
 
 				// Compute left and right bounds
 				BoundingBox leftBounds, rightBounds;
@@ -215,7 +240,7 @@ namespace EDX
 
 				pNode->InitInterior(leftBounds, rightBounds, pLeft, pRight);
 
-				if (true)
+				if (numTriangles < 4096)
 				{
 					RecursiveBuildNode(pLeft, buildInfo, startIdx, mid, depth + 1, memory);
 					RecursiveBuildNode(pRight, buildInfo, mid, endIdx, depth + 1, memory);
