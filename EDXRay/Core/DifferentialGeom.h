@@ -75,7 +75,8 @@ namespace EDX
 
 			Frame mShadingFrame, mGeomFrame;
 
-			BSDF* mpBSDF;
+			const BSDF* mpBSDF;
+			const AreaLight* mpAreaLight;
 
 			inline Vector3 WorldToLocal(const Vector3& vVec) const
 			{

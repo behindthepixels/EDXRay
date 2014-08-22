@@ -11,6 +11,8 @@ namespace EDX
 		class Film;
 		class Integrator;
 		class Light;
+		class PointLight;
+		class AreaLight;
 		class BSDF;
 		struct CameraSample;
 		struct SampleBuffer;

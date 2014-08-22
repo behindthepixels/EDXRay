@@ -39,6 +39,21 @@ namespace EDX
 
 				return mIntensity / Math::DistanceSquared(mPosition, pos);
 			}
+
+			Color Emit(const Vector3 dir) const
+			{
+				return Color::BLACK;
+			}
+
+			float Pdf(const Vector3& pos, const Vector3& dir) const
+			{
+				return 0.0f;
+			}
+
+			bool IsDelta() const
+			{
+				return true;
+			}
 		};
 
 	}
