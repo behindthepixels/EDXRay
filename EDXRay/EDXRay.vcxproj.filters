@@ -25,6 +25,9 @@
     <Filter Include="Source Files\Samplers">
       <UniqueIdentifier>{c29c9d66-b91b-4c42-86e1-a346812dc77b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Lights">
+      <UniqueIdentifier>{3df1f16d-6a75-4f3d-a1de-add95089229f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ForwardDecl.h">
@@ -75,9 +78,6 @@
     <ClInclude Include="Integrators\DirectLighting.h">
       <Filter>Source Files\Integrators</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Light.h">
-      <Filter>Source Files\Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\TaskSynchronizer.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
@@ -86,6 +86,15 @@
     </ClInclude>
     <ClInclude Include="Tracer\BVHBuildTask.h">
       <Filter>Source Files\Tracer</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\PointLight.h">
+      <Filter>Source Files\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BSDF.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Light.h">
+      <Filter>Source Files\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +127,12 @@
     </ClCompile>
     <ClCompile Include="Integrators\DirectLighting.cpp">
       <Filter>Source Files\Integrators</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Light.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BSDF.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

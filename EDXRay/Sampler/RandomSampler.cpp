@@ -8,7 +8,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		void RandomSampler::GenerateSamples(Sample* pSamples, RandomGen& random)
+		void RandomSampler::GenerateSamples(SampleBuffer* pSamples, RandomGen& random)
 		{
 			assert(pSamples);
 

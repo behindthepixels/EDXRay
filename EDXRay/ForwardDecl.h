@@ -11,7 +11,9 @@ namespace EDX
 		class Film;
 		class Integrator;
 		class Light;
+		class BSDF;
 		struct CameraSample;
+		struct SampleBuffer;
 		struct Sample;
 		class Sampler;
 		class Intersection;

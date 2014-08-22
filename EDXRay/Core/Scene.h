@@ -13,6 +13,7 @@ namespace EDX
 		{
 		private:
 			vector<RefPtr<Primitive>>	mPrimitives;
+			vector<RefPtr<Light>>		mLights;
 			RefPtr<BVH2>				mAccel;
 
 		public:
@@ -24,6 +25,12 @@ namespace EDX
 			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
 
 			void AddPrimitive(Primitive* pPrim);
+			void AddLight(Light* pLight);
+
+			const vector<RefPtr<Light>>& GetLight() const
+			{
+				return mLights;
+			}
 
 			void InitAccelerator();
 		};

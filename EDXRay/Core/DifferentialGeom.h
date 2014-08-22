@@ -75,6 +75,8 @@ namespace EDX
 
 			Frame mShadingFrame, mGeomFrame;
 
+			BSDF* mpBSDF;
+
 			inline Vector3 WorldToLocal(const Vector3& vVec) const
 			{
 				return mShadingFrame.WorldToLocal(vVec);

@@ -2,6 +2,7 @@
 
 #include "../ForwardDecl.h"
 #include "Math/Vector.h"
+#include "Memory/RefPtr.h"
 
 namespace EDX
 {
@@ -14,6 +15,9 @@ namespace EDX
 			Vector3*	mpNormalBuffer;
 			Vector2*	mpTexcoordBuffer;
 			uint*		mpIndexBuffer;
+			uint*		mpMaterialIndices;
+
+			RefPtr<BSDF> mpBSDFs[128];
 
 			uint		mVertexCount;
 			uint		mTriangleCount;

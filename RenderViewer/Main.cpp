@@ -9,6 +9,7 @@
 #include "Core/Scene.h"
 #include "Core/Primitive.h"
 #include "Core/TriangleMesh.h"
+#include "Lights/PointLight.h"
 
 using namespace EDX;
 using namespace EDX::RayTracer;
@@ -24,7 +25,7 @@ void OnInit(Object* pSender, EventArgs args)
 	RenderJobDesc desc;
 	desc.ImageWidth = 1280;
 	desc.ImageHeight = 800;
-	desc.SamplesPerPixel = 1;
+	desc.SamplesPerPixel = 16;
 	desc.CameraParams.FieldOfView = 45;
 	gpRenderer->Initialize(desc);
 
@@ -36,6 +37,7 @@ void OnInit(Object* pSender, EventArgs args)
 
 	pScene->AddPrimitive(new Primitive(pMesh));
 	pScene->AddPrimitive(new Primitive(pMesh2));
+	pScene->AddLight(new PointLight(Vector3(0.0f, 10.0f, 10.5f), Color(300.0f)));
 	pScene->InitAccelerator();
 
 	gpRenderer->QueueRenderTasks();

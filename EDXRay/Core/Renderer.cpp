@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "../Integrators/DirectLighting.h"
 #include "Sampler.h"
+#include "../Sampler/RandomSampler.h"
 #include "Film.h"
 #include "DifferentialGeom.h"
 #include "Graphics/Color.h"
@@ -40,6 +41,8 @@ namespace EDX
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
 
+			mpSampler = new RandomSampler;
+
 			mTaskSync.Init(desc.ImageWidth, desc.ImageHeight);
 
 			ThreadScheduler::Instance()->InitTAndLaunchThreads();
@@ -59,9 +62,11 @@ namespace EDX
 				{
 					for (auto x = pTask->minX; x < pTask->maxX; x++)
 					{
-						Sample sample;
-						sample.imageX = x;
-						sample.imageY = y;
+						SampleBuffer sample;
+						mpSampler->GenerateSamples(&sample, random);
+						sample.imageX += x;
+						sample.imageY += y;
+
 						RayDifferential ray;
 						mpCamera->GenRayDifferential(sample, &ray);
 

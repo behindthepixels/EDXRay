@@ -16,14 +16,14 @@ namespace EDX
 			float time;
 		};
 
-		struct Sample : public CameraSample
+		struct SampleBuffer : public CameraSample
 		{
 			float* p1D;
 			Vector2* p2D;
 
 			int count1D, count2D;
 
-			Sample()
+			SampleBuffer()
 				: count1D(0)
 				, count2D(0)
 			{
@@ -34,11 +34,24 @@ namespace EDX
 			void Validate();
 		};
 
+		struct Sample
+		{
+			float u, v, w;
+		};
+
 		class Sampler
 		{
+		private:
+			SampleBuffer mSample;
+
 		public:
-			virtual void GenerateSamples(Sample* pSamples, RandomGen& random) = 0;
 			virtual ~Sampler() {}
+
+			const SampleBuffer& GetConfigSample() const
+			{
+				return mSample;
+			}
+			virtual void GenerateSamples(SampleBuffer* pSamples, RandomGen& random) = 0;
 		};
 	}
 }

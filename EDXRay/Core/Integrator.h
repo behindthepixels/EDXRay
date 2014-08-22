@@ -11,7 +11,7 @@ namespace EDX
 		class Integrator
 		{
 		public:
-			virtual Color Li(const RayDifferential& ray, const Scene* pScene, const Sample* pSamples, RandomGen& random, MemoryArena& memory) const = 0;
+			virtual Color Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory) const = 0;
 		};
 	}
 }

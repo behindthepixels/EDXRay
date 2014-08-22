@@ -14,7 +14,7 @@ namespace EDX
 			uint mMaxDepth;
 
 		public:
-			Color Li(const RayDifferential& ray, const Scene* pScene, const Sample* pSamples, RandomGen& random, MemoryArena& memory) const;
+			Color Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory) const;
 		};
 	}
 }

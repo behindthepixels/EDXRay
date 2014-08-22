@@ -2,6 +2,7 @@
 #include "Primitive.h"
 #include "../Tracer/BVH.h"
 #include "TriangleMesh.h"
+#include "Light.h"
 #include "DifferentialGeom.h"
 
 namespace EDX
@@ -31,6 +32,11 @@ namespace EDX
 		void Scene::AddPrimitive(Primitive* pPrim)
 		{
 			mPrimitives.push_back(pPrim);
+		}
+
+		void Scene::AddLight(Light* pLight)
+		{
+			mLights.push_back(pLight);
 		}
 
 		void Scene::InitAccelerator()

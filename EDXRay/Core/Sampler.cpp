@@ -7,13 +7,15 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		void Sample::Validate()
+		void SampleBuffer::Validate()
 		{
 			SafeDelete(p1D);
 			SafeDelete(p2D);
 
-			p1D = new float[count1D];
-			p2D = new Vector2[count2D];
+			if (count1D > 0)
+				p1D = new float[count1D];
+			if (count2D > 0)
+				p2D = new Vector2[count2D];
 		}
 	}
 }

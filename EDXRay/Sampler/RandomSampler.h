@@ -9,7 +9,7 @@ namespace EDX
 		class RandomSampler : public Sampler
 		{
 		public:
-			void GenerateSamples(Sample* pSamples, RandomGen& random);
+			void GenerateSamples(SampleBuffer* pSamples, RandomGen& random);
 		};
 	}
 }

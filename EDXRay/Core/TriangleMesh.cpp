@@ -5,6 +5,8 @@
 #include "Math/Ray.h"
 #include "Memory/Memory.h"
 
+#include "BSDF.h"
+
 namespace EDX
 {
 	namespace RayTracer
@@ -44,6 +46,12 @@ namespace EDX
 			mTriangleCount = mesh.GetTriangleCount();
 			mpIndexBuffer = new uint[3 * mTriangleCount];
 			memcpy(mpIndexBuffer, mesh.GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
+
+			mpBSDFs[0] = new LambertianDiffuse(Color(0.85f));
+
+			mpMaterialIndices = new uint[mTriangleCount];
+			for (auto i = 0; i < mTriangleCount; i++)
+				mpMaterialIndices[i] = mesh.GetMaterialIdx(i);
 		}
 
 		void TriangleMesh::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
@@ -94,6 +102,8 @@ namespace EDX
 
 			pDiffGeom->mShadingFrame = Frame(pDiffGeom->mNormal);
 			pDiffGeom->mGeomFrame = Frame(pDiffGeom->mGeomNormal);
+
+			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
 		}
 
 		Vector3 TriangleMesh::GetPositionAt(uint idx) const
@@ -126,6 +136,7 @@ namespace EDX
 			SafeDeleteArray(mpNormalBuffer);
 			SafeDeleteArray(mpTexcoordBuffer);
 			SafeDeleteArray(mpIndexBuffer);
+			SafeDeleteArray(mpMaterialIndices);
 			mVertexCount = 0;
 			mTriangleCount = 0;
 		}
