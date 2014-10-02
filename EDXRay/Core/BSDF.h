@@ -2,7 +2,9 @@
 
 #include "../ForwardDecl.h"
 #include "Math/Vector.h"
+#include "Graphics/Texture.h"
 #include "Graphics/Color.h"
+#include "Memory/RefPtr.h"
 
 namespace EDX
 {
@@ -31,10 +33,11 @@ namespace EDX
 		public:
 			const ScatterType mType;
 			const BSDFType mBSDFType;
-			Color mBaseColor;
+			RefPtr<Texture2D<Color>> mpTexture;
 
 		public:
 			BSDF(ScatterType t, BSDFType t2, const Color& color);
+			BSDF(ScatterType t, BSDFType t2, const char* pFile);
 			virtual ~BSDF() {}
 
 			bool MatchesTypes(ScatterType flags) const { return (mType & flags) == mType; }
@@ -59,6 +62,10 @@ namespace EDX
 		public:
 			LambertianDiffuse(const Color cColor = Color::WHITE)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, cColor)
+			{
+			}
+			LambertianDiffuse(const char* pFile)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, pFile)
 			{
 			}
 

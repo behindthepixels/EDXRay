@@ -17,7 +17,7 @@ namespace EDX
 			uint*		mpIndexBuffer;
 			uint*		mpMaterialIndices;
 
-			RefPtr<BSDF> mpBSDFs[128];
+			vector<RefPtr<BSDF>> mpBSDFs;
 
 			uint		mVertexCount;
 			uint		mTriangleCount;

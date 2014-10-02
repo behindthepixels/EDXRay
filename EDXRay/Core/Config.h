@@ -47,7 +47,7 @@ namespace EDX
 				ImageHeight = 800;
 
 				CameraParams.Pos = Vector3::ZERO;
-				CameraParams.Target = Vector3::UNIT_Z;
+				CameraParams.Target = -Vector3::UNIT_Z;
 				CameraParams.Up = Vector3::UNIT_Y;
 				CameraParams.FieldOfView = 45.0f;
 				CameraParams.NearClip = 1.0f;

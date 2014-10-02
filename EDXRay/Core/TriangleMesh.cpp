@@ -16,7 +16,40 @@ namespace EDX
 			const Vector3& scl,
 			const Vector3& rot)
 		{
+			ObjMesh mesh;
+			mesh.LoadFromObj(pos, scl, rot, path, true);
 
+			// Init vertex buffer data
+			mVertexCount = mesh.GetVertexCount();
+			mpPositionBuffer = new Vector3[mVertexCount];
+			mpNormalBuffer = new Vector3[mVertexCount];
+			mpTexcoordBuffer = new Vector2[mVertexCount];
+			for (auto i = 0; i < mVertexCount; i++)
+			{
+				const MeshVertex& vertex = mesh.GetVertexAt(i);
+				mpPositionBuffer[i] = vertex.position;
+				mpNormalBuffer[i] = vertex.normal;
+				mpTexcoordBuffer[i] = Vector2(vertex.fU, vertex.fV);
+			}
+
+			// Init index buffer data
+			mTriangleCount = mesh.GetTriangleCount();
+			mpIndexBuffer = new uint[3 * mTriangleCount];
+			memcpy(mpIndexBuffer, mesh.GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
+
+			// Initialize materials
+			const auto& materialInfo = mesh.GetMaterialInfo();
+			for (auto i = 0; i < materialInfo.size(); i++)
+			{
+				if (materialInfo[i].strTexturePath[0])
+					mpBSDFs.push_back(new LambertianDiffuse(materialInfo[i].strTexturePath));
+				else
+					mpBSDFs.push_back(new LambertianDiffuse(materialInfo[i].color));
+			}
+
+			mpMaterialIndices = new uint[mTriangleCount];
+			for (auto i = 0; i < mTriangleCount; i++)
+				mpMaterialIndices[i] = mesh.GetMaterialIdx(i);
 		}
 
 		void TriangleMesh::LoadSphere(const float radius,
@@ -47,7 +80,7 @@ namespace EDX
 			mpIndexBuffer = new uint[3 * mTriangleCount];
 			memcpy(mpIndexBuffer, mesh.GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
 
-			mpBSDFs[0] = new LambertianDiffuse(Color(0.85f));
+			mpBSDFs.push_back(new LambertianDiffuse(Color(0.85f)));
 
 			mpMaterialIndices = new uint[mTriangleCount];
 			for (auto i = 0; i < mTriangleCount; i++)

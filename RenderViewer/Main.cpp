@@ -26,17 +26,14 @@ void OnInit(Object* pSender, EventArgs args)
 	desc.ImageWidth = 1280;
 	desc.ImageHeight = 800;
 	desc.SamplesPerPixel = 16;
-	desc.CameraParams.FieldOfView = 45;
+	desc.CameraParams.FieldOfView = 65;
 	gpRenderer->Initialize(desc);
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	TriangleMesh* pMesh = new TriangleMesh;
-	pMesh->LoadSphere(1.0f, 128, 128, Vector3(-2.0f, 1.0f, 10.5f));
-	TriangleMesh* pMesh2 = new TriangleMesh;
-	pMesh2->LoadSphere(1.0f, 128, 128, Vector3(2.0f, 1.0f, 10.5f));
+	pMesh->LoadMesh("../../Media/sponza/sponza.obj", Vector3(0, -10, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 
 	pScene->AddPrimitive(new Primitive(pMesh));
-	pScene->AddPrimitive(new Primitive(pMesh2));
 	pScene->AddLight(new PointLight(Vector3(0.0f, 10.0f, 10.5f), Color(300.0f)));
 	pScene->InitAccelerator();
 

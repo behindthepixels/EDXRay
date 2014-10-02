@@ -14,7 +14,12 @@ namespace EDX
 		BSDF::BSDF(ScatterType t, BSDFType t2, const Color& color)
 			: mType(t), mBSDFType(t2)
 		{
-			mBaseColor = color;
+			mpTexture = new ConstantTexture2D<Color>(color);
+		}
+		BSDF::BSDF(ScatterType t, BSDFType t2, const char* pFile)
+			: mType(t), mBSDFType(t2)
+		{
+			mpTexture = new ImageTexture<Color, Color4b>(pFile);
 		}
 
 
@@ -51,7 +56,7 @@ namespace EDX
 
 		Color BSDF::GetColor(const DifferentialGeom& diffGoem) const
 		{
-			return mBaseColor;
+			return mpTexture->Sample(diffGoem.mTexcoord, nullptr);
 		}
 
 		// -----------------------------------------------------------------------------------------------------------------------
