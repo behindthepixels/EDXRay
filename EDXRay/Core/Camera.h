@@ -7,6 +7,17 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		struct CameraParameters
+		{
+			Vector3	Pos;
+			Vector3	Target;
+			Vector3	Up;
+			float	FieldOfView;
+			float	NearClip, FarClip;
+			float	FocusPlaneDist;
+			float	LensRadius;
+		};
+
 		class Camera : public EDX::Camera
 		{
 		private:
@@ -32,6 +43,21 @@ namespace EDX
 			void Resize(int width, int height);
 			void GenerateRay(const CameraSample& sample, Ray* pRay) const;
 			void GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const;
+
+			const CameraParameters GetCameraParams() const
+			{
+				CameraParameters ret;
+				ret.Pos = mPos;
+				ret.Target = mTarget;
+				ret.Up = mUp;
+				ret.FieldOfView = mFOV;
+				ret.NearClip = mNearClip;
+				ret.FarClip = mFarClip;
+				ret.FocusPlaneDist = mFocalPlaneDist;
+				ret.LensRadius = mLensRadius;
+
+				return ret;
+			}
 		};
 	}
 }

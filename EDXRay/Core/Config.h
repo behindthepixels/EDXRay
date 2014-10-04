@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "Math/Vector.h"
+#include "Camera.h"
 
 namespace EDX
 {
@@ -24,22 +25,12 @@ namespace EDX
 
 		struct RenderJobDesc
 		{
-			struct
-			{
-				Vector3	Pos;
-				Vector3	Target;
-				Vector3	Up;
-				float	FieldOfView;
-				float	NearClip, FarClip;
-				float	FocusPlaneDist;
-				float	LensRadius;
-			} CameraParams;
-
-			EIntegratorType	IntegratorType;
-			ESamplerType	SamplerType;
-			uint			ImageWidth, ImageHeight;
-			uint			SamplesPerPixel;
-			vector<string>	ModelPaths;
+			CameraParameters	CameraParams;
+			EIntegratorType		IntegratorType;
+			ESamplerType		SamplerType;
+			uint				ImageWidth, ImageHeight;
+			uint				SamplesPerPixel;
+			vector<string>		ModelPaths;
 
 			RenderJobDesc()
 			{
@@ -47,7 +38,7 @@ namespace EDX
 				ImageHeight = 800;
 
 				CameraParams.Pos = Vector3::ZERO;
-				CameraParams.Target = -Vector3::UNIT_Z;
+				CameraParams.Target = Vector3::UNIT_Z;
 				CameraParams.Up = Vector3::UNIT_Y;
 				CameraParams.FieldOfView = 45.0f;
 				CameraParams.NearClip = 1.0f;

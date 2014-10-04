@@ -37,4 +37,5 @@ namespace EDX
 	class Color;
 	class Ray;
 	class RayDifferential;
+	class ObjMesh;
 }

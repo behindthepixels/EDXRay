@@ -332,7 +332,7 @@ namespace EDX
 				auto pMesh = prims[i]->GetMesh();
 
 				// Extract indices
-				const uint* pIndices = pMesh->GetIndexBuffer();
+				const uint* pIndices = pMesh->GetIndexAt(0);
 				for (auto j = 0; j < pMesh->GetTriangleCount(); j++)
 				{
 					mpBuildIndices[mBuildTriangleCount++] = BuildTriangle(mBuildVertexCount + pIndices[3 * j],

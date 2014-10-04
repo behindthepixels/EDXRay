@@ -11,34 +11,30 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		void TriangleMesh::LoadMesh(const char* path,
-			const Vector3& pos,
-			const Vector3& scl,
-			const Vector3& rot)
+		void TriangleMesh::LoadMesh(const ObjMesh* pObjMesh)
 		{
-			ObjMesh mesh;
-			mesh.LoadFromObj(pos, scl, rot, path, true);
+			mpObjMesh = pObjMesh;
 
 			// Init vertex buffer data
-			mVertexCount = mesh.GetVertexCount();
+			mVertexCount = pObjMesh->GetVertexCount();
 			mpPositionBuffer = new Vector3[mVertexCount];
 			mpNormalBuffer = new Vector3[mVertexCount];
 			mpTexcoordBuffer = new Vector2[mVertexCount];
 			for (auto i = 0; i < mVertexCount; i++)
 			{
-				const MeshVertex& vertex = mesh.GetVertexAt(i);
+				const MeshVertex& vertex = pObjMesh->GetVertexAt(i);
 				mpPositionBuffer[i] = vertex.position;
 				mpNormalBuffer[i] = vertex.normal;
 				mpTexcoordBuffer[i] = Vector2(vertex.fU, vertex.fV);
 			}
 
 			// Init index buffer data
-			mTriangleCount = mesh.GetTriangleCount();
+			mTriangleCount = pObjMesh->GetTriangleCount();
 			mpIndexBuffer = new uint[3 * mTriangleCount];
-			memcpy(mpIndexBuffer, mesh.GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
+			memcpy(mpIndexBuffer, pObjMesh->GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
 
 			// Initialize materials
-			const auto& materialInfo = mesh.GetMaterialInfo();
+			const auto& materialInfo = pObjMesh->GetMaterialInfo();
 			for (auto i = 0; i < materialInfo.size(); i++)
 			{
 				if (materialInfo[i].strTexturePath[0])
@@ -49,7 +45,18 @@ namespace EDX
 
 			mpMaterialIndices = new uint[mTriangleCount];
 			for (auto i = 0; i < mTriangleCount; i++)
-				mpMaterialIndices[i] = mesh.GetMaterialIdx(i);
+				mpMaterialIndices[i] = pObjMesh->GetMaterialIdx(i);
+		}
+
+		void TriangleMesh::LoadMesh(const char* path,
+			const Vector3& pos,
+			const Vector3& scl,
+			const Vector3& rot)
+		{
+			ObjMesh* pMesh = new ObjMesh;
+			pMesh->LoadFromObj(pos, scl, rot, path, true);
+
+			LoadMesh(pMesh);
 		}
 
 		void TriangleMesh::LoadSphere(const float radius,
@@ -59,32 +66,10 @@ namespace EDX
 			const Vector3& scl,
 			const Vector3& rot)
 		{
-			ObjMesh mesh;
-			mesh.LoadSphere(pos, scl, rot, radius, slices, stacks);
+			ObjMesh* pMesh = new ObjMesh;
+			pMesh->LoadSphere(pos, scl, rot, radius, slices, stacks);
 
-			// Init vertex buffer data
-			mVertexCount = mesh.GetVertexCount();
-			mpPositionBuffer = new Vector3[mVertexCount];
-			mpNormalBuffer = new Vector3[mVertexCount];
-			mpTexcoordBuffer = new Vector2[mVertexCount];
-			for (auto i = 0; i < mVertexCount; i++)
-			{
-				const MeshVertex& vertex = mesh.GetVertexAt(i);
-				mpPositionBuffer[i] = vertex.position;
-				mpNormalBuffer[i] = vertex.normal;
-				mpTexcoordBuffer[i] = Vector2(vertex.fU, vertex.fV);
-			}
-
-			// Init index buffer data
-			mTriangleCount = mesh.GetTriangleCount();
-			mpIndexBuffer = new uint[3 * mTriangleCount];
-			memcpy(mpIndexBuffer, mesh.GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
-
-			mpBSDFs.push_back(new LambertianDiffuse(Color(0.85f)));
-
-			mpMaterialIndices = new uint[mTriangleCount];
-			for (auto i = 0; i < mTriangleCount; i++)
-				mpMaterialIndices[i] = mesh.GetMaterialIdx(i);
+			LoadMesh(pMesh);
 		}
 
 		void TriangleMesh::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
@@ -99,9 +84,9 @@ namespace EDX
 			const Vector3& normal2 = GetNormalAt(3 * pDiffGeom->mTriId + 1);
 			const Vector3& normal3 = GetNormalAt(3 * pDiffGeom->mTriId + 2);
 
-			const Vector2& texcoord1 = GetTexcoordAt(3 * pDiffGeom->mTriId);
-			const Vector2& texcoord2 = GetTexcoordAt(3 * pDiffGeom->mTriId + 1);
-			const Vector2& texcoord3 = GetTexcoordAt(3 * pDiffGeom->mTriId + 2);
+			const Vector2& texcoord1 = GetTexCoordAt(3 * pDiffGeom->mTriId);
+			const Vector2& texcoord2 = GetTexCoordAt(3 * pDiffGeom->mTriId + 1);
+			const Vector2& texcoord3 = GetTexCoordAt(3 * pDiffGeom->mTriId + 2);
 
 			const float u = pDiffGeom->mU;
 			const float v = pDiffGeom->mV;
@@ -139,7 +124,7 @@ namespace EDX
 			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
 		}
 
-		Vector3 TriangleMesh::GetPositionAt(uint idx) const
+		const Vector3& TriangleMesh::GetPositionAt(uint idx) const
 		{
 			assert(idx < 3 * mTriangleCount);
 			assert(mpIndexBuffer);
@@ -147,7 +132,7 @@ namespace EDX
 			return mpPositionBuffer[mpIndexBuffer[idx]];
 		}
 
-		Vector3 TriangleMesh::GetNormalAt(uint idx) const
+		const Vector3& TriangleMesh::GetNormalAt(uint idx) const
 		{
 			assert(idx < 3 * mTriangleCount);
 			assert(mpIndexBuffer);
@@ -155,7 +140,7 @@ namespace EDX
 			return mpNormalBuffer[mpIndexBuffer[idx]];
 		}
 
-		Vector2 TriangleMesh::GetTexcoordAt(uint idx) const
+		const Vector2& TriangleMesh::GetTexCoordAt(uint idx) const
 		{
 			assert(idx < 3 * mTriangleCount);
 			assert(mpIndexBuffer);
