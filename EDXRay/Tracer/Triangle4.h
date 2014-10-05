@@ -129,7 +129,7 @@ namespace EDX
 
 		struct Triangle4Node
 		{
-			int triangleCount;
+			uint triangleCount;
 			Triangle4 tri4;
 		};
 	}

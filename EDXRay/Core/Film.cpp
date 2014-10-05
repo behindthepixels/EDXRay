@@ -30,6 +30,7 @@ namespace EDX
 
 		void Film::Clear()
 		{
+			mSampleCount = 0;
 			mpPixelBuffer.Clear();
 			mpAccumulateBuffer.Clear();
 		}

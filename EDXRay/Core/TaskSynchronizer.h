@@ -35,6 +35,7 @@ namespace EDX
 			vector<HANDLE>	mPreRenderEvent;
 			vector<HANDLE>	mPostRenderEvent;
 			bool mAllTaskFinished;
+			bool mAbort;
 
 		public:
 			void Init(const int x, const int y)
@@ -68,6 +69,7 @@ namespace EDX
 				}
 
 				mAllTaskFinished = false;
+				mAbort = false;
 			}
 
 			bool GetNextTask(RenderTile*& pTask)
@@ -89,6 +91,8 @@ namespace EDX
 				SetEvent(mPreRenderEvent[threadId]);
 				while (WaitForMultipleObjects(mThreadCount, mPreRenderEvent.data(), true, 20) == WAIT_TIMEOUT)
 				{
+					if (mAbort)
+						return;
 				}
 
 				mPreRenderSyncedCount++;
@@ -108,6 +112,8 @@ namespace EDX
 				SetEvent(mPostRenderEvent[threadId]);
 				while (WaitForMultipleObjects(mThreadCount, mPostRenderEvent.data(), true, 20) == WAIT_TIMEOUT)
 				{
+					if (mAbort)
+						return;
 				}
 
 				mPostRenderSyncedCount++;
@@ -126,6 +132,16 @@ namespace EDX
 			{
 				mCurrentTileIdx = 0;
 				mAllTaskFinished = false;
+			}
+
+			void SetAbort(const bool ab)
+			{
+				mAbort = ab;
+			}
+
+			const bool Aborted() const
+			{
+				return mAbort;
 			}
 		};
 	}

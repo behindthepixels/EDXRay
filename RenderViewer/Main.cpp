@@ -22,7 +22,7 @@ bool gRendering = false;
 
 void OnInit(Object* pSender, EventArgs args)
 {
-	glClearColor(0.4f, 0.5f, 0.65f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	gpRenderer = new Renderer;
 
@@ -35,13 +35,13 @@ void OnInit(Object* pSender, EventArgs args)
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	TriangleMesh* pMesh = new TriangleMesh;
-	pMesh->LoadSphere(1.0f, 128, 128, Vector3(-2.0f, 1.0f, 10.5f));
-	TriangleMesh* pMesh2 = new TriangleMesh;
-	pMesh2->LoadSphere(1.0f, 128, 128, Vector3(2.0f, 1.0f, 10.5f));
+	//pMesh->LoadMesh("../../Media/sponza/sponza.obj", Vector3(0, -10, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", Vector3(0, -10, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-10, -10, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh->LoadSphere(1.0f, 5280, 1280, Vector3(0.0f, 1.0f, 10.5f));
 
 	pScene->AddPrimitive(new Primitive(pMesh));
-	pScene->AddPrimitive(new Primitive(pMesh2));
-	pScene->AddLight(new PointLight(Vector3(0.0f, 10.0f, 10.5f), Color(300.0f)));
+	pScene->AddLight(new PointLight(Vector3(0.0f, 10.0f, 0.0f), Color(1000.0f)));
 	pScene->InitAccelerator();
 
 	gPreview.Initialize(*pScene, 1280, 800, 65);
@@ -65,20 +65,25 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 	// Set opengl params
 	glViewport(0, 0, args.Width, args.Height);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, args.Width, 0, args.Height, -1, 1);
+	if (gRendering)
+	{
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, args.Width, 0, args.Height, -1, 1);
+	}
+	else
+	{
+		gPreview.OnResize(args.Width, args.Height);
+	}
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
-
-	gPreview.OnResize(args.Width, args.Height);
 }
 
 void OnMouseEvent(Object* pSender, MouseEventArgs args)
 {
-	gPreview.GetCamera().HandleMouseMsg(args);
+	if (!gRendering)
+		gPreview.GetCamera().HandleMouseMsg(args);
 }
 
 void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
@@ -102,16 +107,19 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 		}
 		else
 		{
+			gpRenderer->StopRenderTasks();
 			gPreview.OnResize(Application::GetMainWindow()->GetWindowWidth(), Application::GetMainWindow()->GetWindowHeight());
 		}
 		break;
 	}
 
-	gPreview.GetCamera().HandleKeyboardMsg(args);
+	if (!gRendering)
+		gPreview.GetCamera().HandleKeyboardMsg(args);
 }
 
 void OnRelease(Object* pSender, EventArgs args)
 {
+	gpRenderer->StopRenderTasks();
 	gpRenderer.Dereference();
 	gPreview.~Previewer();
 }

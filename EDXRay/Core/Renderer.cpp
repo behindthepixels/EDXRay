@@ -45,6 +45,7 @@ namespace EDX
 
 			mTaskSync.Init(desc.ImageWidth, desc.ImageHeight);
 
+			mTaskSync.SetAbort(false);
 			ThreadScheduler::Instance()->InitTAndLaunchThreads();
 		}
 
@@ -62,6 +63,9 @@ namespace EDX
 				{
 					for (auto x = pTask->minX; x < pTask->maxX; x++)
 					{
+						if (mTaskSync.Aborted())
+							return;
+
 						SampleBuffer sample;
 						mpSampler->GenerateSamples(&sample, random);
 						sample.imageX += x;
@@ -97,16 +101,44 @@ namespace EDX
 					mpFilm->ScaleToPixel();
 					mTaskSync.ResetTasks();
 				}
+
+				if (mTaskSync.Aborted())
+					return;
 			}
 		}
 
 		void Renderer::QueueRenderTasks()
 		{
+			mpFilm->Clear();
+			mTaskSync.SetAbort(false);
+
 			for (auto i = 0; i < ThreadScheduler::Instance()->GetThreadCount(); i++)
 			{
 				mTasks.push_back(new RenderTask(this));
 				ThreadScheduler::Instance()->AddTasks(Task((Task::TaskFunc)&RenderTask::_Render, mTasks[i]));
 			}
+		}
+		
+		void Renderer::StopRenderTasks()
+		{
+			mTaskSync.SetAbort(true);
+			ThreadScheduler::Instance()->JoinAllTasks();
+		}
+
+		void Renderer::SetCameraParams(const CameraParameters& params)
+		{
+			mJobDesc.CameraParams = params;
+
+			mpCamera->Init(mJobDesc.CameraParams.Pos,
+				mJobDesc.CameraParams.Target,
+				mJobDesc.CameraParams.Up,
+				mJobDesc.ImageWidth,
+				mJobDesc.ImageHeight,
+				mJobDesc.CameraParams.FieldOfView,
+				mJobDesc.CameraParams.NearClip,
+				mJobDesc.CameraParams.FarClip,
+				mJobDesc.CameraParams.LensRadius,
+				mJobDesc.CameraParams.FocusPlaneDist);
 		}
 
 		const Color* Renderer::GetFrameBuffer() const

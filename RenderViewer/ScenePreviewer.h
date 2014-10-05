@@ -80,7 +80,7 @@ namespace EDX
 				glEnable(GL_TEXTURE_2D);
 				glEnable(GL_DEPTH_TEST);
 				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc(GL_GEQUAL, 1.0f);
+				glAlphaFunc(GL_GREATER, 0.0f);
 				glDisable(GL_LIGHTING);
 
 				for (auto& it : mMeshes)

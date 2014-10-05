@@ -19,22 +19,17 @@ namespace EDX
 		public:
 			Scene();
 
+			// Tracing methods
 			bool Intersect(const Ray& ray, Intersection* pIsect) const;
 			bool Occluded(const Ray& ray) const;
 
 			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
 
+			// Scene management
 			void AddPrimitive(Primitive* pPrim);
 			void AddLight(Light* pLight);
-
-			const vector<RefPtr<Primitive>>& GetPrimitives() const
-			{
-				return mPrimitives;
-			}
-			const vector<RefPtr<Light>>& GetLight() const
-			{
-				return mLights;
-			}
+			const vector<RefPtr<Primitive>>& GetPrimitives() const { return mPrimitives; }
+			const vector<RefPtr<Light>>& GetLight() const { return mLights; }
 
 			void InitAccelerator();
 		};

@@ -38,25 +38,12 @@ namespace EDX
 			void RenderImage(int threadId, RandomGen& random, MemoryArena& memory);
 
 			void QueueRenderTasks();
+			void StopRenderTasks();
 
 			const Color* GetFrameBuffer() const;
-			void SetCameraParams(const CameraParameters& params)
-			{
-				mJobDesc.CameraParams = params;
-
-				mpCamera->Init(mJobDesc.CameraParams.Pos,
-					mJobDesc.CameraParams.Target,
-					mJobDesc.CameraParams.Up,
-					mJobDesc.ImageWidth,
-					mJobDesc.ImageHeight,
-					mJobDesc.CameraParams.FieldOfView,
-					mJobDesc.CameraParams.NearClip,
-					mJobDesc.CameraParams.FarClip,
-					mJobDesc.CameraParams.LensRadius,
-					mJobDesc.CameraParams.FocusPlaneDist);
-			}
 			const RenderJobDesc GetJobDesc() const { return mJobDesc; }
 			RefPtr<Scene> GetScene() { return mpScene; }
+			void SetCameraParams(const CameraParameters& params);
 		};
 	}
 }

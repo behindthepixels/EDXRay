@@ -38,6 +38,8 @@ namespace EDX
 			ThreadScheduler::Instance()->JoinAllTasks();
 
 			mpRoot = AllocAligned<Node>(mTreeBufSize, 64);
+			memset(mpRoot, 0, mTreeBufSize * sizeof(Node));
+
 			uint offset = 0;
 			LinearizeNodes(pBuildRoot, &offset);
 			assert(offset == mTreeBufSize);
@@ -207,7 +209,7 @@ namespace EDX
 				}
 
 				int mid = 0;
-				if (bestSplitCost < IntersectCost * packedCount)
+				if (bestSplitCost < IntersectCost * packedCount || packedCount > 6)
 				{
 					TriangleInfo* pMid = std::partition(&buildInfo[startIdx], &buildInfo[endIdx - 1] + 1,
 						[&](const TriangleInfo& par) -> bool
@@ -268,22 +270,6 @@ namespace EDX
 		uint BVH2::LinearizeNodes(const BuildNode* pBuildNode, uint* pOffset)
 		{
 			Node* pNode = &mpRoot[*pOffset];
-
-			pNode->minMaxBoundsX[0] = pBuildNode->leftBounds.mMin.x;
-			pNode->minMaxBoundsX[1] = pBuildNode->rightBounds.mMin.x;
-			pNode->minMaxBoundsX[2] = pBuildNode->leftBounds.mMax.x;
-			pNode->minMaxBoundsX[3] = pBuildNode->rightBounds.mMax.x;
-
-			pNode->minMaxBoundsY[0] = pBuildNode->leftBounds.mMin.y;
-			pNode->minMaxBoundsY[1] = pBuildNode->rightBounds.mMin.y;
-			pNode->minMaxBoundsY[2] = pBuildNode->leftBounds.mMax.y;
-			pNode->minMaxBoundsY[3] = pBuildNode->rightBounds.mMax.y;
-
-			pNode->minMaxBoundsZ[0] = pBuildNode->leftBounds.mMin.z;
-			pNode->minMaxBoundsZ[1] = pBuildNode->rightBounds.mMin.z;
-			pNode->minMaxBoundsZ[2] = pBuildNode->leftBounds.mMax.z;
-			pNode->minMaxBoundsZ[3] = pBuildNode->rightBounds.mMax.z;
-
 			uint currOffset = (*pOffset);
 
 			if (pBuildNode->primCount > 0) // Create leaf node
@@ -300,6 +286,21 @@ namespace EDX
 			else // Interior
 			{
 				pNode->triangleCount = 0;
+				pNode->minMaxBoundsX[0] = pBuildNode->leftBounds.mMin.x;
+				pNode->minMaxBoundsX[1] = pBuildNode->rightBounds.mMin.x;
+				pNode->minMaxBoundsX[2] = pBuildNode->leftBounds.mMax.x;
+				pNode->minMaxBoundsX[3] = pBuildNode->rightBounds.mMax.x;
+
+				pNode->minMaxBoundsY[0] = pBuildNode->leftBounds.mMin.y;
+				pNode->minMaxBoundsY[1] = pBuildNode->rightBounds.mMin.y;
+				pNode->minMaxBoundsY[2] = pBuildNode->leftBounds.mMax.y;
+				pNode->minMaxBoundsY[3] = pBuildNode->rightBounds.mMax.y;
+
+				pNode->minMaxBoundsZ[0] = pBuildNode->leftBounds.mMin.z;
+				pNode->minMaxBoundsZ[1] = pBuildNode->rightBounds.mMin.z;
+				pNode->minMaxBoundsZ[2] = pBuildNode->leftBounds.mMax.z;
+				pNode->minMaxBoundsZ[3] = pBuildNode->rightBounds.mMax.z;
+
 				(*pOffset)++;
 				LinearizeNodes(pBuildNode->pChildren[0], pOffset);
 				pNode->secondChildOffset = LinearizeNodes(pBuildNode->pChildren[1], pOffset);
@@ -450,6 +451,79 @@ namespace EDX
 
 		bool BVH2::Occluded(const Ray& ray) const
 		{
+			const IntSSE identity = _mm_set_epi8(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+			const IntSSE swap = _mm_set_epi8(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
+			const IntSSE shuffleX = ray.mDir.x >= 0 ? identity : swap;
+			const IntSSE shuffleY = ray.mDir.y >= 0 ? identity : swap;
+			const IntSSE shuffleZ = ray.mDir.z >= 0 ? identity : swap;
+
+			const IntSSE pn = IntSSE(0x00000000, 0x00000000, 0x80000000, 0x80000000);
+			const Vec3f_SSE norg(-ray.mOrg.x, -ray.mOrg.y, -ray.mOrg.z);
+			const Vec3f_SSE rdir = Vec3f_SSE(FloatSSE(1.0f / ray.mDir.x) ^ pn, FloatSSE(1.0f / ray.mDir.y) ^ pn, FloatSSE(1.0f / ray.mDir.z) ^ pn);
+			FloatSSE nearFar(ray.mMin, ray.mMin, -ray.mMax, -ray.mMax);
+
+			int TodoStack[64];
+			uint stackTop = 0, nodeIdx = 0;
+
+			bool hit = false;
+			while (true)
+			{
+				const Node* pNode = &mpRoot[nodeIdx];
+
+				// Interior node
+				if (pNode->triangleCount == 0)
+				{
+					const FloatSSE tNearFarX = (SSE::Shuffle8(pNode->minMaxBoundsX, shuffleX) + norg.x) * rdir.x;
+					const FloatSSE tNearFarY = (SSE::Shuffle8(pNode->minMaxBoundsY, shuffleY) + norg.y) * rdir.y;
+					const FloatSSE tNearFarZ = (SSE::Shuffle8(pNode->minMaxBoundsZ, shuffleZ) + norg.z) * rdir.z;
+					const FloatSSE tNearFar = SSE::Max(SSE::Max(tNearFarX, tNearFarY), SSE::Max(tNearFarZ, nearFar)) ^ pn;
+					const BoolSSE lrhit = tNearFar <= SSE::Shuffle8(tNearFar, swap);
+
+					if (lrhit[0] != 0 && lrhit[1] != 0)
+					{
+						if (tNearFar[0] < tNearFar[1]) // First child first
+						{
+							TodoStack[stackTop++] = pNode->secondChildOffset;
+							nodeIdx = nodeIdx + 1;
+						}
+						else
+						{
+							TodoStack[stackTop++] = nodeIdx + 1;
+							nodeIdx = pNode->secondChildOffset;
+						}
+					}
+					else if (lrhit[0] != 0)
+					{
+						nodeIdx = nodeIdx + 1;
+					}
+					else if (lrhit[1] != 0)
+					{
+						nodeIdx = pNode->secondChildOffset;
+					}
+					else // If miss the node's bounds
+					{
+						if (stackTop == 0)
+							return false;
+
+						nodeIdx = TodoStack[--stackTop];
+					}
+				}
+				else // Leaf node
+				{
+					Triangle4Node* pLeafNode = (Triangle4Node*)pNode;
+					for (auto i = 0; i < pLeafNode->triangleCount; i++)
+					{
+						if (pLeafNode[i].tri4.Occluded(ray))
+							return true;
+					}
+
+					if (stackTop == 0)
+						return false;
+
+					nodeIdx = TodoStack[--stackTop];
+				}
+			}
+
 			return false;
 		}
 	}
