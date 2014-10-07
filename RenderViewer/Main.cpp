@@ -35,13 +35,13 @@ void OnInit(Object* pSender, EventArgs args)
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	TriangleMesh* pMesh = new TriangleMesh;
-	//pMesh->LoadMesh("../../Media/sponza/sponza.obj", Vector3(0, -10, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", Vector3(0, -10, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-10, -10, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	//pMesh->LoadSphere(1.0f, 5280, 1280, Vector3(0.0f, 1.0f, 10.5f));
+	pMesh->LoadMesh("../../Media/sponza/sponza.obj", Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh->LoadSphere(1.0f, 128, 128, Vector3(0.0f, 1.0f, 10.5f));
 
 	pScene->AddPrimitive(new Primitive(pMesh));
-	pScene->AddLight(new PointLight(Vector3(0.0f, 10.0f, 0.0f), Color(1000.0f)));
+	pScene->AddLight(new PointLight(Vector3(0.0f, 4.0f, 0.0f), Color(180.0f)));
 	pScene->InitAccelerator();
 
 	gPreview.Initialize(*pScene, 1280, 800, 65);

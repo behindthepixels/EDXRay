@@ -56,6 +56,7 @@ namespace EDX
 
 		Color BSDF::GetColor(const DifferentialGeom& diffGoem) const
 		{
+			mpTexture->SetFilter(TextureFilter::Linear);
 			return mpTexture->Sample(diffGoem.mTexcoord, nullptr);
 		}
 
