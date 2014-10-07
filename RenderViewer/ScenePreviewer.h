@@ -97,6 +97,7 @@ namespace EDX
 					for (auto i = 0; i < pObjMesh->GetSubsetCount(); i++)
 					{
 						it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->Bind();
+						it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->SetFilter(TextureFilter::Anisotropic16x);
 						auto setTriangleCount = pObjMesh->GetSubsetStartIdx(i + 1) - pObjMesh->GetSubsetStartIdx(i);
 						glDrawRangeElements(GL_TRIANGLES, 0, setTriangleCount, setTriangleCount, GL_UNSIGNED_INT, (void*)(pObjMesh->GetSubsetStartIdx(i) * sizeof(uint)));
 						it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->UnBind();

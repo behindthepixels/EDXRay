@@ -46,7 +46,7 @@ namespace EDX
 			mTaskSync.Init(desc.ImageWidth, desc.ImageHeight);
 
 			mTaskSync.SetAbort(false);
-			ThreadScheduler::Instance()->InitTAndLaunchThreads();
+			ThreadScheduler::Instance()->InitAndLaunchThreads();
 		}
 
 		Renderer::~Renderer()
