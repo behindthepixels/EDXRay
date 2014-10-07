@@ -63,7 +63,6 @@ namespace EDX
 				mMemLock.Lock();
 				Triangle4* pTri4 = memory.Alloc<Triangle4>(packedCount);
 				mMemLock.Unlock();
-				*pTri4 = Triangle4();
 				for (auto i = 0; i < packedCount; i++)
 				{
 					BuildVertex triangles[4][3];
@@ -84,6 +83,7 @@ namespace EDX
 						triangles[count][2].pos = vt3;
 					}
 
+					pTri4[i] = Triangle4();
 					pTri4[i].Pack(triangles, indices, count);
 				}
 

@@ -16,12 +16,14 @@ namespace EDX
 			Vec3f_SSE	mEdges2;
 			Vec3f_SSE	mGeomNormals;
 
-			IntSSE		mMeshIds;
-			IntSSE		mTriIds;
+			uint		mMeshIds[4];
+			uint		mTriIds[4];
 
 		public:
 			Triangle4()
 			{
+				mMeshIds[0] = mMeshIds[1] = mMeshIds[2] = mMeshIds[3] = 0;
+				mTriIds[0] = mTriIds[1] = mTriIds[2] = mTriIds[3] = 0;
 			}
 
 			void Pack(const BuildVertex tris[4][3], const BuildTriangle indices[4], const size_t count)
