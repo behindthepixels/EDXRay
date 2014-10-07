@@ -18,8 +18,6 @@ namespace EDX
 
 		struct GLMesh
 		{
-			MeshVertex* mpVertices;
-			int mTriCount;
 			ObjMesh* mpMesh;
 			RefPtr<OpenGL::VertexBuffer> mpVBO;
 			RefPtr<OpenGL::IndexBuffer> mpIBO;
