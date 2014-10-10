@@ -19,6 +19,7 @@ namespace EDX
 			if (pScene->Intersect(ray, &diffGeom))
 			{
 				pScene->PostIntersect(ray, &diffGeom);
+				diffGeom.ComputeDifferentials(ray);
 
 				const Vector3 eyeDir = -ray.mDir;
 				const Vector3& position = diffGeom.mPosition;
@@ -45,7 +46,7 @@ namespace EDX
 								continue;
 							}
 
-							const float bsdfPdf = pBSDF->PDF(eyeDir, lightDir, diffGeom);
+							const float bsdfPdf = pBSDF->Pdf(eyeDir, lightDir, diffGeom);
 							const float misWeight = Sampling::PowerHeuristic(1, lightPdf, 1, bsdfPdf);
 							L += f * Li * Math::AbsDot(lightDir, normal) * misWeight / lightPdf;
 						}
@@ -79,8 +80,11 @@ namespace EDX
 					}
 				}
 
-				L += Integrator::SpecularReflect(this, pScene, ray, diffGeom, pSamples, memory, random);
-				L += Integrator::SpecularTransmit(this, pScene, ray, diffGeom, pSamples, memory, random);
+				if (ray.mDepth < 5)
+				{
+					L += Integrator::SpecularReflect(this, pScene, ray, diffGeom, pSamples, random, memory);
+					L += Integrator::SpecularTransmit(this, pScene, ray, diffGeom, pSamples, random, memory);
+				}
 			}
 
 			return L;

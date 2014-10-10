@@ -74,11 +74,11 @@ namespace EDX
 			Vector2 mTexcoord;
 			Vector3 mGeomNormal;
 			Vector3 mDpdu, mDpdv;
-			Vector3 mnDndu, mnDndv;
+			Vector3 mDndu, mDndv;
 
 			// Differentials
-			mutable Vector3 mvDpdx, mvDpdy;
-			mutable float mfDudx, mfDudy, mfDvdx, mfDvdy;
+			mutable Vector3 mDpdx, mDpdy;
+			mutable float mDudx, mDudy, mDvdx, mDvdy;
 
 			Frame mShadingFrame, mGeomFrame;
 
@@ -87,10 +87,10 @@ namespace EDX
 
 		public:
 			DifferentialGeom()
-				: mfDudx(0.0f)
-				, mfDudy(0.0f)
-				, mfDvdx(0.0f)
-				, mfDvdy(0.0f)
+				: mDudx(0.0f)
+				, mDudy(0.0f)
+				, mDvdx(0.0f)
+				, mDvdy(0.0f)
 			{
 			}
 

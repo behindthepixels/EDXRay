@@ -15,9 +15,9 @@ namespace EDX
 
 		public:
 			static Color SpecularReflect(const Integrator* pIntegrator, const Scene* pScene, const RayDifferential& ray,
-				const DifferentialGeom& diffGeom, const SampleBuffer* pSamples, MemoryArena& memory, RandomGen& random);
+				const DifferentialGeom& diffGeom, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory);
 			static Color SpecularTransmit(const Integrator* pIntegrator, const Scene* pScene, const RayDifferential& ray,
-				const DifferentialGeom& diffGeom, const SampleBuffer* pSamples, MemoryArena& memory, RandomGen& random);
+				const DifferentialGeom& diffGeom, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory);
 		};
 	}
 }

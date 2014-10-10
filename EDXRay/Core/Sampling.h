@@ -112,18 +112,18 @@ namespace EDX
 				return 1.0f / (2.0f * float(Math::EDX_PI) * (1.0f - cosThetaMax));
 			}
 
-			inline float PowerHeuristic(int nf, float fPdf, int ng, float gPdf)
+			inline float PowerHeuristic(int nf, float pdf, int ng, float gPdf)
 			{
-				float f = nf * fPdf, g = ng * gPdf;
+				float f = nf * pdf, g = ng * gPdf;
 				return (f * f) / (f * f + g * g);
 			}
-			inline float PdfAtoW(float fPdfA, float fDist, float fCos)
+			inline float PdfAtoW(float pdfA, float dist, float cos)
 			{
-				return fPdfA * fDist * fDist / Math::Abs(fCos);
+				return pdfA * dist * dist / Math::Abs(cos);
 			}
-			inline float PdfWToA(float fPdfW, float fDist, float fCos)
+			inline float PdfWToA(float pdfW, float dist, float cos)
 			{
-				return fPdfW * Math::Abs(fCos) / (fDist * fDist);
+				return pdfW * Math::Abs(cos) / (dist * dist);
 			}
 
 			inline float VanDerCorput(uint n, uint scramble)

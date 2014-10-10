@@ -43,12 +43,12 @@ namespace EDX
 		}
 
 		BSDF::BSDF(ScatterType t, BSDFType t2, const Color& color)
-			: mType(t), mBSDFType(t2)
+			: mScatterType(t), mBSDFType(t2)
 		{
 			mpTexture = new ConstantTexture2D<Color>(color);
 		}
 		BSDF::BSDF(ScatterType t, BSDFType t2, const char* pFile)
-			: mType(t), mBSDFType(t2)
+			: mScatterType(t), mBSDFType(t2)
 		{
 			mpTexture = new ImageTexture<Color, Color4b>(pFile);
 		}
@@ -72,7 +72,7 @@ namespace EDX
 			return GetColor(diffGoem) * Eval(vWo, vWi, types);
 		}
 
-		float BSDF::PDF(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
+		float BSDF::Pdf(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
 		{
 			if (!MatchesTypes(types))
 			{
@@ -82,10 +82,10 @@ namespace EDX
 			Vector3 vWo = diffGoem.WorldToLocal(vOut);
 			Vector3 vWi = diffGoem.WorldToLocal(vIn);
 
-			return PDF(vWo, vWi, types);
+			return Pdf(vWo, vWi, types);
 		}
 
-		Color BSDF::GetColor(const DifferentialGeom& diffGoem) const
+		const Color BSDF::GetColor(const DifferentialGeom& diffGoem) const
 		{
 			mpTexture->SetFilter(TextureFilter::Linear);
 			return mpTexture->Sample(diffGoem.mTexcoord, nullptr);
@@ -97,29 +97,25 @@ namespace EDX
 		Color LambertianDiffuse::Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types) const
 		{
 			if (!BSDFCoordinate::SameHemisphere(vOut, vIn))
-			{
 				return Color::BLACK;
-			}
 
 			return float(Math::EDX_INV_PI);
 		}
 
-		float LambertianDiffuse::PDF(const Vector3& vOut, const Vector3& vIn, ScatterType types /* = BSDF_ALL */) const
+		float LambertianDiffuse::Pdf(const Vector3& vOut, const Vector3& vIn, ScatterType types /* = BSDF_ALL */) const
 		{
 			if (!BSDFCoordinate::SameHemisphere(vOut, vIn))
-			{
 				return 0.0f;
-			}
 
 			return BSDFCoordinate::AbsCosTheta(vIn) * float(Math::EDX_INV_PI);
 		}
 
-		Color LambertianDiffuse::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pfPDF,
+		Color LambertianDiffuse::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf,
 			ScatterType types, ScatterType* pSampledTypes) const
 		{
 			if (!MatchesTypes(types))
 			{
-				*pfPDF = 0.0f;
+				*pPdf = 0.0f;
 				return Color::BLACK;
 			}
 
@@ -130,10 +126,10 @@ namespace EDX
 				vWi.z *= -1.0f;
 
 			*pvIn = diffGoem.LocalToWorld(vWi);
-			*pfPDF = PDF(vWo, vWi, types);
+			*pPdf = Pdf(vWo, vWi, types);
 			if (pSampledTypes != NULL)
 			{
-				*pSampledTypes = mType;
+				*pSampledTypes = mScatterType;
 			}
 
 			return GetColor(diffGoem) * Eval(vWo, vWi, types);
@@ -152,21 +148,21 @@ namespace EDX
 			return Color::BLACK;
 		}
 
-		float Mirror::PDF(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
+		float Mirror::Pdf(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
 		{
 			return 0.0f;
 		}
 
-		float Mirror::PDF(const Vector3& vIn, const Vector3& vOut, ScatterType types /* = BSDF_ALL */) const
+		float Mirror::Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types /* = BSDF_ALL */) const
 		{
 			return 0.0f;
 		}
 
-		Color Mirror::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pfPDF, ScatterType types /* = BSDF_ALL */, ScatterType* pSampledTypes /* = NULL */) const
+		Color Mirror::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf, ScatterType types /* = BSDF_ALL */, ScatterType* pSampledTypes /* = NULL */) const
 		{
 			if (!MatchesTypes(types))
 			{
-				*pfPDF = 0.0f;
+				*pPdf = 0.0f;
 				return Color::BLACK;
 			}
 
@@ -174,10 +170,10 @@ namespace EDX
 			vWi = Vector3(-vWo.x, -vWo.y, vWo.z);
 
 			*pvIn = diffGoem.LocalToWorld(vWi);
-			*pfPDF = 1.0f;
+			*pPdf = 1.0f;
 			if (pSampledTypes != NULL)
 			{
-				*pSampledTypes = mType;
+				*pSampledTypes = mScatterType;
 			}
 
 			return GetColor(diffGoem) / BSDFCoordinate::AbsCosTheta(vWi);
@@ -196,76 +192,76 @@ namespace EDX
 			return Color::BLACK;
 		}
 
-		float Glass::PDF(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
+		float Glass::Pdf(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
 		{
 			return 0.0f;
 		}
 
-		float Glass::PDF(const Vector3& vIn, const Vector3& vOut, ScatterType types /* = BSDF_ALL */) const
+		float Glass::Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types /* = BSDF_ALL */) const
 		{
 			return 0.0f;
 		}
 
-		Color Glass::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pfPDF, ScatterType types /* = BSDF_ALL */, ScatterType* pSampledTypes /* = NULL */) const
+		Color Glass::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf, ScatterType types /* = BSDF_ALL */, ScatterType* pSampledTypes /* = NULL */) const
 		{
-			bool bSampleReflect = (types & mTypeRef) == mTypeRef;
-			bool bSampleRefract = (types & mTypeRfr) == mTypeRfr;
+			bool sampleReflect = (types & (BSDF_REFLECTION | BSDF_SPECULAR)) == (BSDF_REFLECTION | BSDF_SPECULAR);
+			bool sampleRefract = (types & (BSDF_TRANSMISSION | BSDF_SPECULAR)) == (BSDF_TRANSMISSION | BSDF_SPECULAR);
 
-			if (!bSampleReflect && !bSampleRefract)
+			if (!sampleReflect && !sampleRefract)
 			{
-				*pfPDF = 0.0f;
+				*pPdf = 0.0f;
 				return Color::BLACK;
 			}
 
-			bool bSampleBoth = bSampleReflect == bSampleRefract;
+			bool sampleBoth = sampleReflect == sampleRefract;
 
 			Vector3 vWo = diffGoem.WorldToLocal(vOut), vWi;
 
-			float fFresnel = Fresnel(BSDFCoordinate::CosTheta(vWo));
-			float fProb = fFresnel;//0.5f * fFresnel + 0.25f;
+			float fresnel = Fresnel(BSDFCoordinate::CosTheta(vWo));
+			float prob = fresnel;//0.5f * fFresnel + 0.25f;
 
-			if (sample.w <= fProb && bSampleBoth || (bSampleReflect && !bSampleBoth)) // Sample reflection
+			if (sample.w <= prob && sampleBoth || (sampleReflect && !sampleBoth)) // Sample reflection
 			{
 				vWi = Vector3(-vWo.x, -vWo.y, vWo.z);
 
 				*pvIn = diffGoem.LocalToWorld(vWi);
-				*pfPDF = !bSampleBoth ? 1.0f : fProb;
+				*pPdf = !sampleBoth ? 1.0f : prob;
 				if (pSampledTypes != NULL)
 				{
-					*pSampledTypes = mTypeRef;
+					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_SPECULAR);
 				}
 
-				return fFresnel * GetColor(diffGoem) / BSDFCoordinate::AbsCosTheta(vWi);
+				return fresnel * GetColor(diffGoem) / BSDFCoordinate::AbsCosTheta(vWi);
 			}
-			else if (sample.w > fProb && bSampleBoth || (bSampleRefract && !bSampleBoth)) // Sample refraction
+			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
-				bool bEntering = BSDFCoordinate::CosTheta(vWo) > 0.0f;
-				float etai = mfEtai, etat = mfEtat;
-				if (!bEntering)
+				bool entering = BSDFCoordinate::CosTheta(vWo) > 0.0f;
+				float etai = mEtai, etat = mEtat;
+				if (!entering)
 					swap(etai, etat);
 
-				float fSini2 = BSDFCoordinate::SinTheta2(vWo);
-				float fEta = etai / etat;
-				float fSint2 = fEta * fEta * fSini2;
+				float sini2 = BSDFCoordinate::SinTheta2(vWo);
+				float eta = etai / etat;
+				float sint2 = eta * eta * sini2;
 
-				if (fSint2 > 1.0f)
+				if (sint2 > 1.0f)
 					return Color::BLACK;
 
-				float fCost = Math::Sqrt(Math::Max(0.0f, 1.0f - fSint2));
-				if (bEntering)
-					fCost = -fCost;
-				float fSintOverSini = fEta;
+				float cost = Math::Sqrt(Math::Max(0.0f, 1.0f - sint2));
+				if (entering)
+					cost = -cost;
+				float sintOverSini = eta;
 
-				vWi = Vector3(fSintOverSini * -vWo.x, fSintOverSini * -vWo.y, fCost);
+				vWi = Vector3(sintOverSini * -vWo.x, sintOverSini * -vWo.y, cost);
 
 				*pvIn = diffGoem.LocalToWorld(vWi);
-				*pfPDF = !bSampleBoth ? 1.0f : 1.0f - fProb;
+				*pPdf = !sampleBoth ? 1.0f : 1.0f - prob;
 				if (pSampledTypes != NULL)
 				{
-					*pSampledTypes = mTypeRfr;
+					*pSampledTypes = ScatterType(BSDF_TRANSMISSION | BSDF_SPECULAR);
 				}
 
-				return (1.0f - fFresnel) * GetColor(diffGoem) / BSDFCoordinate::AbsCosTheta(vWi);
+				return (1.0f - fresnel) * GetColor(diffGoem) / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 
 			return Color::BLACK;
@@ -275,24 +271,24 @@ namespace EDX
 		{
 			fCosi = Math::Clamp(fCosi, -1.0f, 1.0f);
 
-			bool bEntering = fCosi > 0.0f;
-			float ei = mfEtai, et = mfEtat;
-			if (!bEntering)
+			bool entering = fCosi > 0.0f;
+			float ei = mEtai, et = mEtat;
+			if (!entering)
 				swap(ei, et);
 
-			float fSint = ei / et * Math::Sqrt(Math::Max(0.0f, 1.0f - fCosi * fCosi));
+			float sint = ei / et * Math::Sqrt(Math::Max(0.0f, 1.0f - fCosi * fCosi));
 
-			if (fSint >= 1.0f)
+			if (sint >= 1.0f)
 				return 1.0f;
 			else
 			{
-				float fCost = Math::Sqrt(Math::Max(0.0f, 1.0f - fSint * fSint));
+				float fCost = Math::Sqrt(Math::Max(0.0f, 1.0f - sint * sint));
 				fCosi = Math::Abs(fCosi);
 
-				float fPara = ((mfEtat * fCosi) - (mfEtai * fCost)) /
-					((mfEtat * fCosi) + (mfEtai * fCost));
-				float fPerp = ((mfEtai * fCosi) - (mfEtat * fCost)) /
-					((mfEtai * fCosi) + (mfEtat * fCost));
+				float fPara = ((mEtat * fCosi) - (mEtai * fCost)) /
+					((mEtat * fCosi) + (mEtai * fCost));
+				float fPerp = ((mEtai * fCosi) - (mEtat * fCost)) /
+					((mEtai * fCosi) + (mEtat * fCost));
 
 				return (fPara * fPara + fPerp * fPerp) / 2.0f;
 			}

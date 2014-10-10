@@ -32,46 +32,6 @@ namespace EDX
 			mTriangleCount = pObjMesh->GetTriangleCount();
 			mpIndexBuffer = new uint[3 * mTriangleCount];
 			memcpy(mpIndexBuffer, pObjMesh->GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
-
-			// Initialize materials
-			const auto& materialInfo = pObjMesh->GetMaterialInfo();
-			for (auto i = 0; i < materialInfo.size(); i++)
-			{
-				if (materialInfo[i].strTexturePath[0])
-					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].strTexturePath));
-				else
-					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].color));
-			}
-
-			mpMaterialIndices = new uint[mTriangleCount];
-			for (auto i = 0; i < mTriangleCount; i++)
-				mpMaterialIndices[i] = pObjMesh->GetMaterialIdx(i);
-		}
-
-		void TriangleMesh::LoadMesh(const char* path,
-			const BSDFType bsdfType,
-			const Vector3& pos,
-			const Vector3& scl,
-			const Vector3& rot)
-		{
-			ObjMesh* pMesh = new ObjMesh;
-			pMesh->LoadFromObj(pos, scl, rot, path, true);
-
-			LoadMesh(pMesh, bsdfType);
-		}
-
-		void TriangleMesh::LoadSphere(const float radius,
-			const int slices,
-			const int stacks,
-			const BSDFType bsdfType,
-			const Vector3& pos,
-			const Vector3& scl,
-			const Vector3& rot)
-		{
-			ObjMesh* pMesh = new ObjMesh;
-			pMesh->LoadSphere(pos, scl, rot, radius, slices, stacks);
-
-			LoadMesh(pMesh, bsdfType);
 		}
 
 		void TriangleMesh::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
@@ -106,24 +66,32 @@ namespace EDX
 			Vector2 d1 = texcoord1 - texcoord2;
 			Vector2 d2 = texcoord3 - texcoord1;
 			float det = Math::Cross(d1, d2);
+
+			Vector3 dn1 = normal1 - normal2;
+			Vector3 dn2 = normal3 - normal1;
+
 			Vector3 dpdu, dpdv;
+			Vector3 dndu, dndv;
 			if (det == 0.0f)
 			{
 				Math::CoordinateSystem(pDiffGeom->mNormal, &dpdu, &dpdv);
+				dndu = dndv = Vector3::ZERO;
 			}
 			else
 			{
 				float invDet = 1.f / det;
 				dpdu = (d2.v * e1 - d1.v * e2) * invDet;
 				dpdv = (-d2.u * e1 + d1.u * e2) * invDet;
+				dndu = (d2.v * dn1 - d1.v * dn2) * invDet;
+				dndv = (-d2.u * dn1 + d1.u * dn2) * invDet;
 			}
 			pDiffGeom->mDpdu = dpdu;
 			pDiffGeom->mDpdv = dpdv;
+			pDiffGeom->mDndu = dndu;
+			pDiffGeom->mDndv = dndv;
 
 			pDiffGeom->mShadingFrame = Frame(pDiffGeom->mNormal);
 			pDiffGeom->mGeomFrame = Frame(pDiffGeom->mGeomNormal);
-
-			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
 		}
 
 		const Vector3& TriangleMesh::GetPositionAt(uint idx) const
@@ -156,7 +124,6 @@ namespace EDX
 			SafeDeleteArray(mpNormalBuffer);
 			SafeDeleteArray(mpTexcoordBuffer);
 			SafeDeleteArray(mpIndexBuffer);
-			SafeDeleteArray(mpMaterialIndices);
 			mVertexCount = 0;
 			mTriangleCount = 0;
 		}

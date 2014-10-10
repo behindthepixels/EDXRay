@@ -26,7 +26,7 @@ namespace EDX
 		void Scene::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
 		{
 			assert(pDiffGeom);
-			mPrimitives[pDiffGeom->mPrimId]->GetMesh()->PostIntersect(ray, pDiffGeom);
+			mPrimitives[pDiffGeom->mPrimId]->PostIntersect(ray, pDiffGeom);
 		}
 
 		void Scene::AddPrimitive(Primitive* pPrim)

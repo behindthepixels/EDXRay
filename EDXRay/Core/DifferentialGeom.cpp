@@ -22,8 +22,8 @@ namespace EDX
 				Vector3 vPx = ray.mDxOrg + fTx * ray.mDxDir;
 				Vector3 vPy = ray.mDyOrg + fTy * ray.mDyDir;
 
-				mvDpdx = vPx - mPosition;
-				mvDpdy = vPy - mPosition;
+				mDpdx = vPx - mPosition;
+				mDpdy = vPy - mPosition;
 
 				auto SolveLinearSystem2x2 = [](const float A[2][2], const float B[2], float *x0, float *x1) -> bool
 				{
@@ -65,22 +65,22 @@ namespace EDX
 				Bx[1] = vPx[axes[1]] - mPosition[axes[1]];
 				By[0] = vPy[axes[0]] - mPosition[axes[0]];
 				By[1] = vPy[axes[1]] - mPosition[axes[1]];
-				if (!SolveLinearSystem2x2(A, Bx, &mfDudx, &mfDvdx))
+				if (!SolveLinearSystem2x2(A, Bx, &mDudx, &mDvdx))
 				{
-					mfDudx = 0.0f;
-					mfDvdx = 0.0f;
+					mDudx = 0.0f;
+					mDvdx = 0.0f;
 				}
-				if (!SolveLinearSystem2x2(A, By, &mfDudy, &mfDvdy))
+				if (!SolveLinearSystem2x2(A, By, &mDudy, &mDvdy))
 				{
-					mfDudy = 0.0f;
-					mfDvdy = 0.0f;
+					mDudy = 0.0f;
+					mDvdy = 0.0f;
 				}
 			}
 			else
 			{
 			Fail:
-				mvDpdx = mvDpdy = Vector3::ZERO;
-				mfDudx = mfDudy = mfDvdx = mfDvdy = 0.0f;
+				mDpdx = mDpdy = Vector3::ZERO;
+				mDudx = mDudy = mDvdx = mDvdy = 0.0f;
 			}
 		}
 	}
