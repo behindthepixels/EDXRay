@@ -10,6 +10,7 @@
 #include "Core/Primitive.h"
 #include "Core/TriangleMesh.h"
 #include "Lights/PointLight.h"
+#include "Core/BSDF.h"
 
 #include "ScenePreviewer.h"
 
@@ -35,12 +36,15 @@ void OnInit(Object* pSender, EventArgs args)
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	TriangleMesh* pMesh = new TriangleMesh;
-	pMesh->LoadMesh("../../Media/sponza/sponza.obj", Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	pMesh->LoadMesh("../../Media/sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadSphere(1.0f, 128, 128, Vector3(0.0f, 1.0f, 10.5f));
 
+	TriangleMesh* pMesh2 = new TriangleMesh;
+	pMesh2->LoadSphere(0.5, 64, 64, BSDFType::Mirror, Vector3(0, 2, 0));
 	pScene->AddPrimitive(new Primitive(pMesh));
+	pScene->AddPrimitive(new Primitive(pMesh2));
 	pScene->AddLight(new PointLight(Vector3(0.0f, 4.0f, 0.0f), Color(180.0f)));
 	pScene->InitAccelerator();
 

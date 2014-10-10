@@ -26,7 +26,7 @@ namespace EDX
 			void Release();
 			void Clear();
 
-			void AddSample(int x, int y, Color sample);
+			void AddSample(int x, int y, const Color& sample);
 			void ScaleToPixel();
 			inline void IncreSampleCount() { mSampleCount++; }
 

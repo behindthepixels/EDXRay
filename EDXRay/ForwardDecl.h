@@ -30,6 +30,7 @@ namespace EDX
 		class Triangle4;
 		class RenderTask;
 		class BuildTask;
+		enum class BSDFType;
 	}
 
 	class RandomGen;

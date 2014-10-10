@@ -35,7 +35,7 @@ namespace EDX
 			mpAccumulateBuffer.Clear();
 		}
 
-		void Film::AddSample(int x, int y, Color sample)
+		void Film::AddSample(int x, int y, const Color& sample)
 		{
 			int iRowAdd = mHeight - 1 - y;
 			int iColAdd = x;

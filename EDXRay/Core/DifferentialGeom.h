@@ -61,6 +61,8 @@ namespace EDX
 
 			Intersection()
 				: mDist(float(Math::EDX_INFINITY))
+				, mU(0.0f)
+				, mV(0.0f)
 			{
 			}
 		};
@@ -72,11 +74,25 @@ namespace EDX
 			Vector2 mTexcoord;
 			Vector3 mGeomNormal;
 			Vector3 mDpdu, mDpdv;
+			Vector3 mnDndu, mnDndv;
+
+			// Differentials
+			mutable Vector3 mvDpdx, mvDpdy;
+			mutable float mfDudx, mfDudy, mfDvdx, mfDvdy;
 
 			Frame mShadingFrame, mGeomFrame;
 
 			const BSDF* mpBSDF;
 			const AreaLight* mpAreaLight;
+
+		public:
+			DifferentialGeom()
+				: mfDudx(0.0f)
+				, mfDudy(0.0f)
+				, mfDvdx(0.0f)
+				, mfDvdy(0.0f)
+			{
+			}
 
 			inline Vector3 WorldToLocal(const Vector3& vVec) const
 			{
@@ -86,6 +102,8 @@ namespace EDX
 			{
 				return mShadingFrame.LocalToWorld(vVec);
 			}
+
+			void ComputeDifferentials(const RayDifferential& ray) const;
 		};
 
 	}

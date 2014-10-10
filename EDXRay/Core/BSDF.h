@@ -47,9 +47,10 @@ namespace EDX
 			virtual Color SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pfPDF,
 				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const = 0;
 			Color GetColor(const DifferentialGeom& diffGoem) const;
+			ScatterType GetScatterType() const { return mType; }
 			BSDFType GetBSDFType() const { return mBSDFType; }
 
-			static BSDF* CreateBSDF(const BSDFType type, const Color color);
+			static BSDF* CreateBSDF(const BSDFType type, const Color& color);
 			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
 
 		private:
@@ -75,6 +76,63 @@ namespace EDX
 		private:
 			float PDF(const Vector3& vIn, const Vector3& vOut, ScatterType types = BSDF_ALL) const;
 			Color Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
+		};
+
+		class Mirror : public BSDF
+		{
+		public:
+			Mirror(const Color cColor = Color::WHITE)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, cColor)
+			{
+			}
+			Mirror(const char* strTexPath)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, strTexPath)
+			{
+			}
+
+			Color Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGoem, ScatterType types = BSDF_ALL) const;
+			float PDF(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types = BSDF_ALL) const;
+			Color SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pfPDF,
+				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const;
+
+		private:
+			Color Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
+			float PDF(const Vector3& vIn, const Vector3& vOut, ScatterType types = BSDF_ALL) const;
+		};
+
+		class Glass : public BSDF
+		{
+		private:
+			float mfEtai, mfEtat;
+			ScatterType mTypeRef, mTypeRfr;
+
+		public:
+			Glass(const Color cColor = Color::WHITE, float fetai = 1.0f, float fetat = 1.5f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, cColor)
+				, mTypeRef(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR))
+				, mTypeRfr(ScatterType(BSDF_TRANSMISSION | BSDF_SPECULAR))
+				, mfEtai(fetai)
+				, mfEtat(fetat)
+			{
+			}
+			Glass(const char* strTexPath, float fetai = 1.0f, float fetat = 1.5f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, strTexPath)
+				, mTypeRef(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR))
+				, mTypeRfr(ScatterType(BSDF_TRANSMISSION | BSDF_SPECULAR))
+				, mfEtai(fetai)
+				, mfEtat(fetat)
+			{
+			}
+
+			Color Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGoem, ScatterType types = BSDF_ALL) const;
+			float PDF(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types = BSDF_ALL) const;
+			Color SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pfPDF,
+				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const;
+
+		private:
+			Color Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
+			float PDF(const Vector3& vIn, const Vector3& vOut, ScatterType types = BSDF_ALL) const;
+			float Fresnel(float fCosi) const;
 		};
 
 		namespace BSDFCoordinate

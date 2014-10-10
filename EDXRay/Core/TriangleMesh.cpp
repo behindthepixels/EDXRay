@@ -11,7 +11,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		void TriangleMesh::LoadMesh(const ObjMesh* pObjMesh)
+		void TriangleMesh::LoadMesh(const ObjMesh* pObjMesh, const BSDFType bsdfType)
 		{
 			mpObjMesh = pObjMesh;
 
@@ -38,9 +38,9 @@ namespace EDX
 			for (auto i = 0; i < materialInfo.size(); i++)
 			{
 				if (materialInfo[i].strTexturePath[0])
-					mpBSDFs.push_back(new LambertianDiffuse(materialInfo[i].strTexturePath));
+					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].strTexturePath));
 				else
-					mpBSDFs.push_back(new LambertianDiffuse(materialInfo[i].color));
+					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].color));
 			}
 
 			mpMaterialIndices = new uint[mTriangleCount];
@@ -49,6 +49,7 @@ namespace EDX
 		}
 
 		void TriangleMesh::LoadMesh(const char* path,
+			const BSDFType bsdfType,
 			const Vector3& pos,
 			const Vector3& scl,
 			const Vector3& rot)
@@ -56,12 +57,13 @@ namespace EDX
 			ObjMesh* pMesh = new ObjMesh;
 			pMesh->LoadFromObj(pos, scl, rot, path, true);
 
-			LoadMesh(pMesh);
+			LoadMesh(pMesh, bsdfType);
 		}
 
 		void TriangleMesh::LoadSphere(const float radius,
 			const int slices,
 			const int stacks,
+			const BSDFType bsdfType,
 			const Vector3& pos,
 			const Vector3& scl,
 			const Vector3& rot)
@@ -69,7 +71,7 @@ namespace EDX
 			ObjMesh* pMesh = new ObjMesh;
 			pMesh->LoadSphere(pos, scl, rot, radius, slices, stacks);
 
-			LoadMesh(pMesh);
+			LoadMesh(pMesh, bsdfType);
 		}
 
 		void TriangleMesh::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const

@@ -4,6 +4,8 @@
 #include "Math/Vector.h"
 #include "Memory/RefPtr.h"
 
+#include "BSDF.h"
+
 namespace EDX
 {
 	namespace RayTracer
@@ -39,15 +41,17 @@ namespace EDX
 				Release();
 			}
 
-			void LoadMesh(const ObjMesh* pObjMesh);
+			void LoadMesh(const ObjMesh* pObjMesh, const BSDFType bsdfType);
 
 			void LoadMesh(const char* path,
+				const BSDFType bsdfType = BSDFType::Diffuse,
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO);
 			void LoadSphere(const float radius,
 				const int slices = 64,
 				const int stacks = 64,
+				const BSDFType bsdfType = BSDFType::Diffuse,
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO);

@@ -23,6 +23,8 @@ namespace EDX
 				const Vector3 eyeDir = -ray.mDir;
 				const Vector3& position = diffGeom.mPosition;
 				const Vector3& normal = diffGeom.mNormal;
+				const BSDF* pBSDF = diffGeom.mpBSDF;
+
 				for (const auto& pLight : pScene->GetLight())
 				{
 					Sample sample;
@@ -31,7 +33,6 @@ namespace EDX
 					Vector3 lightDir;
 					VisibilityTester visibility;
 					float lightPdf;
-					const BSDF* pBSDF = diffGeom.mpBSDF;
 					const Color Li = pLight->Illuminate(position, sample, &lightDir, &visibility, &lightPdf);
 					if (lightPdf > 0.0f && !Li.IsBlack())
 					{
@@ -77,6 +78,9 @@ namespace EDX
 						}
 					}
 				}
+
+				L += Integrator::SpecularReflect(this, pScene, ray, diffGeom, pSamples, memory, random);
+				L += Integrator::SpecularTransmit(this, pScene, ray, diffGeom, pSamples, memory, random);
 			}
 
 			return L;
