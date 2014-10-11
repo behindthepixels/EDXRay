@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "../Integrators/DirectLighting.h"
+#include "../Integrators/PathTracing.h"
 #include "Sampler.h"
 #include "../Sampler/RandomSampler.h"
 #include "Film.h"
@@ -36,7 +37,7 @@ namespace EDX
 
 			// Initialize scene
 			mpScene = new Scene;
-			mpIntegrator = new DirectLightingIntegrator;
+			mpIntegrator = new PathTracingIntegrator(6);
 
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);

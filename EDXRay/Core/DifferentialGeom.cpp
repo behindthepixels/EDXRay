@@ -7,7 +7,7 @@ namespace EDX
 	{
 		void DifferentialGeom::ComputeDifferentials(const RayDifferential& ray) const
 		{
-			if (ray.mbHasDifferential)
+			if (ray.mHasDifferential)
 			{
 				float fD = -Math::Dot(mNormal, mPosition);
 

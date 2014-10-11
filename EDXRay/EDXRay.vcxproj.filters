@@ -96,6 +96,9 @@
     <ClInclude Include="Core\Light.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Integrators\PathTracing.h">
+      <Filter>Source Files\Integrators</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -139,6 +142,9 @@
     </ClCompile>
     <ClCompile Include="Core\Integrator.cpp">
       <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Integrators\PathTracing.cpp">
+      <Filter>Source Files\Integrators</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

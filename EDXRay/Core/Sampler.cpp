@@ -17,5 +17,13 @@ namespace EDX
 			if (count2D > 0)
 				p2D = new Vector2[count2D];
 		}
+
+
+		Sample::Sample(RandomGen& random)
+		{
+			u = random.Float();
+			v = random.Float();
+			w = random.Float();
+		}
 	}
 }

@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
+#include "Math/Vector.h"
 
 
 namespace EDX
@@ -14,6 +15,8 @@ namespace EDX
 			virtual Color Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory) const = 0;
 
 		public:
+			static Color EstimateDirectLighting(const DifferentialGeom& diffGeom, const Vector3& outVec, const Light* pLight,
+				const Scene* pScene, const Sample& lightSample, const Sample& bsdfSample);
 			static Color SpecularReflect(const Integrator* pIntegrator, const Scene* pScene, const RayDifferential& ray,
 				const DifferentialGeom& diffGeom, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory);
 			static Color SpecularTransmit(const Integrator* pIntegrator, const Scene* pScene, const RayDifferential& ray,

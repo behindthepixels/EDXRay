@@ -36,6 +36,7 @@
     <ClInclude Include="Core\TriangleMesh.h" />
     <ClInclude Include="ForwardDecl.h" />
     <ClInclude Include="Integrators\DirectLighting.h" />
+    <ClInclude Include="Integrators\PathTracing.h" />
     <ClInclude Include="Lights\PointLight.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
     <ClInclude Include="Tracer\BVH.h" />
@@ -55,6 +56,7 @@
     <ClCompile Include="Core\Scene.cpp" />
     <ClCompile Include="Core\TriangleMesh.cpp" />
     <ClCompile Include="Integrators\DirectLighting.cpp" />
+    <ClCompile Include="Integrators\PathTracing.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
     <ClCompile Include="Tracer\BVH.cpp" />
   </ItemGroup>

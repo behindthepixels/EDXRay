@@ -8,13 +8,13 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		class DirectLightingIntegrator : public Integrator
+		class PathTracingIntegrator : public Integrator
 		{
 		private:
 			uint mMaxDepth;
 
 		public:
-			DirectLightingIntegrator(int depth)
+			PathTracingIntegrator(int depth)
 				: mMaxDepth(depth)
 			{
 			}

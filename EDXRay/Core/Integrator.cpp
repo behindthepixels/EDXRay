@@ -1,5 +1,7 @@
 #include "Integrator.h"
 #include "Scene.h"
+#include "Light.h"
+#include "Sampling.h"
 #include "DifferentialGeom.h"
 #include "BSDF.h"
 #include "Sampler.h"
@@ -10,6 +12,71 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		Color Integrator::EstimateDirectLighting(const DifferentialGeom& diffGeom,
+			const Vector3& outDir,
+			const Light* pLight,
+			const Scene* pScene,
+			const Sample& lightSample,
+			const Sample& bsdfSample)
+		{
+			const Vector3& position = diffGeom.mPosition;
+			const Vector3& normal = diffGeom.mNormal;
+			const BSDF* pBSDF = diffGeom.mpBSDF;
+
+			Color L;
+
+			// Sample light sources
+			Vector3 lightDir;
+			VisibilityTester visibility;
+			float lightPdf;
+			const Color Li = pLight->Illuminate(position, lightSample, &lightDir, &visibility, &lightPdf);
+			if (lightPdf > 0.0f && !Li.IsBlack())
+			{
+				const Color f = pBSDF->Eval(outDir, lightDir, diffGeom, ScatterType(BSDF_ALL & ~BSDF_SPECULAR));
+				if (!f.IsBlack() && visibility.Unoccluded(pScene))
+				{
+					if (pLight->IsDelta())
+					{
+						L += f * Li * Math::AbsDot(lightDir, normal) / lightPdf;
+						return L;
+					}
+
+					const float bsdfPdf = pBSDF->Pdf(outDir, lightDir, diffGeom);
+					const float misWeight = Sampling::PowerHeuristic(1, lightPdf, 1, bsdfPdf);
+					L += f * Li * Math::AbsDot(lightDir, normal) * misWeight / lightPdf;
+				}
+			}
+
+			// Sample BSDF for MIS
+			ScatterType types;
+			float bsdfPdf;
+			const Color f = pBSDF->SampleScattered(outDir, bsdfSample, diffGeom, &lightDir, &bsdfPdf, ScatterType(BSDF_ALL & ~BSDF_SPECULAR), &types);
+			if (bsdfPdf > 0.0f && !f.IsBlack())
+			{
+				lightPdf = pLight->Pdf(position, lightDir);
+				if (lightPdf > 0.0f)
+				{
+					float misWeight = Sampling::PowerHeuristic(1, lightPdf, 1, bsdfPdf);
+
+					DifferentialGeom isect;
+					Ray rayLight = Ray(position, lightDir);
+					Color Li;
+					if (pScene->Intersect(rayLight, &isect))
+					{
+						if (pLight == (Light*)isect.mpAreaLight)
+							Li = pLight->Emit(-lightDir);
+					}
+
+					if (!Li.IsBlack())
+					{
+						L += f * Li * Math::AbsDot(lightDir, normal) * misWeight / bsdfPdf;
+					}
+				}
+			}
+
+			return L;
+		}
+
 		Color Integrator::SpecularReflect(const Integrator* pIntegrator,
 			const Scene* pScene,
 			const RayDifferential& ray,
@@ -30,9 +97,9 @@ namespace EDX
 			if (pdf > 0.0f && !f.IsBlack() && Math::AbsDot(vIn, normal) != 0.0f)
 			{
 				RayDifferential rayRef = RayDifferential(position, vIn, float(Math::EDX_INFINITY), 0.0f, ray.mDepth + 1);
-				if (ray.mbHasDifferential)
+				if (ray.mHasDifferential)
 				{
-					rayRef.mbHasDifferential = true;
+					rayRef.mHasDifferential = true;
 					rayRef.mDxOrg = position + diffGeom.mDpdx;
 					rayRef.mDyOrg = position + diffGeom.mDpdy;
 
@@ -78,9 +145,9 @@ namespace EDX
 			if (pdf > 0.0f && !f.IsBlack() && Math::AbsDot(vIn, normal) != 0.0f)
 			{
 				RayDifferential rayRfr = RayDifferential(position, vIn, float(Math::EDX_INFINITY), 0.0f, ray.mDepth + 1);
-				if (ray.mbHasDifferential)
+				if (ray.mHasDifferential)
 				{
-					rayRfr.mbHasDifferential = true;
+					rayRfr.mHasDifferential = true;
 					rayRfr.mDxOrg = position + diffGeom.mDpdx;
 					rayRfr.mDyOrg = position + diffGeom.mDpdy;
 

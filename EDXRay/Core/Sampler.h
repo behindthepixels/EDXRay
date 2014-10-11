@@ -37,6 +37,15 @@ namespace EDX
 		struct Sample
 		{
 			float u, v, w;
+
+			Sample()
+				: u(0.0f)
+				, v(0.0f)
+				, w(0.0f)
+			{
+			}
+
+			Sample(RandomGen& random);
 		};
 
 		class Sampler

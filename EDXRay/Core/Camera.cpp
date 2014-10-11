@@ -82,7 +82,7 @@ namespace EDX
 			pRay->mDxOrg = pRay->mDyOrg = pRay->mOrg;
 			pRay->mDxDir = Math::Normalize(camCoord + mDxCam);
 			pRay->mDyDir = Math::Normalize(camCoord + mDyCam);
-			pRay->mbHasDifferential = true;
+			pRay->mHasDifferential = true;
 
 			*pRay = Matrix::TransformRayDiff(*pRay, mViewInv);
 			pRay->mMin = float(Math::EDX_EPSILON);
