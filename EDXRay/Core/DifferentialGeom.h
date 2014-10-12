@@ -75,6 +75,7 @@ namespace EDX
 			Vector3 mGeomNormal;
 			Vector3 mDpdu, mDpdv;
 			Vector3 mDndu, mDndv;
+			bool	mTextured;
 
 			// Differentials
 			mutable Vector3 mDpdx, mDpdy;
@@ -91,6 +92,7 @@ namespace EDX
 				, mDudy(0.0f)
 				, mDvdx(0.0f)
 				, mDvdy(0.0f)
+				, mTextured(false)
 			{
 			}
 

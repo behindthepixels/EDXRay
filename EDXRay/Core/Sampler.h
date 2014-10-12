@@ -26,12 +26,30 @@ namespace EDX
 			SampleBuffer()
 				: count1D(0)
 				, count2D(0)
+				, p1D(nullptr)
+				, p2D(nullptr)
 			{
 			}
 
-			inline int Request1DArray(int count) { count1D += count; return count1D - 1; }
-			inline int Request2DArray(int count) { count2D += count; return count2D - 1; }
+			inline int Request1DArray(int count) { int ret = count1D; count1D += count; return ret; }
+			inline int Request2DArray(int count) { int ret = count2D; count2D += count; return ret; }
+
+			SampleBuffer* Duplicate() const;
 			void Validate();
+		};
+
+		struct SampleOffsets
+		{
+			uint offset1d, offset2d;
+
+			SampleOffsets()
+			{
+			}
+			SampleOffsets(uint count, SampleBuffer* pSampleBuf)
+			{
+				offset1d = pSampleBuf->Request1DArray(count);
+				offset2d = pSampleBuf->Request2DArray(count);
+			}
 		};
 
 		struct Sample
@@ -46,6 +64,12 @@ namespace EDX
 			}
 
 			Sample(RandomGen& random);
+			Sample(const SampleOffsets& offsets, const SampleBuffer* pSampleBuf)
+			{
+				w = pSampleBuf->p1D[offsets.offset1d];
+				u = pSampleBuf->p2D[offsets.offset2d].u;
+				v = pSampleBuf->p2D[offsets.offset2d].v;
+			}
 		};
 
 		class Sampler

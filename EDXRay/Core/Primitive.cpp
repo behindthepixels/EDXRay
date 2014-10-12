@@ -74,5 +74,10 @@ namespace EDX
 			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
 			mpMesh->PostIntersect(ray, pDiffGeom);
 		}
+
+		const BSDF* Primitive::GetBSDF(const uint triId) const
+		{
+			return mpBSDFs[mpMaterialIndices[triId]].Ptr();
+		}
 	}
 }

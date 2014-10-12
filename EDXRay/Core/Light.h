@@ -31,11 +31,20 @@ namespace EDX
 
 		class Light
 		{
+		protected:
+			uint mSampleCount;
+
 		public:
+			Light(uint sampCount)
+				: mSampleCount(sampCount)
+			{
+			}
+
 			virtual ~Light() {}
 			virtual Color Illuminate(const Vector3& pos, const Sample& lightSample, Vector3* pDir, VisibilityTester* pVisTest, float* pPdf) const = 0;
 			virtual Color Emit(const Vector3 dir) const = 0;
 			virtual float Pdf(const Vector3& pos, const Vector3& dir) const = 0;
+			float GetSampleCount() const { return mSampleCount; }
 			virtual bool IsDelta() const = 0;
 		};
 	}

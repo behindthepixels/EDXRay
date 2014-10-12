@@ -18,6 +18,7 @@ namespace EDX
 
 			uint		mVertexCount;
 			uint		mTriangleCount;
+			bool		mTextured;
 
 			RefPtr<const ObjMesh>	mpObjMesh;
 

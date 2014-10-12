@@ -17,6 +17,7 @@ namespace EDX
 		struct CameraSample;
 		struct SampleBuffer;
 		struct Sample;
+		struct SampleOffsets;
 		class Sampler;
 		class Intersection;
 		class DifferentialGeom;

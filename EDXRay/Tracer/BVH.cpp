@@ -13,6 +13,7 @@ namespace EDX
 	{
 		void BVH2::Construct(const vector<RefPtr<Primitive>>& prims)
 		{
+			mpRefPrims = &const_cast<vector<RefPtr<Primitive>>&>(prims);
 			ExtractGeometry(prims);
 
 			// Init build bounding box and index info
@@ -340,7 +341,8 @@ namespace EDX
 						mBuildVertexCount + pIndices[3 * j + 1],
 						mBuildVertexCount + pIndices[3 * j + 2],
 						i,
-						j);
+						j,
+						prims[i]->GetBSDF(j)->GetTexture()->HasAlpha());
 				}
 
 				// Extract vertices
@@ -431,7 +433,7 @@ namespace EDX
 					Triangle4Node* pLeafNode = (Triangle4Node*)pNode;
 					for (auto i = 0; i < pLeafNode->triangleCount; i++)
 					{
-						if (pLeafNode[i].tri4.Intersect(ray, pIsect))
+						if (pLeafNode[i].tri4.Intersect(ray, pIsect, mpRefPrims))
 							hit = true;
 					}
 					nearFar = SSE::Shuffle<0, 1, 2, 3>(nearFar, -pIsect->mDist);
@@ -513,7 +515,7 @@ namespace EDX
 					Triangle4Node* pLeafNode = (Triangle4Node*)pNode;
 					for (auto i = 0; i < pLeafNode->triangleCount; i++)
 					{
-						if (pLeafNode[i].tri4.Occluded(ray))
+						if (pLeafNode[i].tri4.Occluded(ray, mpRefPrims))
 							return true;
 					}
 

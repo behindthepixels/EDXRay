@@ -18,13 +18,15 @@ namespace EDX
 		{
 			uint idx1, idx2, idx3;
 			uint meshIdx, triIdx;
+			bool hasAlpha;
 
-			BuildTriangle(uint i1 = 0, uint i2 = 0, uint i3 = 0, uint m = 0, uint t = 0)
+			BuildTriangle(uint i1 = 0, uint i2 = 0, uint i3 = 0, uint m = 0, uint t = 0, bool alpha = false)
 				: idx1(i1)
 				, idx2(i2)
 				, idx3(i3)
 				, meshIdx(m)
 				, triIdx(t)
+				, hasAlpha(alpha)
 			{
 			}
 		};
@@ -107,6 +109,7 @@ namespace EDX
 			BuildTriangle*	mpBuildIndices;
 			uint mBuildVertexCount;
 			uint mBuildTriangleCount;
+			vector<RefPtr<Primitive>>* mpRefPrims;
 
 			BoundingBox mBounds;
 
@@ -123,6 +126,7 @@ namespace EDX
 				, mBuildVertexCount(0)
 				, mBuildTriangleCount(0)
 				, MaxDepth(128)
+				, mpRefPrims(nullptr)
 			{
 			}
 			~BVH2()

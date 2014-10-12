@@ -11,54 +11,28 @@ namespace EDX
 		{
 			inline void ConcentricSampleDisk(float u1, float u2, float *dx, float *dy)
 			{
-				float r, theta;
-				// Map uniform random numbers to $[-1,1]^2$
-				float sx = 2 * u1 - 1;
-				float sy = 2 * u2 - 1;
+				float r1 = 2.0f * u1 - 1.0f;
+				float r2 = 2.0f * u2 - 1.0f;
 
-				// Map square to $(r,\theta)$
+				/* Modified concencric map code with less branching (by Dave Cline), see
+				http://psgraphics.blogspot.ch/2011/01/improved-code-for-concentric-map.html */
 
-				// Handle degeneracy at the origin
-				if (sx == 0.0 && sy == 0.0)
+				float phi, r;
+				if (r1 == 0 && r2 == 0)
+					r = phi = 0;
+
+				if (r1*r1 > r2*r2)
 				{
-					*dx = 0.0;
-					*dy = 0.0;
-					return;
+					r = r1;
+					phi = float(Math::EDX_PI_4) * (r2 / r1);
 				}
-				if (sx >= -sy)
-				{
-					if (sx > sy)
-					{
-						// Handle first region of disk
-						r = sx;
-						if (sy > 0.0) theta = sy / r;
-						else          theta = 8.0f + sy / r;
-					}
-					else
-					{
-						// Handle second region of disk
-						r = sy;
-						theta = 2.0f - sx / r;
-					}
+				else {
+					r = r2;
+					phi = float(Math::EDX_PI_2) - (r1 / r2) * float(Math::EDX_PI_4);
 				}
-				else
-				{
-					if (sx <= sy)
-					{
-						// Handle third region of disk
-						r = -sx;
-						theta = 4.0f - sy / r;
-					}
-					else
-					{
-						// Handle fourth region of disk
-						r = -sy;
-						theta = 6.0f + sx / r;
-					}
-				}
-				theta *= float(Math::EDX_PI_4);
-				*dx = r * Math::Cos(theta);
-				*dy = r * Math::Sin(theta);
+
+				*dx = r * Math::Cos(phi);
+				*dy = r * Math::Sin(phi);
 			}
 			inline void UniformSampleTriangle(float u1, float u2, float* u, float* v)
 			{

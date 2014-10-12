@@ -12,7 +12,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		Color PathTracingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory) const
+		Color PathTracingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory) const
 		{
 			Color L = Color::BLACK;
 			Color pathThroughput = Color::WHITE;
@@ -31,16 +31,23 @@ namespace EDX
 						diffGeom.ComputeDifferentials(pathRay);
 
 					// Explicitly sample light sources
-					L += pathThroughput * Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLight()[0].Ptr(), pScene, Sample(random), Sample(random));
+					const BSDF* pBSDF = diffGeom.mpBSDF;
+					if (!pBSDF->IsSpecular())
+					{
+						Sample lightSample = Sample(mpLightSampleOffsets[bounce], pSampleBuf);
+						Sample bsdfSample = Sample(mpBSDFSampleOffsets[bounce], pSampleBuf);
+						auto lightIdx = Math::Min(lightSample.w * pScene->GetLights().size(), pScene->GetLights().size() - 1);
+						L += pathThroughput * Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, lightSample, bsdfSample);
+					}
 
 					const Vector3& pos = diffGeom.mPosition;
 					const Vector3& normal = diffGeom.mNormal;
-					const BSDF* pBSDF = diffGeom.mpBSDF;
 					Vector3 vOut = -pathRay.mDir;
 					Vector3 vIn;
 					float pdf;
 					ScatterType bsdfFlags;
-					Color f = pBSDF->SampleScattered(vOut, Sample(random), diffGeom, &vIn, &pdf, BSDF_ALL, &bsdfFlags);
+					Sample scatterSample = Sample(mpScatterOffsets[bounce], pSampleBuf);
+					Color f = pBSDF->SampleScattered(vOut, scatterSample, diffGeom, &vIn, &pdf, BSDF_ALL, &bsdfFlags);
 					if (f.IsBlack() || pdf == 0.0f)
 						break;
 
@@ -65,6 +72,31 @@ namespace EDX
 			}
 
 			return L;
+		}
+
+		void PathTracingIntegrator::RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf)
+		{
+			assert(pSampleBuf);
+
+			mpLightSampleOffsets = new SampleOffsets[mMaxDepth];
+			mpBSDFSampleOffsets = new SampleOffsets[mMaxDepth];
+			mpScatterOffsets = new SampleOffsets[mMaxDepth];
+
+			for (auto i = 0; i < mMaxDepth; i++)
+			{
+				mpLightSampleOffsets[i] = SampleOffsets(1, pSampleBuf);
+				mpBSDFSampleOffsets[i] = SampleOffsets(1, pSampleBuf);
+				mpScatterOffsets[i] = SampleOffsets(1, pSampleBuf);
+			}
+
+			pSampleBuf->Validate();
+		}
+
+		PathTracingIntegrator::~PathTracingIntegrator()
+		{
+			SafeDeleteArray(mpLightSampleOffsets);
+			SafeDeleteArray(mpBSDFSampleOffsets);
+			SafeDeleteArray(mpScatterOffsets);
 		}
 	}
 }

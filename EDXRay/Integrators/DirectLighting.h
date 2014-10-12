@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EDXPrerequisites.h"
+#include "../ForwardDecl.h"
 #include "../Core/Integrator.h"
 
 
@@ -12,15 +13,21 @@ namespace EDX
 		{
 		private:
 			uint mMaxDepth;
+			SampleOffsets* mpLightSampleOffsets;
+			SampleOffsets* mpBSDFSampleOffsets;
 
 		public:
 			DirectLightingIntegrator(int depth)
 				: mMaxDepth(depth)
+				, mpLightSampleOffsets(nullptr)
+				, mpBSDFSampleOffsets(nullptr)
 			{
 			}
+			~DirectLightingIntegrator();
 
 		public:
 			Color Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory) const;
+			void RequestSamples(const Scene* pScene, SampleBuffer* pSamples);
 		};
 	}
 }

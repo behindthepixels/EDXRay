@@ -7,10 +7,21 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		SampleBuffer* SampleBuffer::Duplicate() const
+		{
+			SampleBuffer* pRet = new SampleBuffer;
+
+			pRet->count1D = count1D;
+			pRet->count2D = count2D;
+			pRet->Validate();
+
+			return pRet;
+		}
+
 		void SampleBuffer::Validate()
 		{
-			SafeDelete(p1D);
-			SafeDelete(p2D);
+			SafeDeleteArray(p1D);
+			SafeDeleteArray(p2D);
 
 			if (count1D > 0)
 				p1D = new float[count1D];

@@ -40,6 +40,7 @@ namespace EDX
 				const Vector3& rot = Vector3::ZERO);
 
 			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
+			const BSDF* GetBSDF(const uint triId) const;
 
 			const TriangleMesh* GetMesh() const
 			{

@@ -29,7 +29,7 @@ namespace EDX
 			void AddPrimitive(Primitive* pPrim);
 			void AddLight(Light* pLight);
 			const vector<RefPtr<Primitive>>& GetPrimitives() const { return mPrimitives; }
-			const vector<RefPtr<Light>>& GetLight() const { return mLights; }
+			const vector<RefPtr<Light>>& GetLights() const { return mLights; }
 
 			void InitAccelerator();
 		};

@@ -32,6 +32,8 @@ namespace EDX
 			mTriangleCount = pObjMesh->GetTriangleCount();
 			mpIndexBuffer = new uint[3 * mTriangleCount];
 			memcpy(mpIndexBuffer, pObjMesh->GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
+
+			mTextured = mpObjMesh->IsTextured();
 		}
 
 		void TriangleMesh::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
@@ -46,52 +48,60 @@ namespace EDX
 			const Vector3& normal2 = GetNormalAt(3 * pDiffGeom->mTriId + 1);
 			const Vector3& normal3 = GetNormalAt(3 * pDiffGeom->mTriId + 2);
 
-			const Vector2& texcoord1 = GetTexCoordAt(3 * pDiffGeom->mTriId);
-			const Vector2& texcoord2 = GetTexCoordAt(3 * pDiffGeom->mTriId + 1);
-			const Vector2& texcoord3 = GetTexCoordAt(3 * pDiffGeom->mTriId + 2);
-
 			const float u = pDiffGeom->mU;
 			const float v = pDiffGeom->mV;
 			const float w = 1.0f - u - v;
 
 			pDiffGeom->mPosition = ray.CalcPoint(pDiffGeom->mDist);
 			pDiffGeom->mNormal = Math::Normalize(w * normal1 + u * normal2 + v * normal3);
-			pDiffGeom->mTexcoord = w * texcoord1 + u * texcoord2 + v * texcoord3;
-
 
 			Vector3 e1 = vt1 - vt2;
 			Vector3 e2 = vt3 - vt1;
 			pDiffGeom->mGeomNormal = Math::Normalize(Math::Cross(e2, e1));
 
-			Vector2 d1 = texcoord1 - texcoord2;
-			Vector2 d2 = texcoord3 - texcoord1;
-			float det = Math::Cross(d1, d2);
-
-			Vector3 dn1 = normal1 - normal2;
-			Vector3 dn2 = normal3 - normal1;
-
-			Vector3 dpdu, dpdv;
-			Vector3 dndu, dndv;
-			if (det == 0.0f)
-			{
-				Math::CoordinateSystem(pDiffGeom->mNormal, &dpdu, &dpdv);
-				dndu = dndv = Vector3::ZERO;
-			}
-			else
-			{
-				float invDet = 1.f / det;
-				dpdu = (d2.v * e1 - d1.v * e2) * invDet;
-				dpdv = (-d2.u * e1 + d1.u * e2) * invDet;
-				dndu = (d2.v * dn1 - d1.v * dn2) * invDet;
-				dndv = (-d2.u * dn1 + d1.u * dn2) * invDet;
-			}
-			pDiffGeom->mDpdu = dpdu;
-			pDiffGeom->mDpdv = dpdv;
-			pDiffGeom->mDndu = dndu;
-			pDiffGeom->mDndv = dndv;
-
 			pDiffGeom->mShadingFrame = Frame(pDiffGeom->mNormal);
 			pDiffGeom->mGeomFrame = Frame(pDiffGeom->mGeomNormal);
+
+			if (mTextured)
+			{
+				pDiffGeom->mTextured = true;
+
+				const Vector2& texcoord1 = GetTexCoordAt(3 * pDiffGeom->mTriId);
+				const Vector2& texcoord2 = GetTexCoordAt(3 * pDiffGeom->mTriId + 1);
+				const Vector2& texcoord3 = GetTexCoordAt(3 * pDiffGeom->mTriId + 2);
+
+				pDiffGeom->mTexcoord = w * texcoord1 + u * texcoord2 + v * texcoord3;
+
+				Vector2 d1 = texcoord1 - texcoord2;
+				Vector2 d2 = texcoord3 - texcoord1;
+				float det = Math::Cross(d1, d2);
+
+				Vector3 dn1 = normal1 - normal2;
+				Vector3 dn2 = normal3 - normal1;
+
+				Vector3 dpdu, dpdv;
+				Vector3 dndu, dndv;
+				if (det == 0.0f)
+				{
+					Math::CoordinateSystem(pDiffGeom->mNormal, &dpdu, &dpdv);
+					dndu = dndv = Vector3::ZERO;
+				}
+				else
+				{
+					float invDet = 1.f / det;
+					dpdu = (d2.v * e1 - d1.v * e2) * invDet;
+					dpdv = (-d2.u * e1 + d1.u * e2) * invDet;
+					dndu = (d2.v * dn1 - d1.v * dn2) * invDet;
+					dndv = (-d2.u * dn1 + d1.u * dn2) * invDet;
+				}
+				pDiffGeom->mDpdu = dpdu;
+				pDiffGeom->mDpdv = dpdv;
+				pDiffGeom->mDndu = dndu;
+				pDiffGeom->mDndv = dndv;
+			}
+			else
+				pDiffGeom->mTextured = false;
+
 		}
 
 		const Vector3& TriangleMesh::GetPositionAt(uint idx) const

@@ -19,6 +19,7 @@ namespace EDX
 			RefPtr<Integrator> mpIntegrator;
 			RefPtr<Sampler>	mpSampler;
 			RefPtr<Film>	mpFilm;
+			RefPtr<SampleBuffer> mpSampleBuf;
 
 			RenderJobDesc	mJobDesc;
 
@@ -34,8 +35,10 @@ namespace EDX
 			
 			void Initialize(const RenderJobDesc& desc);
 
-			void RenderFrame(RandomGen& random, MemoryArena& memory);
+			void RenderFrame(SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory);
 			void RenderImage(int threadId, RandomGen& random, MemoryArena& memory);
+
+			void BakeSamples();
 
 			void QueueRenderTasks();
 			void StopRenderTasks();

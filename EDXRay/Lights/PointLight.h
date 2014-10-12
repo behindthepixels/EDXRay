@@ -16,8 +16,10 @@ namespace EDX
 
 		public:
 			PointLight(const Vector3& pos,
-				const Color& intens)
-				: mPosition(pos)
+				const Color& intens, 
+				const uint sampCount = 1)
+				: Light(sampCount)
+				, mPosition(pos)
 				, mIntensity(intens)
 			{
 			}

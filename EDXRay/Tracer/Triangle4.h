@@ -3,6 +3,8 @@
 #include "SIMD/SSE.h"
 #include "BVH.h"
 #include "../Core/DifferentialGeom.h"
+#include "../Core/Primitive.h"
+#include "../Core/TriangleMesh.h"
 
 namespace EDX
 {
@@ -18,12 +20,14 @@ namespace EDX
 
 			uint		mMeshIds[4];
 			uint		mTriIds[4];
+			bool		mHasAlpha[4];
 
 		public:
 			Triangle4()
 			{
 				mMeshIds[0] = mMeshIds[1] = mMeshIds[2] = mMeshIds[3] = 0;
 				mTriIds[0] = mTriIds[1] = mTriIds[2] = mTriIds[3] = 0;
+				mHasAlpha[0] = mHasAlpha[1] = mHasAlpha[2] = mHasAlpha[3] = false;
 			}
 
 			void Pack(const BuildVertex tris[4][3], const BuildTriangle indices[4], const size_t count)
@@ -57,10 +61,11 @@ namespace EDX
 					// Pack Ids
 					mMeshIds[i] = indices[i].meshIdx;
 					mTriIds[i] = indices[i].triIdx;
+					mHasAlpha[i] = indices[i].hasAlpha;
 				}
 			}
 
-			__forceinline bool Intersect(const Ray& ray, Intersection* pIsect) const
+			__forceinline bool Intersect(const Ray& ray, Intersection* pIsect, const vector<RefPtr<Primitive>>* pPrims) const
 			{
 				// Calculate determinant
 				const Vec3f_SSE vOrgs = Vec3f_SSE(ray.mOrg);
@@ -89,8 +94,24 @@ namespace EDX
 				const FloatSSE t = T * invAbsDet;
 
 				const size_t idx = SSE::SelectMin(valid, t);
-				float hitT = t[idx];
 				float baryCentricU = u[idx], baryCentricV = v[idx];
+				if (mHasAlpha[idx])
+				{
+					const auto prim = (*pPrims)[mMeshIds[idx]].Ptr();
+					const auto mesh = prim->GetMesh();
+					const Vector2& texcoord1 = mesh->GetTexCoordAt(3 * mTriIds[idx]);
+					const Vector2& texcoord2 = mesh->GetTexCoordAt(3 * mTriIds[idx] + 1);
+					const Vector2& texcoord3 = mesh->GetTexCoordAt(3 * mTriIds[idx] + 2);
+
+					const Vector2 texCoord = (1.0f - baryCentricU - baryCentricV) * texcoord1 +
+						baryCentricU * texcoord2 +
+						baryCentricV * texcoord3;
+
+					if (prim->GetBSDF(mTriIds[idx])->GetTexture()->Sample(texCoord, nullptr, TextureFilter::Nearest).a == 0)
+						return false;
+				}
+
+				float hitT = t[idx];
 
 				ray.mMax = hitT;
 				pIsect->mDist = hitT;
@@ -102,7 +123,7 @@ namespace EDX
 				return true;
 			}
 
-			__forceinline bool Occluded(const Ray& ray) const
+			__forceinline bool Occluded(const Ray& ray, const vector<RefPtr<Primitive>>* pPrims) const
 			{
 				// Calculate determinant
 				const Vec3f_SSE vOrgs = Vec3f_SSE(ray.mOrg);
@@ -124,6 +145,32 @@ namespace EDX
 				valid &= (T > absDet * FloatSSE(ray.mMin)) & (T < absDet * FloatSSE(ray.mMax));
 				if (SSE::None(valid))
 					return false;
+
+				const FloatSSE invAbsDet = SSE::Rcp(absDet);
+				const FloatSSE t = T * invAbsDet;
+				const size_t idx = SSE::SelectMin(valid, t);
+				if (mHasAlpha[idx])
+				{
+					const FloatSSE u = U * invAbsDet;
+					const FloatSSE v = V * invAbsDet;
+					const FloatSSE t = T * invAbsDet;
+
+					const size_t idx = SSE::SelectMin(valid, t);
+					float baryCentricU = u[idx], baryCentricV = v[idx];
+
+					const auto prim = (*pPrims)[mMeshIds[idx]].Ptr();
+					const auto mesh = prim->GetMesh();
+					const Vector2& texcoord1 = mesh->GetTexCoordAt(3 * mTriIds[idx]);
+					const Vector2& texcoord2 = mesh->GetTexCoordAt(3 * mTriIds[idx] + 1);
+					const Vector2& texcoord3 = mesh->GetTexCoordAt(3 * mTriIds[idx] + 2);
+
+					const Vector2 texCoord = (1.0f - baryCentricU - baryCentricV) * texcoord1 +
+						baryCentricU * texcoord2 +
+						baryCentricV * texcoord3;
+
+					if (prim->GetBSDF(mTriIds[idx])->GetTexture()->Sample(texCoord, nullptr, TextureFilter::Nearest).a == 0)
+						return false;
+				}
 
 				return true;
 			}

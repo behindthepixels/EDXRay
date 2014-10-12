@@ -55,7 +55,7 @@ namespace EDX
 			ThreadScheduler::DeleteInstance();
 		}
 
-		void Renderer::RenderFrame(RandomGen& random, MemoryArena& memory)
+		void Renderer::RenderFrame(SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory)
 		{
 			RenderTile* pTask;
 			while (mTaskSync.GetNextTask(pTask))
@@ -67,15 +67,14 @@ namespace EDX
 						if (mTaskSync.Aborted())
 							return;
 
-						SampleBuffer sample;
-						mpSampler->GenerateSamples(&sample, random);
-						sample.imageX += x;
-						sample.imageY += y;
+						mpSampler->GenerateSamples(pSampleBuf, random);
+						pSampleBuf->imageX += x;
+						pSampleBuf->imageY += y;
 
 						RayDifferential ray;
-						mpCamera->GenRayDifferential(sample, &ray);
+						mpCamera->GenRayDifferential(*pSampleBuf, &ray);
 
-						Color L = mpIntegrator->Li(ray, mpScene.Ptr(), &sample, random, memory);
+						Color L = mpIntegrator->Li(ray, mpScene.Ptr(), pSampleBuf, random, memory);
 
 						mpFilm->AddSample(x, y, L);
 					}
@@ -85,12 +84,14 @@ namespace EDX
 
 		void Renderer::RenderImage(int threadId, RandomGen& random, MemoryArena& memory)
 		{
+			SampleBuffer* pSampleBuf = mpSampleBuf->Duplicate();
+
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
 				// Sync barrier before render
 				mTaskSync.SyncThreadsPreRender(threadId);
 
-				RenderFrame(random, memory);
+				RenderFrame(pSampleBuf, random, memory);
 
 				// Sync barrier after render
 				mTaskSync.SyncThreadsPostRender(threadId);
@@ -101,11 +102,20 @@ namespace EDX
 					mpFilm->IncreSampleCount();
 					mpFilm->ScaleToPixel();
 					mTaskSync.ResetTasks();
+					memory.FreeAll();
 				}
 
 				if (mTaskSync.Aborted())
 					return;
 			}
+
+			SafeDelete(pSampleBuf);
+		}
+
+		void Renderer::BakeSamples()
+		{
+			mpSampleBuf = new SampleBuffer;
+			mpIntegrator->RequestSamples(mpScene.Ptr(), mpSampleBuf.Ptr());
 		}
 
 		void Renderer::QueueRenderTasks()

@@ -51,6 +51,7 @@ namespace EDX
 			const Color GetColor(const DifferentialGeom& diffGoem) const;
 			const ScatterType GetScatterType() const { return mScatterType; }
 			const BSDFType GetBSDFType() const { return mBSDFType; }
+			const Texture2D<Color>* GetTexture() const { return mpTexture.Ptr(); }
 
 			static BSDF* CreateBSDF(const BSDFType type, const Color& color);
 			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
