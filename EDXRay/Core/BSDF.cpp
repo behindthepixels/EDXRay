@@ -85,11 +85,6 @@ namespace EDX
 			return Pdf(vWo, vWi, types);
 		}
 
-		const Color BSDF::GetColor(const DifferentialGeom& diffGoem) const
-		{
-			return mpTexture->Sample(diffGoem.mTexcoord, nullptr, TextureFilter::Linear);
-		}
-
 		// -----------------------------------------------------------------------------------------------------------------------
 		// Lambertian BRDF Implementation
 		// -----------------------------------------------------------------------------------------------------------------------

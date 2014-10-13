@@ -37,7 +37,7 @@ namespace EDX
 
 			// Initialize scene
 			mpScene = new Scene;
-			mpIntegrator = new PathTracingIntegrator(6);
+			mpIntegrator = new PathTracingIntegrator(4);
 
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
@@ -84,7 +84,7 @@ namespace EDX
 
 		void Renderer::RenderImage(int threadId, RandomGen& random, MemoryArena& memory)
 		{
-			SampleBuffer* pSampleBuf = mpSampleBuf->Duplicate();
+			SampleBuffer* pSampleBuf = mpSampleBuf->Duplicate(1);
 
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
@@ -109,7 +109,7 @@ namespace EDX
 					return;
 			}
 
-			SafeDelete(pSampleBuf);
+			SafeDeleteArray(pSampleBuf);
 		}
 
 		void Renderer::BakeSamples()
@@ -129,7 +129,7 @@ namespace EDX
 				ThreadScheduler::Instance()->AddTasks(Task((Task::TaskFunc)&RenderTask::_Render, mTasks[i]));
 			}
 		}
-		
+
 		void Renderer::StopRenderTasks()
 		{
 			mTaskSync.SetAbort(true);

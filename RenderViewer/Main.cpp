@@ -31,22 +31,22 @@ void OnInit(Object* pSender, EventArgs args)
 	desc.ImageWidth = 1280;
 	desc.ImageHeight = 800;
 	desc.SamplesPerPixel = 8192;
-	desc.CameraParams.FieldOfView = 35;
+	desc.CameraParams.FieldOfView = 65;
 	gpRenderer->Initialize(desc);
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	Primitive* pMesh = new Primitive;
 	//pMesh->LoadMesh("../../Media/sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
-	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", BSDFType::Diffuse, Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", BSDFType::Diffuse, Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadSphere(1.0f, 128, 128, Vector3(0.0f, 1.0f, 10.5f));
 
 	Primitive* pMesh2 = new Primitive;
 	pMesh2->LoadSphere(0.5, BSDFType::Glass, 64, 64, Vector3(0, 2, 0));
 	pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
-	pScene->AddLight(new PointLight(Vector3(0.0f, 4.0f, 0.0f), Color(90.0f)));
+	pScene->AddLight(new PointLight(Vector3(0.0f, 4.0f, 0.0f), Color(40.0f)));
 	pScene->InitAccelerator();
 	gpRenderer->BakeSamples();
 

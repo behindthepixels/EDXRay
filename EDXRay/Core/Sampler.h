@@ -34,7 +34,7 @@ namespace EDX
 			inline int Request1DArray(int count) { int ret = count1D; count1D += count; return ret; }
 			inline int Request2DArray(int count) { int ret = count2D; count2D += count; return ret; }
 
-			SampleBuffer* Duplicate() const;
+			SampleBuffer* Duplicate(uint count) const;
 			void Validate();
 		};
 

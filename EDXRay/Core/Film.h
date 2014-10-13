@@ -31,6 +31,7 @@ namespace EDX
 			inline void IncreSampleCount() { mSampleCount++; }
 
 			const Color* GetPixelBuffer() const { return mpPixelBuffer.Data(); }
+			const int GetSampleCount() const { return mSampleCount; }
 		};
 	}
 }

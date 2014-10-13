@@ -30,9 +30,9 @@ namespace EDX
 				, mZ(z)
 			{}
 
-			Frame(const Vector3& vNormal)
+			__forceinline Frame(const Vector3& vNormal)
 			{
-				mZ = Math::Normalize(vNormal);
+				mZ = vNormal;
 				Math::CoordinateSystem(mZ, &mX, &mY);
 			}
 
@@ -81,7 +81,7 @@ namespace EDX
 			mutable Vector3 mDpdx, mDpdy;
 			mutable float mDudx, mDudy, mDvdx, mDvdy;
 
-			Frame mShadingFrame, mGeomFrame;
+			Frame mShadingFrame;
 
 			const BSDF* mpBSDF;
 			const AreaLight* mpAreaLight;

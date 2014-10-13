@@ -7,13 +7,16 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		SampleBuffer* SampleBuffer::Duplicate() const
+		SampleBuffer* SampleBuffer::Duplicate(uint count) const
 		{
-			SampleBuffer* pRet = new SampleBuffer;
+			SampleBuffer* pRet = new SampleBuffer[count];
 
-			pRet->count1D = count1D;
-			pRet->count2D = count2D;
-			pRet->Validate();
+			for (auto i = 0; i < count; i++)
+			{
+				pRet[i].count1D = count1D;
+				pRet[i].count2D = count2D;
+				pRet[i].Validate();
+			}
 
 			return pRet;
 		}

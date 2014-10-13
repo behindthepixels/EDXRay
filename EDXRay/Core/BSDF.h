@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ForwardDecl.h"
+#include "DifferentialGeom.h"
 #include "Math/Vector.h"
 #include "Graphics/Texture.h"
 #include "Graphics/Color.h"
@@ -48,7 +49,15 @@ namespace EDX
 			virtual Color SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf,
 				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const = 0;
 
-			const Color GetColor(const DifferentialGeom& diffGoem) const;
+			__forceinline const Color GetColor(const DifferentialGeom& diffGoem) const
+			{
+				Vector2 differential[2] = {
+					(diffGoem.mDudx, diffGoem.mDvdx),
+					(diffGoem.mDudy, diffGoem.mDvdy)
+				};
+				return mpTexture->Sample(diffGoem.mTexcoord, differential, TextureFilter::Linear);
+			}
+
 			const ScatterType GetScatterType() const { return mScatterType; }
 			const BSDFType GetBSDFType() const { return mBSDFType; }
 			const Texture2D<Color>* GetTexture() const { return mpTexture.Ptr(); }
