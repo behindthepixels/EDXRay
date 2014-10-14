@@ -99,6 +99,9 @@
     <ClInclude Include="Integrators\PathTracing.h">
       <Filter>Source Files\Integrators</Filter>
     </ClInclude>
+    <ClInclude Include="Lights\AreaLight.h">
+      <Filter>Source Files\Lights</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">

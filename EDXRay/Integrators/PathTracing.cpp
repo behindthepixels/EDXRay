@@ -26,9 +26,8 @@ namespace EDX
 				{
 					pScene->PostIntersect(pathRay, &diffGeom);
 
-					// Compute ray differential for the 1st bounce
-					if (bounce == 0)
-						diffGeom.ComputeDifferentials(pathRay);
+					// Compute ray differentials
+					diffGeom.ComputeDifferentials(pathRay);
 
 					// Explicitly sample light sources
 					const BSDF* pBSDF = diffGeom.mpBSDF;

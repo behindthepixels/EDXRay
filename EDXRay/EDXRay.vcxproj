@@ -37,6 +37,7 @@
     <ClInclude Include="ForwardDecl.h" />
     <ClInclude Include="Integrators\DirectLighting.h" />
     <ClInclude Include="Integrators\PathTracing.h" />
+    <ClInclude Include="Lights\AreaLight.h" />
     <ClInclude Include="Lights\PointLight.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
     <ClInclude Include="Tracer\BVH.h" />

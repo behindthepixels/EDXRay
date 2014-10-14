@@ -96,15 +96,16 @@ namespace EDX
 			{
 			}
 
-			inline Vector3 WorldToLocal(const Vector3& vVec) const
+			inline Vector3 WorldToLocal(const Vector3& vec) const
 			{
-				return mShadingFrame.WorldToLocal(vVec);
+				return mShadingFrame.WorldToLocal(vec);
 			}
-			inline Vector3 LocalToWorld(const Vector3& vVec) const
+			inline Vector3 LocalToWorld(const Vector3& vec) const
 			{
-				return mShadingFrame.LocalToWorld(vVec);
+				return mShadingFrame.LocalToWorld(vec);
 			}
 
+			Color Emit(const Vector3& dir) const;
 			void ComputeDifferentials(const RayDifferential& ray) const;
 		};
 

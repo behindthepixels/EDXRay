@@ -8,15 +8,15 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		class PointLight : public Light
+		class AreaLight : public Light
 		{
 		private:
 			Vector3	mPosition;
 			Color	mIntensity;
 
 		public:
-			PointLight(const Vector3& pos,
-				const Color& intens, 
+			AreaLight(const Vector3& pos,
+				const Color& intens,
 				const uint sampCount = 1)
 				: Light(sampCount)
 				, mPosition(pos)
@@ -54,7 +54,7 @@ namespace EDX
 
 			bool IsDelta() const
 			{
-				return true;
+				return false;
 			}
 		};
 

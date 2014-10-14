@@ -1,10 +1,17 @@
 #include "DifferentialGeom.h"
+#include "../Lights/AreaLight.h"
+#include "Graphics/Color.h"
 #include "Math/Ray.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
+		Color DifferentialGeom::Emit(const Vector3& vOut) const
+		{
+			return mpAreaLight ? mpAreaLight->Emit(mGeomNormal, vOut) : Color::BLACK;
+		}
+
 		void DifferentialGeom::ComputeDifferentials(const RayDifferential& ray) const
 		{
 			if (ray.mHasDifferential && mTextured)
