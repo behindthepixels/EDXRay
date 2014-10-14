@@ -17,6 +17,9 @@
 using namespace EDX;
 using namespace EDX::RayTracer;
 
+int gImageWidth = 1280;
+int gImageHeight = 800;
+
 RefPtr<Renderer> gpRenderer = nullptr;
 Previewer gPreview;
 bool gRendering = false;
@@ -28,8 +31,8 @@ void OnInit(Object* pSender, EventArgs args)
 	gpRenderer = new Renderer;
 
 	RenderJobDesc desc;
-	desc.ImageWidth = 1280;
-	desc.ImageHeight = 800;
+	desc.ImageWidth = gImageWidth;
+	desc.ImageHeight = gImageHeight;
 	desc.SamplesPerPixel = 8192;
 	desc.CameraParams.FieldOfView = 65;
 	gpRenderer->Initialize(desc);
@@ -37,9 +40,9 @@ void OnInit(Object* pSender, EventArgs args)
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	Primitive* pMesh = new Primitive;
 	//pMesh->LoadMesh("../../Media/sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
-	pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", BSDFType::Diffuse, Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", BSDFType::Diffuse, Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadSphere(1.0f, 128, 128, Vector3(0.0f, 1.0f, 10.5f));
 
 	Primitive* pMesh2 = new Primitive;
@@ -50,7 +53,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->InitAccelerator();
 	gpRenderer->BakeSamples();
 
-	gPreview.Initialize(*pScene, 1280, 800, 65);
+	gPreview.Initialize(*pScene, desc.ImageWidth, desc.ImageHeight, desc.CameraParams.FieldOfView);
 }
 
 void OnRender(Object* pSender, EventArgs args)
@@ -141,7 +144,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdS
 	mainWindow->SetMouseHandler(MouseEvent(OnMouseEvent));
 	mainWindow->SetkeyboardHandler(KeyboardEvent(OnKeyboardEvent));
 
-	mainWindow->Create(L"EDXRay", 1280, 800);
+	mainWindow->Create(L"EDXRay", gImageWidth, gImageHeight);
 
 	Application::Run(mainWindow);
 
