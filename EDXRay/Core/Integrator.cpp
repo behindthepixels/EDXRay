@@ -67,7 +67,7 @@ namespace EDX
 					if (pScene->Intersect(rayLight, &isect))
 					{
 						if (pLight == (Light*)isect.mpAreaLight)
-							Li = pLight->Emit(-lightDir);
+							Li = pLight->Emit(diffGeom.mGeomNormal, -lightDir);
 					}
 
 					if (!Li.IsBlack())
