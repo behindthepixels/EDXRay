@@ -37,7 +37,7 @@ namespace EDX
 
 			// Initialize scene
 			mpScene = new Scene;
-			mpIntegrator = new PathTracingIntegrator(4);
+			mpIntegrator = new PathTracingIntegrator(10);
 
 			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);

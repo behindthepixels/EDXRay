@@ -30,9 +30,18 @@ namespace EDX
 			for (auto i = 0; i < materialInfo.size(); i++)
 			{
 				if (materialInfo[i].strTexturePath[0])
-					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].strTexturePath));
+				{
+					mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].strTexturePath));
+				}
 				else
-					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].color));
+				{
+					if (materialInfo[i].transColor != Color::BLACK)
+						mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Glass, materialInfo[i].transColor));
+					else if (materialInfo[i].specColor != Color::BLACK)
+						mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Mirror, materialInfo[i].specColor));
+					else
+						mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].color));
+				}
 			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
