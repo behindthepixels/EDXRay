@@ -67,7 +67,7 @@ namespace EDX
 			}
 			inline float UniformSpherePDF()
 			{
-				return 1.0f / (4.0f * float(Math::EDX_PI));
+				return Math::EDX_INV_4PI;
 			}
 			inline float UniformHemispherePDF()
 			{

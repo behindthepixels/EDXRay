@@ -42,7 +42,7 @@ namespace EDX
 				return mIntensity / Math::DistanceSquared(mPosition, pos);
 			}
 
-			Color Emit(const Vector3& normal, const Vector3& dir) const
+			Color Emit(const Vector3& dir) const
 			{
 				return Color::BLACK;
 			}

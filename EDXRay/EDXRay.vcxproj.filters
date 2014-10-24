@@ -102,6 +102,12 @@
     <ClInclude Include="Lights\AreaLight.h">
       <Filter>Source Files\Lights</Filter>
     </ClInclude>
+    <ClInclude Include="Lights\DirectionalLight.h">
+      <Filter>Source Files\Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\EnvironmentalLight.h">
+      <Filter>Source Files\Lights</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">

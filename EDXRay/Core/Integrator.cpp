@@ -47,9 +47,6 @@ namespace EDX
 				}
 			}
 
-			if (pLight->IsDelta())
-				return L;
-
 			// Sample BSDF for MIS
 			ScatterType types;
 			float bsdfPdf;
@@ -67,7 +64,7 @@ namespace EDX
 					if (pScene->Intersect(rayLight, &isect))
 					{
 						if (pLight == (Light*)isect.mpAreaLight)
-							Li = pLight->Emit(diffGeom.mGeomNormal, -lightDir);
+							Li = isect.Emit(-lightDir);
 					}
 
 					if (!Li.IsBlack())

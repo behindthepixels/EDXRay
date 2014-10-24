@@ -2,59 +2,55 @@
 
 #include "EDXPrerequisites.h"
 #include "../Core/Light.h"
+#include "../Core/Sampler.h"
+#include "../Core/Sampling.h"
 #include "Graphics/Color.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
-		class AreaLight : public Light
+		class EnvironmentalLight : public Light
 		{
 		private:
-			Vector3	mPosition;
 			Color	mIntensity;
 
 		public:
-			AreaLight(const Vector3& pos,
-				const Color& intens,
+			EnvironmentalLight(const Color& intens,
 				const uint sampCount = 1)
 				: Light(sampCount)
-				, mPosition(pos)
 				, mIntensity(intens)
 			{
 			}
 
 			Color Illuminate(const Vector3& pos, const Sample& lightSample, Vector3* pDir, VisibilityTester* pVisTest, float* pPdf) const
 			{
-				*pDir = Math::Normalize(mPosition - pos);
-				*pPdf = 1.0f;
-				pVisTest->SetSegment(pos, mPosition);
+				Vector3 vDir = Sampling::UniformSampleSphere(lightSample.u, lightSample.v);
+				*pDir = Vector3(vDir.x, vDir.z, -vDir.y);
+				pVisTest->SetRay(pos, *pDir);
+				*pPdf = Sampling::UniformSpherePDF();
 
-				//if (pfCosAtLight != NULL)
+				//if (pfCosAtLight)
 				//{
 				//	*pfCosAtLight = 1.0f;
 				//}
-				//if (pfEmitPDFW != NULL)
+				//if (pfEmitPDFW)
 				//{
-				//	*pfEmitPDFW = Sampling::UniformSpherePDF();
+				//	Vector3 vSphCenter;
+				//	*pfEmitPDFW = Sampling::UniformSpherePDF() * mfInvSceneBoundArea;
 				//}
 
-				return mIntensity / Math::DistanceSquared(mPosition, pos);
+				return mIntensity;
 			}
 
 			Color Emit(const Vector3& dir) const
 			{
-				return Color::BLACK;
-			}
-
-			Color L(const Vector3& normal, const Vector3& dir) const
-			{
-				return Color::BLACK;
+				return mIntensity;
 			}
 
 			float Pdf(const Vector3& pos, const Vector3& dir) const
 			{
-				return 0.0f;
+				return Sampling::UniformSpherePDF();
 			}
 
 			bool IsDelta() const

@@ -17,7 +17,7 @@ namespace EDX
 			Color L = Color::BLACK;
 			Color pathThroughput = Color::WHITE;
 
-			bool specBounce = false;
+			bool specBounce = true;
 			RayDifferential pathRay = ray;
 			for (auto bounce = 0; bounce < mMaxDepth; bounce++)
 			{
@@ -28,6 +28,9 @@ namespace EDX
 
 					// Compute ray differentials
 					diffGeom.ComputeDifferentials(pathRay);
+
+					if (specBounce)
+						L += pathThroughput * diffGeom.Emit(-pathRay.mDir);
 
 					// Explicitly sample light sources
 					const BSDF* pBSDF = diffGeom.mpBSDF;
@@ -66,6 +69,11 @@ namespace EDX
 				}
 				else // Hit the environmental light source (if there is one)
 				{
+					if (specBounce)
+					{
+						for (const auto& lt : pScene->GetLights())
+							L += pathThroughput * lt->Emit(-pathRay.mDir);
+					}
 					break;
 				}
 			}

@@ -2,52 +2,40 @@
 
 #include "EDXPrerequisites.h"
 #include "../Core/Light.h"
+#include "../Core/DifferentialGeom.h"
 #include "Graphics/Color.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
-		class AreaLight : public Light
+		class DirectionalLight : public Light
 		{
 		private:
-			Vector3	mPosition;
 			Color	mIntensity;
+			Vector3 mDirection;
+			Frame	mDirFrame;
 
 		public:
-			AreaLight(const Vector3& pos,
+			DirectionalLight(const Vector3& dir,
 				const Color& intens,
 				const uint sampCount = 1)
 				: Light(sampCount)
-				, mPosition(pos)
+				, mDirection(Math::Normalize(dir))
 				, mIntensity(intens)
 			{
 			}
 
 			Color Illuminate(const Vector3& pos, const Sample& lightSample, Vector3* pDir, VisibilityTester* pVisTest, float* pPdf) const
 			{
-				*pDir = Math::Normalize(mPosition - pos);
+				*pDir = mDirection;
 				*pPdf = 1.0f;
-				pVisTest->SetSegment(pos, mPosition);
+				pVisTest->SetRay(pos, mDirection);
 
-				//if (pfCosAtLight != NULL)
-				//{
-				//	*pfCosAtLight = 1.0f;
-				//}
-				//if (pfEmitPDFW != NULL)
-				//{
-				//	*pfEmitPDFW = Sampling::UniformSpherePDF();
-				//}
-
-				return mIntensity / Math::DistanceSquared(mPosition, pos);
+				return mIntensity;
 			}
 
 			Color Emit(const Vector3& dir) const
-			{
-				return Color::BLACK;
-			}
-
-			Color L(const Vector3& normal, const Vector3& dir) const
 			{
 				return Color::BLACK;
 			}
@@ -59,7 +47,7 @@ namespace EDX
 
 			bool IsDelta() const
 			{
-				return false;
+				return true;
 			}
 		};
 
