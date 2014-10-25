@@ -35,7 +35,7 @@ void OnInit(Object* pSender, EventArgs args)
 	RenderJobDesc desc;
 	desc.ImageWidth = gImageWidth;
 	desc.ImageHeight = gImageHeight;
-	desc.SamplesPerPixel = 8192;
+	desc.SamplesPerPixel = 8192 * 4;
 	desc.CameraParams.FieldOfView = 65;
 	gpRenderer->Initialize(desc);
 
@@ -48,8 +48,8 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadSphere(1.0f, BSDFType::Diffuse, 128, 128, Vector3(0.0f, 1.0f, 10.5f));
 
 	pScene->AddPrimitive(pMesh);
-	pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(16.0f)));
-	pScene->AddLight(new EnvironmentalLight(18 * Color(0.4, 0.6, 0.8)));
+	pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(13.0f)));
+	pScene->AddLight(new EnvironmentalLight(100 * Color(0.66, 0.66, 0.7)));
 	pScene->InitAccelerator();
 	gpRenderer->BakeSamples();
 
