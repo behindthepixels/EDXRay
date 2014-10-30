@@ -47,6 +47,9 @@ namespace EDX
 				}
 			}
 
+			if (pLight->IsDelta())
+				return L;
+
 			// Sample BSDF for MIS
 			ScatterType types;
 			float bsdfPdf;
