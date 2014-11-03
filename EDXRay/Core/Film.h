@@ -7,9 +7,42 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		class Filter
+		{
+		protected:
+			float mRadius;
+
+		public:
+			Filter(const float rad)
+				: mRadius(rad)
+			{
+			}
+			virtual ~Filter() {}
+
+			const float GetRadius() const
+			{
+				return mRadius;
+			}
+			virtual const float Eval(const float dx, const float dy) const = 0;
+		};
+
+		class BoxFilter : public Filter
+		{
+			const float Eval(const float dx, const float dy) const
+			{
+				return 1.0f;
+			}
+		};
+
 		class Film
 		{
 		protected:
+			//struct Pixel
+			//{
+			//	Color color;
+			//	float weight;
+			//};
+
 			int mWidth, mHeight;
 			int mSampleCount;
 			Array<2, Color> mpPixelBuffer;
