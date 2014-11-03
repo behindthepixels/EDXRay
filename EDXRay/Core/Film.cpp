@@ -51,7 +51,7 @@ namespace EDX
 			{
 				for (int x = 0; x < mWidth; x++)
 				{
-					mpPixelBuffer[y * mWidth + x] = mpAccumulateBuffer[y * mWidth + x] * fScale;
+					mpPixelBuffer[y * mWidth + x] = Math::Pow(mpAccumulateBuffer[y * mWidth + x] * fScale, 0.45f);
 				}
 			}
 		}
