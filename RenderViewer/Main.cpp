@@ -35,8 +35,10 @@ void OnInit(Object* pSender, EventArgs args)
 	RenderJobDesc desc;
 	desc.ImageWidth = gImageWidth;
 	desc.ImageHeight = gImageHeight;
-	desc.SamplesPerPixel = 8192 * 4;
+	desc.SamplesPerPixel = 8192 * 32;
 	desc.CameraParams.FieldOfView = 65;
+	desc.CameraParams.Pos = Vector3(0, 3, 5);
+	desc.CameraParams.Target = Vector3(0, 4, 0);
 	gpRenderer->Initialize(desc);
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
@@ -53,7 +55,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->InitAccelerator();
 	gpRenderer->BakeSamples();
 
-	gPreview.Initialize(*pScene, desc.ImageWidth, desc.ImageHeight, desc.CameraParams.FieldOfView);
+	gPreview.Initialize(*pScene, desc);
 }
 
 void OnRender(Object* pSender, EventArgs args)

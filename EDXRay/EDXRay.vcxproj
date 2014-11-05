@@ -24,6 +24,7 @@
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\Film.h" />
     <ClInclude Include="Core\DifferentialGeom.h" />
+    <ClInclude Include="Core\Filter.h" />
     <ClInclude Include="Core\Integrator.h" />
     <ClInclude Include="Core\Light.h" />
     <ClInclude Include="Core\Primitive.h" />

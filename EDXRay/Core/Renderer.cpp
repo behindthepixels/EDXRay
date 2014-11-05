@@ -37,10 +37,10 @@ namespace EDX
 
 			// Initialize scene
 			mpScene = new Scene;
-			mpIntegrator = new PathTracingIntegrator(6);
+			mpIntegrator = new PathTracingIntegrator(8);
 
 			mpFilm = new Film;
-			mpFilm->Init(desc.ImageWidth, desc.ImageHeight);
+			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new GaussianFilter);
 
 			mpSampler = new RandomSampler;
 
@@ -76,7 +76,7 @@ namespace EDX
 
 						Color L = mpIntegrator->Li(ray, mpScene.Ptr(), pSampleBuf, random, memory);
 
-						mpFilm->AddSample(x, y, L);
+						mpFilm->AddSample(pSampleBuf->imageX, pSampleBuf->imageY, L);
 					}
 				}
 			}

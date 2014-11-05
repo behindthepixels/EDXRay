@@ -31,11 +31,17 @@ namespace EDX
 			vector<RefPtr<GLMesh>> mMeshes;
 
 		public:
-			void Initialize(const Scene& scene, int windowWidth, int windowHeight, float fov)
+			void Initialize(const Scene& scene, const RenderJobDesc& jobDesc)
 			{
 				OpenGL::InitializeOpenGLExtensions();
 
-				mCamera.Init(-5.0f * Vector3::UNIT_Z, Vector3::ZERO, Vector3::UNIT_Y, windowWidth, windowHeight, fov, 0.01f);
+				mCamera.Init(jobDesc.CameraParams.Pos,
+					jobDesc.CameraParams.Target,
+					jobDesc.CameraParams.Up,
+					jobDesc.ImageWidth,
+					jobDesc.ImageHeight,
+					jobDesc.CameraParams.FieldOfView,
+					0.01f);
 
 				auto& prims = scene.GetPrimitives();
 				for (auto& it : prims)

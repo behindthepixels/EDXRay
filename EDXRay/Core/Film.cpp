@@ -1,25 +1,27 @@
 #include "Film.h"
+#include "Math/EDXMath.h"
 #include "Graphics/Color.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
-		void Film::Init(int width, int height)
+		void Film::Init(int width, int height, Filter* pFilter)
+		{
+			Resize(width, height);
+			mpFilter = pFilter;
+		}
+
+		void Film::Resize(int width, int height)
 		{
 			mWidth = width;
 			mHeight = height;
-			mSampleCount = 0;
 
 			mpPixelBuffer.Free();
 			mpPixelBuffer.Init(Vector2i(width, height));
 			mpAccumulateBuffer.Free();
 			mpAccumulateBuffer.Init(Vector2i(width, height));
-		}
-
-		void Film::Resize(int width, int height)
-		{
-			Init(width, height);
+			mSampleCount = 0;
 		}
 
 		void Film::Release()
@@ -35,12 +37,31 @@ namespace EDX
 			mpAccumulateBuffer.Clear();
 		}
 
-		void Film::AddSample(int x, int y, const Color& sample)
+		void Film::AddSample(float x, float y, const Color& sample)
 		{
-			int iRowAdd = mHeight - 1 - y;
-			int iColAdd = x;
+			x -= 0.5f;
+			y -= 0.5f;
+			int minX = Math::CeilToInt(x - mpFilter->GetRadius());
+			int maxX = Math::FloorToInt(x + mpFilter->GetRadius());
+			int minY = Math::CeilToInt(y - mpFilter->GetRadius());
+			int maxY = Math::FloorToInt(y + mpFilter->GetRadius());
+			minX = Math::Max(0, minX);
+			maxX = Math::Min(maxX, mWidth - 1);
+			minY = Math::Max(0, minY);
+			maxY = Math::Min(maxY, mHeight - 1);
 
-			mpAccumulateBuffer[iRowAdd * mWidth + iColAdd] += sample;
+			for (auto i = minY; i <= maxY; i++)
+			{
+				for (auto j = minX; j <= maxX; j++)
+				{
+					int rowAdd = mHeight - 1 - i;
+					int colAdd = j;
+
+					float weight = mpFilter->Eval(j - x, i - y);
+					mpAccumulateBuffer[rowAdd * mWidth + colAdd].weight += weight;
+					mpAccumulateBuffer[rowAdd * mWidth + colAdd].color += weight * sample;
+				}
+			}
 		}
 
 		void Film::ScaleToPixel()
@@ -51,7 +72,7 @@ namespace EDX
 			{
 				for (int x = 0; x < mWidth; x++)
 				{
-					mpPixelBuffer[y * mWidth + x] = Math::Pow(mpAccumulateBuffer[y * mWidth + x] * fScale, 0.45f);
+					mpPixelBuffer[y * mWidth + x] = Math::Pow(mpAccumulateBuffer[y * mWidth + x].color / mpAccumulateBuffer[y * mWidth + x].weight, 0.45f);
 				}
 			}
 		}

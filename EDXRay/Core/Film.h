@@ -1,52 +1,29 @@
 #pragma once
 
+#include "Filter.h"
 #include "../ForwardDecl.h"
+#include "Graphics/Color.h"
 #include "Memory/Array.h"
+#include "Memory/RefPtr.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
-		class Filter
-		{
-		protected:
-			float mRadius;
-
-		public:
-			Filter(const float rad)
-				: mRadius(rad)
-			{
-			}
-			virtual ~Filter() {}
-
-			const float GetRadius() const
-			{
-				return mRadius;
-			}
-			virtual const float Eval(const float dx, const float dy) const = 0;
-		};
-
-		class BoxFilter : public Filter
-		{
-			const float Eval(const float dx, const float dy) const
-			{
-				return 1.0f;
-			}
-		};
-
 		class Film
 		{
 		protected:
-			//struct Pixel
-			//{
-			//	Color color;
-			//	float weight;
-			//};
+			struct Pixel
+			{
+				Color color;
+				float weight;
+			};
 
 			int mWidth, mHeight;
 			int mSampleCount;
 			Array<2, Color> mpPixelBuffer;
-			Array<2, Color> mpAccumulateBuffer;
+			Array<2, Pixel> mpAccumulateBuffer;
+			RefPtr<Filter> mpFilter;
 
 		public:
 			~Film()
@@ -54,12 +31,12 @@ namespace EDX
 				Release();
 			}
 
-			void Init(int width, int height);
+			void Init(int width, int height, Filter* pFilter);
 			void Resize(int width, int height);
 			void Release();
 			void Clear();
 
-			void AddSample(int x, int y, const Color& sample);
+			void AddSample(float x, float y, const Color& sample);
 			void ScaleToPixel();
 			inline void IncreSampleCount() { mSampleCount++; }
 
