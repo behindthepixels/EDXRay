@@ -6,6 +6,8 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		const float Film::INV_GAMMA = 0.454545f;
+
 		void Film::Init(int width, int height, Filter* pFilter)
 		{
 			Resize(width, height);
@@ -56,10 +58,11 @@ namespace EDX
 				{
 					int rowAdd = mHeight - 1 - i;
 					int colAdd = j;
+					Pixel& pixel = mpAccumulateBuffer[Vector2i(colAdd, rowAdd)];
 
 					float weight = mpFilter->Eval(j - x, i - y);
-					mpAccumulateBuffer[rowAdd * mWidth + colAdd].weight += weight;
-					mpAccumulateBuffer[rowAdd * mWidth + colAdd].color += weight * sample;
+					pixel.weight += weight;
+					pixel.color += weight * sample;
 				}
 			}
 		}
@@ -72,7 +75,99 @@ namespace EDX
 			{
 				for (int x = 0; x < mWidth; x++)
 				{
-					mpPixelBuffer[y * mWidth + x] = Math::Pow(mpAccumulateBuffer[y * mWidth + x].color / mpAccumulateBuffer[y * mWidth + x].weight, 0.45f);
+					const Pixel& pixel = mpAccumulateBuffer[Vector2i(x, y)];
+					mpPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight, INV_GAMMA);
+				}
+			}
+		}
+
+		// Ray Histogram Fusion film implementation
+		void FilmRHF::Init(int width, int height, Filter* pFilter)
+		{
+			Film::Init(width, height, pFilter);
+			mSampleHistogram.Init(width, height);
+		}
+
+		void FilmRHF::Resize(int width, int height)
+		{
+			Film::Resize(width, height);
+			mSampleHistogram.Init(width, height);
+		}
+
+		void FilmRHF::Clear()
+		{
+			Film::Clear();
+			mSampleHistogram.Clear();
+		}
+
+		const float FilmRHF::Histogram::MAX_VAL = 7.5f;
+
+		void FilmRHF::AddSample(float x, float y, const Color& sample)
+		{
+			x -= 0.5f;
+			y -= 0.5f;
+			int minX = Math::CeilToInt(x - mpFilter->GetRadius());
+			int maxX = Math::FloorToInt(x + mpFilter->GetRadius());
+			int minY = Math::CeilToInt(y - mpFilter->GetRadius());
+			int maxY = Math::FloorToInt(y + mpFilter->GetRadius());
+			minX = Math::Max(0, minX);
+			maxX = Math::Min(maxX, mWidth - 1);
+			minY = Math::Max(0, minY);
+			maxY = Math::Min(maxY, mHeight - 1);
+
+			for (auto i = minY; i <= maxY; i++)
+			{
+				for (auto j = minX; j <= maxX; j++)
+				{
+					int rowAdd = mHeight - 1 - i;
+					int colAdd = j;
+					Pixel& pixel = mpAccumulateBuffer[Vector2i(colAdd, rowAdd)];
+
+					float weight = mpFilter->Eval(j - x, i - y);
+					Color weightedSample = weight * sample;
+
+					pixel.weight += weight;
+					pixel.color += weightedSample;
+
+					Color normalizedSample = Math::Pow(sample, INV_GAMMA) / Histogram::MAX_VAL;
+					normalizedSample.r = Math::Min(2.0f, normalizedSample.r);
+					normalizedSample.g = Math::Min(2.0f, normalizedSample.g);
+					normalizedSample.b = Math::Min(2.0f, normalizedSample.b);
+
+					Vector3 bin = float(Histogram::NUM_BINS - 2) * Vector3(normalizedSample.r, normalizedSample.g, normalizedSample.b);
+					Vector3i binLow = Math::FloorToInt(bin);
+
+					for (auto d = 0; d < 3; d++)
+					{
+						if (binLow[d] < Histogram::NUM_BINS - 2)
+						{
+							float weightH = bin[d] - binLow[d];
+							float weightL = 1.0f - weightH;
+							mSampleHistogram.histogramWeights[binLow[d]][Vector2i(colAdd, rowAdd)][d] += weightL;
+							mSampleHistogram.histogramWeights[binLow[d] + 1][Vector2i(colAdd, rowAdd)][d] += weightH;
+						}
+						else
+						{
+							float weightH = (normalizedSample[d] - 1);
+							float weightL = 1.0f - weightH;
+							mSampleHistogram.histogramWeights[Histogram::NUM_BINS - 2][Vector2i(colAdd, rowAdd)][d] += weightL;
+							mSampleHistogram.histogramWeights[Histogram::NUM_BINS - 1][Vector2i(colAdd, rowAdd)][d] += weightH;
+						}
+					}
+				}
+			}
+		}
+
+		void FilmRHF::ScaleToPixel()
+		{
+			float fScale = 1.0f / float(mSampleCount);
+
+			for (int y = 0; y < mHeight; y++)
+			{
+				for (int x = 0; x < mWidth; x++)
+				{
+					const Pixel& pixel = mpAccumulateBuffer[Vector2i(x, y)];
+					mpPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight, INV_GAMMA);
 				}
 			}
 		}

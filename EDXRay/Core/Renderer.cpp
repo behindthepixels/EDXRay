@@ -39,7 +39,7 @@ namespace EDX
 			mpScene = new Scene;
 			mpIntegrator = new PathTracingIntegrator(8);
 
-			mpFilm = new Film;
+			mpFilm = new FilmRHF;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new GaussianFilter);
 
 			mpSampler = new RandomSampler;
