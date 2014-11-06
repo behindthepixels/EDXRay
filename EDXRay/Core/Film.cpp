@@ -171,5 +171,29 @@ namespace EDX
 				}
 			}
 		}
+
+		float FilmRHF::ChiSquareDistance(const Vector2i& x, const Vector2i& y)
+		{
+			Vector3 totalWeight0, totalWeight1;
+			Vector3i numEmptyBins;
+			for (auto i = 0; i < Histogram::NUM_BINS; i++)
+			{
+				totalWeight0 += mSampleHistogram.histogramWeights[i][x];
+				totalWeight1 += mSampleHistogram.histogramWeights[i][y];
+
+				for (auto d = 0; d < 3; d++)
+				{
+					numEmptyBins[d] += mSampleHistogram.histogramWeights[i][x][d] > 0.0f ? 1 : 0;
+					numEmptyBins[d] += mSampleHistogram.histogramWeights[i][y][d] > 0.0f ? 1 : 0;
+				}
+			}
+
+			Vector3 scaleX, scaleY;
+
+
+			for (auto i = 0; i < Histogram::NUM_BINS; i++)
+			{
+
+		}
 	}
 }

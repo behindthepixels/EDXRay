@@ -56,7 +56,7 @@ namespace EDX
 				static const float MAX_VAL;
 
 				int width, height;
-				BlockedArray<2, Color> histogramWeights[NUM_BINS];
+				BlockedArray<2, Vector3> histogramWeights[NUM_BINS];
 
 				void Init(int w, int h)
 				{
@@ -82,6 +82,9 @@ namespace EDX
 
 			void AddSample(float x, float y, const Color& sample);
 			void ScaleToPixel();
+
+		private:
+			float ChiSquareDistance(const Vector2i& x, const Vector2i& y);
 		};
 	}
 }
