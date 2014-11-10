@@ -22,8 +22,8 @@ namespace EDX
 
 			int mWidth, mHeight;
 			int mSampleCount;
-			Array<2, Color> mpPixelBuffer;
-			BlockedArray<2, Pixel> mpAccumulateBuffer;
+			Array<2, Color>			mPixelBuffer;
+			BlockedArray<2, Pixel>	mAccumulateBuffer;
 			RefPtr<Filter> mpFilter;
 
 			static const float INV_GAMMA;
@@ -43,8 +43,9 @@ namespace EDX
 			virtual void ScaleToPixel();
 			inline void IncreSampleCount() { mSampleCount++; }
 
-			const Color* GetPixelBuffer() const { return mpPixelBuffer.Data(); }
+			const Color* GetPixelBuffer() const { return mPixelBuffer.Data(); }
 			const int GetSampleCount() const { return mSampleCount; }
+			virtual void Denoise(const bool denoise) {}
 		};
 
 		class FilmRHF : public Film
@@ -52,28 +53,40 @@ namespace EDX
 		protected:
 			struct Histogram
 			{
-				static const int NUM_BINS = 30;
+				static const int NUM_BINS = 20;
 				static const float MAX_VAL;
 
 				int width, height;
-				BlockedArray<2, Vector3> histogramWeights[NUM_BINS];
+				Array<2, Vector3> histogramWeights[NUM_BINS];
+				Array<2, Vector3> totalWeight;
 
 				void Init(int w, int h)
 				{
 					width = w; height = h;
 
+					totalWeight.Init(width, height);
 					for (auto i = 0; i < NUM_BINS; i++)
 						histogramWeights[i].Init(width, height);
 				}
 
 				void Clear()
 				{
+					totalWeight.Clear();
 					for (auto i = 0; i < NUM_BINS; i++)
 						histogramWeights[i].Clear();
 				}
 			};
 
-			Histogram mSampleHistogram;
+			Histogram	mSampleHistogram;
+			float		mMaxDist;
+			int			mHalfPatchSize;
+			int			mHalfWindowSize;
+			Array<2, Color>	mDenoisedPixelBuffer;
+			Array<2, Color>	mInputBuffer;
+			Array<2, int>	mRHFSampleCount;
+			Array<2, Color>	mTempBuffer;
+
+			bool		mRunRHF;
 
 		public:
 			void Init(int width, int height, Filter* pFilter);
@@ -83,8 +96,13 @@ namespace EDX
 			void AddSample(float x, float y, const Color& sample);
 			void ScaleToPixel();
 
+			void Denoise(const bool denoise)
+			{
+				mRunRHF = denoise;
+			}
+
 		private:
-			float ChiSquareDistance(const Vector2i& x, const Vector2i& y);
+			float ChiSquareDistance(const Vector2i& x, const Vector2i& y, const int halfPatchSize);
 		};
 	}
 }

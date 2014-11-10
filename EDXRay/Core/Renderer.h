@@ -43,7 +43,7 @@ namespace EDX
 			void QueueRenderTasks();
 			void StopRenderTasks();
 
-			const Color* GetFrameBuffer() const;
+			Film* GetFilm();
 			const RenderJobDesc GetJobDesc() const { return mJobDesc; }
 			RefPtr<Scene> GetScene() { return mpScene; }
 			void SetCameraParams(const CameraParameters& params);

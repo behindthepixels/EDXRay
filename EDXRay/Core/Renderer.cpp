@@ -152,9 +152,9 @@ namespace EDX
 				mJobDesc.CameraParams.FocusPlaneDist);
 		}
 
-		const Color* Renderer::GetFrameBuffer() const
+		Film* Renderer::GetFilm()
 		{
-			return mpFilm->GetPixelBuffer();
+			return mpFilm.Ptr();
 		}
 	}
 }

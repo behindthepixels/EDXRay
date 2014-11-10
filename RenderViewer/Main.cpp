@@ -6,6 +6,7 @@
 #include <gl/GL.h>
 
 #include "Core/Renderer.h"
+#include "Core/Film.h"
 #include "Core/Scene.h"
 #include "Core/Primitive.h"
 #include "Core/TriangleMesh.h"
@@ -19,8 +20,8 @@
 using namespace EDX;
 using namespace EDX::RayTracer;
 
-int gImageWidth = 1280;
-int gImageHeight = 800;
+int gImageWidth = 400;
+int gImageHeight = 300;
 
 RefPtr<Renderer> gpRenderer = nullptr;
 Previewer gPreview;
@@ -65,7 +66,7 @@ void OnRender(Object* pSender, EventArgs args)
 	if (gRendering)
 	{
 		glRasterPos3f(0.0f, 0.0f, 0.0f);
-		glDrawPixels(gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight, GL_RGBA, GL_FLOAT, (float*)gpRenderer->GetFrameBuffer());
+		glDrawPixels(gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight, GL_RGBA, GL_FLOAT, (float*)gpRenderer->GetFilm()->GetPixelBuffer());
 	}
 	else
 		gPreview.OnRender();
@@ -121,6 +122,10 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 			gpRenderer->StopRenderTasks();
 			gPreview.OnResize(Application::GetMainWindow()->GetWindowWidth(), Application::GetMainWindow()->GetWindowHeight());
 		}
+		break;
+
+	case 'N':
+		gpRenderer->GetFilm()->Denoise(true);
 		break;
 	}
 
