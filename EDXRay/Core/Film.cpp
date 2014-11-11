@@ -2,6 +2,9 @@
 #include "Math/EDXMath.h"
 #include "Graphics/Color.h"
 
+#include <ppl.h>
+using namespace concurrency;
+
 namespace EDX
 {
 	namespace RayTracer
@@ -69,16 +72,14 @@ namespace EDX
 
 		void Film::ScaleToPixel()
 		{
-			float fScale = 1.0f / float(mSampleCount);
-
-			for (int y = 0; y < mHeight; y++)
+			parallel_for(0, mHeight, [this](int y)
 			{
 				for (int x = 0; x < mWidth; x++)
 				{
 					const Pixel& pixel = mAccumulateBuffer[Vector2i(x, y)];
 					mPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight, INV_GAMMA);
 				}
-			}
+			});
 		}
 
 		// Ray Histogram Fusion film implementation
@@ -88,13 +89,11 @@ namespace EDX
 			mInputBuffer.Init(Vector2i(width, height));
 			mDenoisedPixelBuffer.Init(Vector2i(width, height));
 			mSampleHistogram.Init(width, height);
-			mRHFSampleCount.Init(width, height);
+			mRHFSampleCount.Init(Vector2i(width, height));
 
-			mMaxDist = 1.0f;
+			mMaxDist = 0.7f;
 			mHalfPatchSize = 1;
 			mHalfWindowSize = 6;
-			mTempBuffer.Init(Vector2i(2 * mHalfPatchSize + 1, 2 * mHalfPatchSize + 1));
-			mRunRHF = false;
 		}
 
 		void FilmRHF::Resize(int width, int height)
@@ -117,7 +116,7 @@ namespace EDX
 			mRHFSampleCount.Clear();
 		}
 
-		const float FilmRHF::Histogram::MAX_VAL = 7.5f;
+		const float FilmRHF::Histogram::MAX_VAL = 2.5f;
 
 		void FilmRHF::AddSample(float x, float y, const Color& sample)
 		{
@@ -162,44 +161,32 @@ namespace EDX
 						if (binLow[d] < Histogram::NUM_BINS - 2)
 						{
 							weightH = bin[d] - binLow[d];
+							weightL = 1.0f - weightH;
+							mSampleHistogram.histogramWeights[binLow[d]][Vector2i(colAdd, rowAdd)][d] += weightL;
+							mSampleHistogram.histogramWeights[binLow[d] + 1][Vector2i(colAdd, rowAdd)][d] += weightH;
 						}
 						else
 						{
 							weightH = (normalizedSample[d] - 1) / (S - 1.0f);
+							weightL = 1.0f - weightH;
+							mSampleHistogram.histogramWeights[Histogram::NUM_BINS - 2][Vector2i(colAdd, rowAdd)][d] += weightL;
+							mSampleHistogram.histogramWeights[Histogram::NUM_BINS - 1][Vector2i(colAdd, rowAdd)][d] += weightH;
 						}
 
-						weightL = 1.0f - weightH;
-						mSampleHistogram.histogramWeights[binLow[d]][Vector2i(colAdd, rowAdd)][d] += weightL;
-						mSampleHistogram.histogramWeights[binLow[d] + 1][Vector2i(colAdd, rowAdd)][d] += weightH;
 						mSampleHistogram.totalWeight[Vector2i(colAdd, rowAdd)][d] += weightL + weightH;
 					}
 				}
 			}
 		}
 
-		void FilmRHF::ScaleToPixel()
+		void FilmRHF::HistogramFusion(const int numForcedNeighbors)
 		{
-			float fScale = 1.0f / float(mSampleCount);
-
-			for (int y = 0; y < mHeight; y++)
-			{
-				for (int x = 0; x < mWidth; x++)
-				{
-					const Pixel& pixel = mAccumulateBuffer[Vector2i(x, y)];
-					if (mRunRHF)
-						mInputBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight, INV_GAMMA);
-					else
-						mPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight, INV_GAMMA);
-				}
-			}
-
-			if (!mRunRHF)
-				return;
-
 			mDenoisedPixelBuffer.Clear();
 			mRHFSampleCount.Clear();
-			for (int y = 0; y < mHeight; y++)
+			parallel_for(0, mHeight, [this](int y)
 			{
+				static const int MAX_PATCH_SIZE = 5;
+				Color tempPatchBuffer[MAX_PATCH_SIZE * MAX_PATCH_SIZE];
 				for (int x = 0; x < mWidth; x++)
 				{
 					const auto halfPatchSize = Math::Min(mHalfPatchSize, Math::Min(Math::Min(x, y), Math::Min(mWidth - 1 - x, mHeight - 1 - y)));
@@ -209,17 +196,17 @@ namespace EDX
 					const auto maxY = Math::Min(y + mHalfWindowSize, mHeight - 1 - halfPatchSize);
 
 					auto num = 0;
-					mTempBuffer.Clear();
+					memset(tempPatchBuffer, 0, sizeof(Color) * MAX_PATCH_SIZE * MAX_PATCH_SIZE);
 					for (auto i = minY; i <= maxY; i++)
 					{
 						for (auto j = minX; j <= maxX; j++)
 						{
-							float dist = ChiSquareDistance(Vector2i(x, y), Vector2i(j, i), halfPatchSize);
+							float dist = (x == j && y == i) ? Math::EDX_NEG_INFINITY : ChiSquareDistance(Vector2i(x, y), Vector2i(j, i), halfPatchSize);
 							if (dist < mMaxDist)
 							{
 								for (auto h = -halfPatchSize; h <= halfPatchSize; h++)
 									for (auto w = -halfPatchSize; w <= halfPatchSize; w++)
-										mTempBuffer[Vector2i(w + halfPatchSize, h + halfPatchSize)] += mInputBuffer[Vector2i(j + w, i + h)];
+										tempPatchBuffer[(h + halfPatchSize) * MAX_PATCH_SIZE + w + halfPatchSize] += mPixelBuffer[Vector2i(j + w, i + h)];
 
 								num++;
 							}
@@ -232,61 +219,69 @@ namespace EDX
 						{
 							for (auto w = -halfPatchSize; w <= halfPatchSize; w++)
 							{
-								mDenoisedPixelBuffer[Vector2i(x + w, y + h)] += mTempBuffer[Vector2i(w + halfPatchSize, h + halfPatchSize)] / float(num);
+								EDXLockApply lock(mRHFLock);
+								mDenoisedPixelBuffer[Vector2i(x + w, y + h)] += tempPatchBuffer[(h + halfPatchSize) * MAX_PATCH_SIZE + w + halfPatchSize] / float(num);
 								mRHFSampleCount[Vector2i(x + w, y + h)]++;
 							}
 						}
 					}
 				}
-			}
+			});
 
-			for (int y = 0; y < mHeight; y++)
+			parallel_for(0, mHeight, [this](int y)
+			{
 				for (int x = 0; x < mWidth; x++)
 					mPixelBuffer[Vector2i(x, y)] = mDenoisedPixelBuffer[Vector2i(x, y)] / float(mRHFSampleCount[Vector2i(x, y)]);
+			});
+		}
+
+		void FilmRHF::Denoise()
+		{
+			HistogramFusion();
 		}
 
 		float FilmRHF::ChiSquareDistance(const Vector2i& coord0, const Vector2i& coord1, const int halfPatchSize)
 		{
-			auto PixelWiseDist = [this](const Vector2i& c0, const Vector2i& c1) -> float
+			int normFactor = 0;
+			auto PixelWiseDist = [this, &normFactor](const Vector2i& c0, const Vector2i& c1, const int binIdx) -> float
 			{
-				int normFactor = 0;
 				float ret = 0.0f;
 
-				for (auto binIdx = 0; binIdx < Histogram::NUM_BINS; binIdx++)
+				for (auto c = 0; c < 3; c++)
 				{
-					for (auto d = 0; d < 3; d++)
+					const float histo0 = mSampleHistogram.histogramWeights[binIdx][c0][c];
+					const float histo1 = mSampleHistogram.histogramWeights[binIdx][c1][c];
+					const float sum = histo0 + histo1;
+					if (sum > 1.0f)
 					{
-						const float histo0 = mSampleHistogram.histogramWeights[binIdx][c0][d];
-						const float histo1 = mSampleHistogram.histogramWeights[binIdx][c1][d];
-						const float sum = histo0 + histo1;
-						if (sum > 1.0f)
-						{
-							const float weight0 = mSampleHistogram.totalWeight[c0][d];
-							const float weight1 = mSampleHistogram.totalWeight[c1][d];
-							const float diff = weight1 * histo0 - weight0 * histo1;
+						const float weight0 = mSampleHistogram.totalWeight[c0][c];
+						const float weight1 = mSampleHistogram.totalWeight[c1][c];
+						const float diff = weight1 * histo0 - weight0 * histo1;
 
-							ret += diff * diff / ((weight0 * weight1) * sum);
-							normFactor++;
-						}
+						ret += diff * diff / ((weight0 * weight1) * sum);
+						normFactor++;
 					}
 				}
 
-				return ret / (normFactor + 1e-4f);
+				return ret;
 			};
 
 			float patchWiseDist = 0.0f;
-			for (auto i = -halfPatchSize; i <= halfPatchSize; i++)
+			for (auto binIdx = 0; binIdx < Histogram::NUM_BINS; binIdx++)
 			{
-				for (auto j = -halfPatchSize; j <= halfPatchSize; j++)
+				for (auto i = -halfPatchSize; i <= halfPatchSize; i++)
 				{
-					Vector2i c0 = coord0 + Vector2i(i, j);
-					Vector2i c1 = coord1 + Vector2i(i, j);
+					for (auto j = -halfPatchSize; j <= halfPatchSize; j++)
+					{
+						Vector2i c0 = coord0 + Vector2i(i, j);
+						Vector2i c1 = coord1 + Vector2i(i, j);
 
-					patchWiseDist += PixelWiseDist(c0, c1);
+						patchWiseDist += PixelWiseDist(c0, c1, binIdx);
+					}
 				}
 			}
 
-			return patchWiseDist;
+			return patchWiseDist / (normFactor + 1e-4f);
 		}
 	}
 }

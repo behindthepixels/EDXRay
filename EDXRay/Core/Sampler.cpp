@@ -7,6 +7,12 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		SampleBuffer::~SampleBuffer()
+		{
+			SafeDeleteArray(p1D);
+			SafeDeleteArray(p2D);
+		}
+
 		SampleBuffer* SampleBuffer::Duplicate(uint count) const
 		{
 			SampleBuffer* pRet = new SampleBuffer[count];

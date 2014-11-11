@@ -106,7 +106,7 @@ namespace EDX
 				}
 
 				if (mTaskSync.Aborted())
-					return;
+					break;
 			}
 
 			SafeDeleteArray(pSampleBuf);

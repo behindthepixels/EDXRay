@@ -3,7 +3,7 @@
 #include "Windows/Application.h"
 #include "Memory/Memory.h"
 
-#include <gl/GL.h>
+#include "Graphics/OpenGL.h"
 
 #include "Core/Renderer.h"
 #include "Core/Film.h"
@@ -17,15 +17,21 @@
 
 #include "ScenePreviewer.h"
 
+#include "Graphics/EDXGui.h"
+
 using namespace EDX;
 using namespace EDX::RayTracer;
+using namespace EDX::GUI;
 
-int gImageWidth = 400;
-int gImageHeight = 300;
+int gImageWidth = 800;
+int gImageHeight = 600;
 
 RefPtr<Renderer> gpRenderer = nullptr;
 Previewer gPreview;
+EDXDialog gDialog;
 bool gRendering = false;
+
+void GUIEvent(Object* pObject, EventArgs args);
 
 void OnInit(Object* pSender, EventArgs args)
 {
@@ -36,7 +42,7 @@ void OnInit(Object* pSender, EventArgs args)
 	RenderJobDesc desc;
 	desc.ImageWidth = gImageWidth;
 	desc.ImageHeight = gImageHeight;
-	desc.SamplesPerPixel = 8192 * 32;
+	desc.SamplesPerPixel = 512;
 	desc.CameraParams.FieldOfView = 65;
 	desc.CameraParams.Pos = Vector3(0, 3, 5);
 	desc.CameraParams.Target = Vector3(0, 4, 0);
@@ -53,10 +59,19 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->AddPrimitive(pMesh);
 	pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
 	pScene->AddLight(new EnvironmentalLight(12 * Color(0.4f, 0.6f, 0.8f)));
+	//pScene->AddLight(new PointLight(Vector3(0.0f, 5.5f, 0.0f), Color(20.0f)));
+
 	pScene->InitAccelerator();
 	gpRenderer->BakeSamples();
 
 	gPreview.Initialize(*pScene, desc);
+
+	// Initialize UI
+	gDialog.Init(gImageWidth, gImageHeight);
+	gDialog.SetCallback(NotifyEvent(GUIEvent));
+
+	gDialog.AddText(0, "Image Res: 800, 600");
+	gDialog.AddText(1, "Samples per Pixel: ");
 }
 
 void OnRender(Object* pSender, EventArgs args)
@@ -70,6 +85,12 @@ void OnRender(Object* pSender, EventArgs args)
 	}
 	else
 		gPreview.OnRender();
+
+	char strText[_MAX_PATH] = { 0 };
+	_snprintf_s(strText, _MAX_PATH, "Samples per Pixel: %i\0", gpRenderer->GetFilm()->GetSampleCount());
+	((Text*)gDialog.GetControlWithID(1))->SetText(strText);
+
+	gDialog.Render();
 }
 
 void OnResize(Object* pSender, ResizeEventArgs args)
@@ -88,8 +109,16 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 		gPreview.OnResize(args.Width, args.Height);
 	}
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	gDialog.Resize(args.Width, args.Height);
+
+
+	gImageWidth = args.Width;
+	gImageHeight = args.Height;
+
+	Text* pText = (Text*)gDialog.GetControlWithID(0);
+	char strText[_MAX_PATH] = { 0 };
+	_snprintf_s(strText, _MAX_PATH, "Image Res: %i, %i\0", gImageWidth, gImageHeight);
+	pText->SetText(strText);
 }
 
 void OnMouseEvent(Object* pSender, MouseEventArgs args)
@@ -100,6 +129,9 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 
 void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 {
+	if (gDialog.HandleKeyboard(args))
+		return;
+
 	switch (args.key)
 	{
 	case 'R':
@@ -125,7 +157,7 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 		break;
 
 	case 'N':
-		gpRenderer->GetFilm()->Denoise(true);
+		gpRenderer->GetFilm()->Denoise();
 		break;
 	}
 
@@ -133,11 +165,20 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 		gPreview.GetCamera().HandleKeyboardMsg(args);
 }
 
+void GUIEvent(Object* pObject, EventArgs args)
+{
+	EDXControl* pControl = (EDXControl*)pObject;
+	switch (pControl->GetID())
+	{
+	}
+}
+
 void OnRelease(Object* pSender, EventArgs args)
 {
 	gpRenderer->StopRenderTasks();
 	gpRenderer.Dereference();
 	gPreview.~Previewer();
+	gDialog.Release();
 }
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdShow)

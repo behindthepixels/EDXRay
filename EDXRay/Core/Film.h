@@ -6,6 +6,7 @@
 #include "Memory/Array.h"
 #include "Memory/BlockedArray.h"
 #include "Memory/RefPtr.h"
+#include "Windows/Thread.h"
 
 namespace EDX
 {
@@ -29,7 +30,7 @@ namespace EDX
 			static const float INV_GAMMA;
 
 		public:
-			~Film()
+			virtual ~Film()
 			{
 				Release();
 			}
@@ -40,12 +41,12 @@ namespace EDX
 			void Release();
 
 			virtual void AddSample(float x, float y, const Color& sample);
-			virtual void ScaleToPixel();
+			void ScaleToPixel();
 			inline void IncreSampleCount() { mSampleCount++; }
 
 			const Color* GetPixelBuffer() const { return mPixelBuffer.Data(); }
 			const int GetSampleCount() const { return mSampleCount; }
-			virtual void Denoise(const bool denoise) {}
+			virtual void Denoise() {}
 		};
 
 		class FilmRHF : public Film
@@ -64,9 +65,9 @@ namespace EDX
 				{
 					width = w; height = h;
 
-					totalWeight.Init(width, height);
+					totalWeight.Init(Vector2i(width, height));
 					for (auto i = 0; i < NUM_BINS; i++)
-						histogramWeights[i].Init(width, height);
+						histogramWeights[i].Init(Vector2i(width, height));
 				}
 
 				void Clear()
@@ -84,9 +85,8 @@ namespace EDX
 			Array<2, Color>	mDenoisedPixelBuffer;
 			Array<2, Color>	mInputBuffer;
 			Array<2, int>	mRHFSampleCount;
-			Array<2, Color>	mTempBuffer;
 
-			bool		mRunRHF;
+			EDXLock mRHFLock;
 
 		public:
 			void Init(int width, int height, Filter* pFilter);
@@ -94,14 +94,10 @@ namespace EDX
 			void Clear();
 
 			void AddSample(float x, float y, const Color& sample);
-			void ScaleToPixel();
-
-			void Denoise(const bool denoise)
-			{
-				mRunRHF = denoise;
-			}
+			void Denoise();
 
 		private:
+			void HistogramFusion(const int numForcedNeighbors = 0);
 			float ChiSquareDistance(const Vector2i& x, const Vector2i& y, const int halfPatchSize);
 		};
 	}
