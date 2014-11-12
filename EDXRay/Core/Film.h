@@ -59,7 +59,7 @@ namespace EDX
 
 				int width, height;
 				Array<2, Vector3> histogramWeights[NUM_BINS];
-				Array<2, Vector3> totalWeight;
+				Array<2, int> totalWeight;
 
 				void Init(int w, int h)
 				{

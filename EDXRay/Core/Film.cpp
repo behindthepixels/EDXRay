@@ -91,7 +91,7 @@ namespace EDX
 			mSampleHistogram.Init(width, height);
 			mRHFSampleCount.Init(Vector2i(width, height));
 
-			mMaxDist = 0.7f;
+			mMaxDist = 0.8f;
 			mHalfPatchSize = 1;
 			mHalfWindowSize = 6;
 		}
@@ -116,7 +116,7 @@ namespace EDX
 			mRHFSampleCount.Clear();
 		}
 
-		const float FilmRHF::Histogram::MAX_VAL = 2.5f;
+		const float FilmRHF::Histogram::MAX_VAL = 7.5f;
 
 		void FilmRHF::AddSample(float x, float y, const Color& sample)
 		{
@@ -145,6 +145,9 @@ namespace EDX
 					pixel.weight += weight;
 					pixel.color += weightedSample;
 
+					weightedSample.r = Math::Max(0.0f, weightedSample.r);
+					weightedSample.g = Math::Max(0.0f, weightedSample.g);
+					weightedSample.b = Math::Max(0.0f, weightedSample.b);
 					Color normalizedSample = Math::Pow(weightedSample, INV_GAMMA) / Histogram::MAX_VAL;
 
 					const float S = 2.0f;
@@ -155,26 +158,26 @@ namespace EDX
 					Vector3 bin = float(Histogram::NUM_BINS - 2) * Vector3(normalizedSample.r, normalizedSample.g, normalizedSample.b);
 					Vector3i binLow = Math::FloorToInt(bin);
 
-					for (auto d = 0; d < 3; d++)
+					for (auto c = 0; c < 3; c++)
 					{
 						float weightH = 0.0f, weightL = 0.0f;
-						if (binLow[d] < Histogram::NUM_BINS - 2)
+						if (binLow[c] < Histogram::NUM_BINS - 2)
 						{
-							weightH = bin[d] - binLow[d];
+							weightH = bin[c] - binLow[c];
 							weightL = 1.0f - weightH;
-							mSampleHistogram.histogramWeights[binLow[d]][Vector2i(colAdd, rowAdd)][d] += weightL;
-							mSampleHistogram.histogramWeights[binLow[d] + 1][Vector2i(colAdd, rowAdd)][d] += weightH;
+							mSampleHistogram.histogramWeights[binLow[c]][Vector2i(colAdd, rowAdd)][c] += weightL;
+							mSampleHistogram.histogramWeights[binLow[c] + 1][Vector2i(colAdd, rowAdd)][c] += weightH;
 						}
 						else
 						{
-							weightH = (normalizedSample[d] - 1) / (S - 1.0f);
+							weightH = (normalizedSample[c] - 1) / (S - 1.0f);
 							weightL = 1.0f - weightH;
-							mSampleHistogram.histogramWeights[Histogram::NUM_BINS - 2][Vector2i(colAdd, rowAdd)][d] += weightL;
-							mSampleHistogram.histogramWeights[Histogram::NUM_BINS - 1][Vector2i(colAdd, rowAdd)][d] += weightH;
+							mSampleHistogram.histogramWeights[Histogram::NUM_BINS - 2][Vector2i(colAdd, rowAdd)][c] += weightL;
+							mSampleHistogram.histogramWeights[Histogram::NUM_BINS - 1][Vector2i(colAdd, rowAdd)][c] += weightH;
 						}
-
-						mSampleHistogram.totalWeight[Vector2i(colAdd, rowAdd)][d] += weightL + weightH;
 					}
+
+					mSampleHistogram.totalWeight[Vector2i(colAdd, rowAdd)]++;
 				}
 			}
 		}
@@ -185,7 +188,7 @@ namespace EDX
 			mRHFSampleCount.Clear();
 			parallel_for(0, mHeight, [this](int y)
 			{
-				static const int MAX_PATCH_SIZE = 5;
+				static const int MAX_PATCH_SIZE = 3;
 				Color tempPatchBuffer[MAX_PATCH_SIZE * MAX_PATCH_SIZE];
 				for (int x = 0; x < mWidth; x++)
 				{
@@ -201,7 +204,7 @@ namespace EDX
 					{
 						for (auto j = minX; j <= maxX; j++)
 						{
-							float dist = (x == j && y == i) ? Math::EDX_NEG_INFINITY : ChiSquareDistance(Vector2i(x, y), Vector2i(j, i), halfPatchSize);
+							float dist = (x != j || y != i) ? ChiSquareDistance(Vector2i(x, y), Vector2i(j, i), halfPatchSize) : Math::EDX_NEG_INFINITY;
 							if (dist < mMaxDist)
 							{
 								for (auto h = -halfPatchSize; h <= halfPatchSize; h++)
@@ -231,7 +234,11 @@ namespace EDX
 			parallel_for(0, mHeight, [this](int y)
 			{
 				for (int x = 0; x < mWidth; x++)
-					mPixelBuffer[Vector2i(x, y)] = mDenoisedPixelBuffer[Vector2i(x, y)] / float(mRHFSampleCount[Vector2i(x, y)]);
+				{
+					float weight = mRHFSampleCount[Vector2i(x, y)];
+					if (weight > 0.0f)
+						mPixelBuffer[Vector2i(x, y)] = mDenoisedPixelBuffer[Vector2i(x, y)] / weight;
+				}
 			});
 		}
 
@@ -247,6 +254,8 @@ namespace EDX
 			{
 				float ret = 0.0f;
 
+				const float weight0 = mSampleHistogram.totalWeight[c0];
+				const float weight1 = mSampleHistogram.totalWeight[c1];
 				for (auto c = 0; c < 3; c++)
 				{
 					const float histo0 = mSampleHistogram.histogramWeights[binIdx][c0][c];
@@ -254,8 +263,6 @@ namespace EDX
 					const float sum = histo0 + histo1;
 					if (sum > 1.0f)
 					{
-						const float weight0 = mSampleHistogram.totalWeight[c0][c];
-						const float weight1 = mSampleHistogram.totalWeight[c1][c];
 						const float diff = weight1 * histo0 - weight0 * histo1;
 
 						ret += diff * diff / ((weight0 * weight1) * sum);
