@@ -76,7 +76,10 @@ namespace EDX
 			{
 				for (int x = 0; x < mWidth; x++)
 				{
-					const Pixel& pixel = mAccumulateBuffer[Vector2i(x, y)];
+					Pixel pixel = mAccumulateBuffer[Vector2i(x, y)];
+					pixel.color.r = Math::Max(0.0f, pixel.color.r);
+					pixel.color.g = Math::Max(0.0f, pixel.color.g);
+					pixel.color.b = Math::Max(0.0f, pixel.color.b);
 					mPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight, INV_GAMMA);
 				}
 			});
