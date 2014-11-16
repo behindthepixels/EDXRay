@@ -94,7 +94,7 @@ namespace EDX
 			mSampleHistogram.Init(width, height);
 			mRHFSampleCount.Init(Vector2i(width, height));
 
-			mMaxDist = 0.8f;
+			mMaxDist = 0.7f;
 			mHalfPatchSize = 1;
 			mHalfWindowSize = 6;
 		}
@@ -185,10 +185,16 @@ namespace EDX
 			}
 		}
 
-		void FilmRHF::HistogramFusion(const int numForcedNeighbors)
+		void FilmRHF::Denoise()
+		{
+			HistogramFusion();
+		}
+
+		void FilmRHF::HistogramFusion()
 		{
 			mDenoisedPixelBuffer.Clear();
 			mRHFSampleCount.Clear();
+
 			parallel_for(0, mHeight, [this](int y)
 			{
 				static const int MAX_PATCH_SIZE = 3;
@@ -221,11 +227,11 @@ namespace EDX
 
 					if (num > 0)
 					{
+						EDXLockApply lock(mRHFLock);
 						for (auto h = -halfPatchSize; h <= halfPatchSize; h++)
 						{
 							for (auto w = -halfPatchSize; w <= halfPatchSize; w++)
 							{
-								EDXLockApply lock(mRHFLock);
 								mDenoisedPixelBuffer[Vector2i(x + w, y + h)] += tempPatchBuffer[(h + halfPatchSize) * MAX_PATCH_SIZE + w + halfPatchSize] / float(num);
 								mRHFSampleCount[Vector2i(x + w, y + h)]++;
 							}
@@ -245,9 +251,9 @@ namespace EDX
 			});
 		}
 
-		void FilmRHF::Denoise()
+		void GaussianDownSample(const Array<2, Color>& input, Array<2, Color>& output, float scale)
 		{
-			HistogramFusion();
+
 		}
 
 		float FilmRHF::ChiSquareDistance(const Vector2i& coord0, const Vector2i& coord1, const int halfPatchSize)

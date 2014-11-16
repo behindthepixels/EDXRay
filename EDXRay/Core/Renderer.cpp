@@ -40,7 +40,7 @@ namespace EDX
 			mpIntegrator = new PathTracingIntegrator(8);
 
 			mpFilm = new FilmRHF;
-			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new GaussianFilter);
+			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new MitchellNetravaliFilter);
 
 			mpSampler = new RandomSampler;
 

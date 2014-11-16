@@ -4,7 +4,6 @@
 #include "../ForwardDecl.h"
 #include "Graphics/Color.h"
 #include "Memory/Array.h"
-#include "Memory/BlockedArray.h"
 #include "Memory/RefPtr.h"
 #include "Windows/Thread.h"
 
@@ -23,8 +22,8 @@ namespace EDX
 
 			int mWidth, mHeight;
 			int mSampleCount;
-			Array<2, Color>			mPixelBuffer;
-			BlockedArray<2, Pixel>	mAccumulateBuffer;
+			Array<2, Color>	mPixelBuffer;
+			Array<2, Pixel>	mAccumulateBuffer;
 			RefPtr<Filter> mpFilter;
 
 			static const float INV_GAMMA;
@@ -58,7 +57,7 @@ namespace EDX
 				static const float MAX_VAL;
 
 				int width, height;
-				Array<2, Vector3> histogramWeights[NUM_BINS];
+				Array<2, Color> histogramWeights[NUM_BINS];
 				Array<2, int> totalWeight;
 
 				void Init(int w, int h)
@@ -83,6 +82,8 @@ namespace EDX
 			int			mHalfPatchSize;
 			int			mHalfWindowSize;
 			Array<2, Color>	mDenoisedPixelBuffer;
+			static const int MAX_SCALE = 3;
+			Array<2, Color>	mDownSampledBuffers[MAX_SCALE];
 			Array<2, Color>	mInputBuffer;
 			Array<2, int>	mRHFSampleCount;
 
@@ -97,7 +98,8 @@ namespace EDX
 			void Denoise();
 
 		private:
-			void HistogramFusion(const int numForcedNeighbors = 0);
+			void HistogramFusion();
+			void GaussianDownSample();
 			float ChiSquareDistance(const Vector2i& x, const Vector2i& y, const int halfPatchSize);
 		};
 	}
