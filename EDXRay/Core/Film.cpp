@@ -89,31 +89,25 @@ namespace EDX
 		void FilmRHF::Init(int width, int height, Filter* pFilter)
 		{
 			Film::Init(width, height, pFilter);
-			mInputBuffer.Init(Vector2i(width, height));
-			mDenoisedPixelBuffer.Init(Vector2i(width, height));
 			mSampleHistogram.Init(width, height);
-			mRHFSampleCount.Init(Vector2i(width, height));
 
 			mMaxDist = 0.7f;
 			mHalfPatchSize = 1;
 			mHalfWindowSize = 6;
+			mScale = 3;
 		}
 
 		void FilmRHF::Resize(int width, int height)
 		{
 			Film::Resize(width, height);
 
-			mInputBuffer.Init(Vector2i(width, height));
-			mDenoisedPixelBuffer.Init(Vector2i(width, height));
 			mSampleHistogram.Init(width, height);
-			mRHFSampleCount.Init(width, height);
 		}
 
 		void FilmRHF::Clear()
 		{
 			Film::Clear();
 
-			mInputBuffer.Clear();
 			mDenoisedPixelBuffer.Clear();
 			mSampleHistogram.Clear();
 			mRHFSampleCount.Clear();
@@ -180,32 +174,89 @@ namespace EDX
 						}
 					}
 
-					mSampleHistogram.totalWeight[Vector2i(colAdd, rowAdd)]++;
+					mSampleHistogram.totalWeights[Vector2i(colAdd, rowAdd)] += 1.0f;
+					mSampleHistogram.numSamples++;
 				}
 			}
 		}
 
 		void FilmRHF::Denoise()
 		{
-			HistogramFusion();
+			Array<2, Color> scaledImage;
+			Array<2, Color> prevImage;
+			Histogram scaledHistogram;
+			for (auto s = mScale - 1; s >= 0; s--)
+			{
+				float scale = 1.0f / float(1 << s);
+				if (s > 0)
+				{
+					for (auto b = 0; b < Histogram::NUM_BINS; b++)
+						GaussianDownSample(mSampleHistogram.histogramWeights[b], scaledHistogram.histogramWeights[b], scale);
+
+					GaussianDownSample(mSampleHistogram.totalWeights, scaledHistogram.totalWeights, scale);
+
+					float scaledTotalWeight = 0.0f;
+					for (auto i = 0; i < scaledHistogram.totalWeights.LinearSize(); i++)
+						scaledTotalWeight += scaledHistogram.totalWeights[i];
+
+					float ratio = mSampleHistogram.numSamples / scaledTotalWeight;
+					for (auto b = 0; b < Histogram::NUM_BINS; b++)
+					{
+						for (auto i = 0; i < scaledHistogram.histogramWeights[b].LinearSize(); i++)
+							scaledHistogram.histogramWeights[b][i] *= ratio;
+					}
+
+					GaussianDownSample(mPixelBuffer, scaledImage, scale);
+				}
+				else
+				{
+					scaledImage = mPixelBuffer;
+					scaledHistogram = mSampleHistogram;
+				}
+
+				HistogramFusion(scaledImage, scaledHistogram);
+
+				if (s < mScale - 1)
+				{
+					Array<2, Color> posTerm;
+					posTerm.Init(scaledImage.Size());
+					BicubicInterpolation(prevImage, posTerm);
+
+					Array<2, Color> negTermD;
+					GaussianDownSample(scaledImage, negTermD, 0.5f);
+					Array<2, Color> negTerm;
+					negTerm.Init(scaledImage.Size());
+					BicubicInterpolation(negTermD, negTerm);
+
+					for (auto i = 0; i < scaledImage.LinearSize(); i++)
+						scaledImage[i] += posTerm[i] - negTerm[i];
+				}
+
+				prevImage = scaledImage;
+			}
+
+			mPixelBuffer = scaledImage;
 		}
 
-		void FilmRHF::HistogramFusion()
+		void FilmRHF::HistogramFusion(Array<2, Color>& input, const Histogram& histogram)
 		{
-			mDenoisedPixelBuffer.Clear();
-			mRHFSampleCount.Clear();
+			mDenoisedPixelBuffer.Init(input.Size());
+			mRHFSampleCount.Init(input.Size());
 
-			parallel_for(0, mHeight, [this](int y)
+			const int width = input.Size(0);
+			const int height = input.Size(1);
+
+			parallel_for(0, height, [&](int y)
 			{
 				static const int MAX_PATCH_SIZE = 3;
 				Color tempPatchBuffer[MAX_PATCH_SIZE * MAX_PATCH_SIZE];
-				for (int x = 0; x < mWidth; x++)
+				for (int x = 0; x < width; x++)
 				{
-					const auto halfPatchSize = Math::Min(mHalfPatchSize, Math::Min(Math::Min(x, y), Math::Min(mWidth - 1 - x, mHeight - 1 - y)));
+					const auto halfPatchSize = Math::Min(mHalfPatchSize, Math::Min(Math::Min(x, y), Math::Min(width - 1 - x, height - 1 - y)));
 					const auto minX = Math::Max(x - mHalfWindowSize, halfPatchSize);
 					const auto minY = Math::Max(y - mHalfWindowSize, halfPatchSize);
-					const auto maxX = Math::Min(x + mHalfWindowSize, mWidth - 1 - halfPatchSize);
-					const auto maxY = Math::Min(y + mHalfWindowSize, mHeight - 1 - halfPatchSize);
+					const auto maxX = Math::Min(x + mHalfWindowSize, width - 1 - halfPatchSize);
+					const auto maxY = Math::Min(y + mHalfWindowSize, height - 1 - halfPatchSize);
 
 					auto num = 0;
 					memset(tempPatchBuffer, 0, sizeof(Color) * MAX_PATCH_SIZE * MAX_PATCH_SIZE);
@@ -213,12 +264,12 @@ namespace EDX
 					{
 						for (auto j = minX; j <= maxX; j++)
 						{
-							float dist = (x != j || y != i) ? ChiSquareDistance(Vector2i(x, y), Vector2i(j, i), halfPatchSize) : Math::EDX_NEG_INFINITY;
+							float dist = (x != j || y != i) ? ChiSquareDistance(Vector2i(x, y), Vector2i(j, i), halfPatchSize, histogram) : Math::EDX_NEG_INFINITY;
 							if (dist < mMaxDist)
 							{
 								for (auto h = -halfPatchSize; h <= halfPatchSize; h++)
 									for (auto w = -halfPatchSize; w <= halfPatchSize; w++)
-										tempPatchBuffer[(h + halfPatchSize) * MAX_PATCH_SIZE + w + halfPatchSize] += mPixelBuffer[Vector2i(j + w, i + h)];
+										tempPatchBuffer[(h + halfPatchSize) * MAX_PATCH_SIZE + w + halfPatchSize] += input[Vector2i(j + w, i + h)];
 
 								num++;
 							}
@@ -240,35 +291,30 @@ namespace EDX
 				}
 			});
 
-			parallel_for(0, mHeight, [this](int y)
+			parallel_for(0, height, [&](int y)
 			{
-				for (int x = 0; x < mWidth; x++)
+				for (int x = 0; x < width; x++)
 				{
 					float weight = mRHFSampleCount[Vector2i(x, y)];
 					if (weight > 0.0f)
-						mPixelBuffer[Vector2i(x, y)] = mDenoisedPixelBuffer[Vector2i(x, y)] / weight;
+						input[Vector2i(x, y)] = mDenoisedPixelBuffer[Vector2i(x, y)] / weight;
 				}
 			});
 		}
 
-		void GaussianDownSample(const Array<2, Color>& input, Array<2, Color>& output, float scale)
-		{
-
-		}
-
-		float FilmRHF::ChiSquareDistance(const Vector2i& coord0, const Vector2i& coord1, const int halfPatchSize)
+		float FilmRHF::ChiSquareDistance(const Vector2i& coord0, const Vector2i& coord1, const int halfPatchSize, const Histogram& histogram)
 		{
 			int normFactor = 0;
-			auto PixelWiseDist = [this, &normFactor](const Vector2i& c0, const Vector2i& c1, const int binIdx) -> float
+			auto PixelWiseDist = [this, &normFactor, &histogram](const Vector2i& c0, const Vector2i& c1, const int binIdx) -> float
 			{
 				float ret = 0.0f;
 
-				const float weight0 = mSampleHistogram.totalWeight[c0];
-				const float weight1 = mSampleHistogram.totalWeight[c1];
+				const float weight0 = histogram.totalWeights[c0];
+				const float weight1 = histogram.totalWeights[c1];
 				for (auto c = 0; c < 3; c++)
 				{
-					const float histo0 = mSampleHistogram.histogramWeights[binIdx][c0][c];
-					const float histo1 = mSampleHistogram.histogramWeights[binIdx][c1][c];
+					const float histo0 = histogram.histogramWeights[binIdx][c0][c];
+					const float histo1 = histogram.histogramWeights[binIdx][c1][c];
 					const float sum = histo0 + histo1;
 					if (sum > 1.0f)
 					{
@@ -298,6 +344,174 @@ namespace EDX
 			}
 
 			return patchWiseDist / (normFactor + 1e-4f);
+		}
+
+		template<typename T>
+		void FilmRHF::GaussianDownSample(const Array<2, T>& input, Array<2, T>& output, float scale)
+		{
+			static const float SIGMA_SCALE = 0.55f;
+			float sigma = scale < 1.0 ? SIGMA_SCALE * Math::Sqrt(1 / (scale * scale) - 1) : SIGMA_SCALE;
+
+			const float prec = 2.0f;
+			const int halfSize = Math::CeilToInt(sigma * Math::Sqrt(2.0f * prec * logf(10.0f)));
+			const int kernelSize = 1 + 2 * halfSize;
+
+			RefPtr<float, PtrType::Array> pKernel = new float[kernelSize];
+
+			const auto dimX = input.Size(0);
+			const auto dimY = input.Size(1);
+			const auto scaledDimX = Math::CeilToInt(scale * dimX);
+			const auto scaledDimY = Math::CeilToInt(scale * dimY);
+			output.Init(Vector2i(scaledDimX, scaledDimY));
+
+			auto GaussianKernel = [&kernelSize, &pKernel, sigma](const float mean)
+			{
+				float sum = 0.0f;
+				for (auto i = 0; i < kernelSize; i++)
+				{
+					float val = (i - mean) / sigma;
+					pKernel[i] = Math::Exp(-0.5f * val * val);
+					sum += pKernel[i];
+				}
+
+				// Normalization
+				if (sum > 0.0f)
+				{
+					for (auto i = 0; i < kernelSize; i++)
+						pKernel[i] /= sum;
+				}
+			};
+
+			Array<2, T> auxBuf;
+			auxBuf.Init(Vector2i(scaledDimX, dimY));
+
+			for (auto x = 0; x < scaledDimX; x++)
+			{
+				const float org = (x + 0.5f) / scale;
+				const int crd = Math::FloorToInt(org);
+
+				GaussianKernel(halfSize + org - crd - 0.5f);
+
+				for (auto y = 0; y < dimY; y++)
+				{
+					T sum = 0.0f;
+					for (auto k = 0; k < kernelSize; k++)
+					{
+						auto idx = crd - halfSize + k;
+						idx = Math::Clamp(idx, 0, dimX - 1);
+
+						sum += input[Vector2i(idx, y)] * pKernel[k];
+					}
+
+					auxBuf[Vector2i(x, y)] = sum;
+				}
+			}
+
+			for (auto y = 0; y < scaledDimY; y++)
+			{
+				const float org = (y + 0.5f) / scale;
+				const int crd = Math::FloorToInt(org);
+
+				GaussianKernel(halfSize + org - crd - 0.5f);
+
+				for (auto x = 0; x < scaledDimX; x++)
+				{
+					T sum = 0.0f;
+					for (auto k = 0; k < kernelSize; k++)
+					{
+						auto idx = crd - halfSize + k;
+						idx = Math::Clamp(idx, 0, dimY - 1);
+
+						sum += auxBuf[Vector2i(x, idx)] * pKernel[k];
+					}
+
+					output[Vector2i(x, y)] = sum;
+				}
+			}
+		}
+
+		void FilmRHF::BicubicInterpolation(const Array<2, Color>& input, Array<2, Color>& output)
+		{
+			const auto dimX = input.Size(0);
+			const auto dimY = input.Size(1);
+			const auto scaledDimX = output.Size(0);
+			const auto scaledDimY = output.Size(1);
+
+			float scaleX = scaledDimX / float(dimX);
+			float scaleY = scaledDimY / float(dimY);
+
+			Array<2, Color> auxBuf;
+			auxBuf.Init(scaledDimX, dimY);
+
+			float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			auto CalcBicubicWeights = [&weights](float t, float a)
+			{
+				float t2 = t * t;
+				float at = a * t;
+				weights[0] = a * t2 * (1.0f - t);
+				weights[1] = (2.0f * a + 3.0f - (a + 2.0f) * t) * t2 - at;
+				weights[2] = ((a + 2.0f) * t - a - 3.0f) * t2 + 1.0f;
+				weights[3] = a * (t - 2.0f) * t2 + at;
+			};
+
+			for (auto x = 0; x < scaledDimX; x++)
+			{
+				float org = (x + 0.5f) / scaleX;
+
+				if (org < 0.0f || org > dimX)
+				{
+					for (auto y = 0; y < dimY; y++)
+						auxBuf[Vector2i(x, y)] = Color::BLACK;
+
+					continue;
+				}
+
+				org -= 0.5f;
+				int crd = Math::FloorToInt(org);
+				float lin = org - crd;
+				CalcBicubicWeights(lin, -0.5f);
+
+				for (auto y = 0; y < dimY; y++)
+				{
+					Color sum = Color::BLACK;
+					for (auto l = -1; l <= 2; l++)
+					{
+						auto clampedL = Math::Clamp(crd + l, 0, scaledDimX - 1);
+						sum += weights[2 - l] * input[Vector2i(clampedL, y)];
+					}
+
+					auxBuf[Vector2i(x, y)] = sum;
+				}
+			}
+			for (auto y = 0; y < scaledDimY; y++)
+			{
+				float org = (y + 0.5f) / scaleY;
+
+				if (org < 0.0f || org > dimY)
+				{
+					for (auto x = 0; x < scaledDimX; x++)
+						auxBuf[Vector2i(x, y)] = Color::BLACK;
+
+					continue;
+				}
+
+				org -= 0.5f;
+				int crd = Math::FloorToInt(org);
+				float lin = org - crd;
+				CalcBicubicWeights(lin, -0.5f);
+
+				for (auto x = 0; x < scaledDimX; x++)
+				{
+					Color sum = Color::BLACK;
+					for (auto l = -1; l <= 2; l++)
+					{
+						auto clampedL = Math::Clamp(crd + l, 0, scaledDimY - 1);
+						sum += weights[2 - l] * auxBuf[Vector2i(x, clampedL)];
+					}
+
+					output[Vector2i(x, y)] = sum;
+				}
+			}
 		}
 	}
 }

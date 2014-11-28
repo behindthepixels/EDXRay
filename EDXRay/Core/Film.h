@@ -56,35 +56,36 @@ namespace EDX
 				static const int NUM_BINS = 20;
 				static const float MAX_VAL;
 
-				int width, height;
+				int numSamples;
 				Array<2, Color> histogramWeights[NUM_BINS];
-				Array<2, int> totalWeight;
+				Array<2, float> totalWeights;
 
 				void Init(int w, int h)
 				{
-					width = w; height = h;
+					numSamples = 0;
 
-					totalWeight.Init(Vector2i(width, height));
+					totalWeights.Init(Vector2i(w, h));
 					for (auto i = 0; i < NUM_BINS; i++)
-						histogramWeights[i].Init(Vector2i(width, height));
+						histogramWeights[i].Init(Vector2i(w, h));
 				}
 
 				void Clear()
 				{
-					totalWeight.Clear();
+					numSamples = 0;
+					totalWeights.Clear();
 					for (auto i = 0; i < NUM_BINS; i++)
 						histogramWeights[i].Clear();
 				}
 			};
 
+			static const int MAX_SCALE = 3;
 			Histogram	mSampleHistogram;
 			float		mMaxDist;
 			int			mHalfPatchSize;
 			int			mHalfWindowSize;
+			int			mScale;
 			Array<2, Color>	mDenoisedPixelBuffer;
-			static const int MAX_SCALE = 3;
 			Array<2, Color>	mDownSampledBuffers[MAX_SCALE];
-			Array<2, Color>	mInputBuffer;
 			Array<2, int>	mRHFSampleCount;
 
 			EDXLock mRHFLock;
@@ -98,9 +99,12 @@ namespace EDX
 			void Denoise();
 
 		private:
-			void HistogramFusion();
-			void GaussianDownSample();
-			float ChiSquareDistance(const Vector2i& x, const Vector2i& y, const int halfPatchSize);
+			void HistogramFusion(Array<2, Color>& input, const Histogram& histogram);
+			float ChiSquareDistance(const Vector2i& x, const Vector2i& y, const int halfPatchSize, const Histogram& histogram);
+
+			template<typename T>
+			void GaussianDownSample(const Array<2, T>& input, Array<2, T>& output, float scale);
+			void BicubicInterpolation(const Array<2, Color>& input, Array<2, Color>& output);
 		};
 	}
 }
