@@ -2,6 +2,7 @@
 
 #include "Math/Vector.h"
 #include "RNG/Random.h"
+#include "Memory/Array.h"
 
 namespace EDX
 {
@@ -9,6 +10,44 @@ namespace EDX
 	{
 		namespace Sampling
 		{
+			class Distribution1D
+			{
+			private:
+				Array1f mPDF;
+				Array1f mCDF;
+				int mSize;
+				float mIntegralVal;
+
+			public:
+				Distribution1D(float* pFunc, int size)
+				{
+					mSize = size;
+					mPDF.Init(size);
+					mCDF.Init(size + 1);
+
+					mPDF.SetData(pFunc);
+
+					float invSize = 1.0f / float(size);
+					mCDF[0] = 0.0f;
+					for (auto i = 0; i < mCDF.LinearSize(); i++)
+						mCDF[i] = mCDF[i - 1] + mPDF[i - 1] * invSize;
+
+					mIntegralVal = mCDF[size];
+					for (auto i = 0; i < mCDF.LinearSize(); i++)
+						mCDF[i] /= mIntegralVal;
+				}
+
+				int SampleDiscrete(float u, float* pPdf)
+				{
+					float *ptr = std::upper_bound(mCDF.ModifiableData(), mCDF.ModifiableData() + mCDF.LinearSize(), u);
+					int offset = Math::Max(0, int(ptr - mCDF.Data() - 1));
+					if (pPdf)
+						*pPdf = mPDF[offset] / (mIntegralVal * mSize);
+
+					return offset;
+				}
+			};
+
 			inline void ConcentricSampleDisk(float u1, float u2, float *dx, float *dy)
 			{
 				float r1 = 2.0f * u1 - 1.0f;

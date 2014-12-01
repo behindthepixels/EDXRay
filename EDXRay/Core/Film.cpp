@@ -108,9 +108,7 @@ namespace EDX
 		{
 			Film::Clear();
 
-			mDenoisedPixelBuffer.Clear();
 			mSampleHistogram.Clear();
-			mRHFSampleCount.Clear();
 		}
 
 		const float FilmRHF::Histogram::MAX_VAL = 7.5f;
@@ -240,7 +238,9 @@ namespace EDX
 
 		void FilmRHF::HistogramFusion(Array<2, Color>& input, const Histogram& histogram)
 		{
+			Array<2, Color> mDenoisedPixelBuffer;
 			mDenoisedPixelBuffer.Init(input.Size());
+			Array<2, int> mRHFSampleCount;
 			mRHFSampleCount.Init(input.Size());
 
 			const int width = input.Size(0);

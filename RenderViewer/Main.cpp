@@ -23,12 +23,12 @@ using namespace EDX;
 using namespace EDX::RayTracer;
 using namespace EDX::GUI;
 
-int gImageWidth = 800;
-int gImageHeight = 600;
+int gImageWidth = 1280;
+int gImageHeight = 720;
 
-RefPtr<Renderer> gpRenderer = nullptr;
-Previewer gPreview;
-EDXDialog gDialog;
+Renderer*	gpRenderer = nullptr;
+Previewer*	gpPreview = nullptr;
+EDXDialog*	gpDialog = nullptr;
 bool gRendering = false;
 
 void GUIEvent(Object* pObject, EventArgs args);
@@ -42,36 +42,45 @@ void OnInit(Object* pSender, EventArgs args)
 	RenderJobDesc desc;
 	desc.ImageWidth = gImageWidth;
 	desc.ImageHeight = gImageHeight;
-	desc.SamplesPerPixel = 512;
+	desc.SamplesPerPixel = 1024;
 	desc.CameraParams.FieldOfView = 65;
 	desc.CameraParams.Pos = Vector3(0, 3, 5);
-	desc.CameraParams.Target = Vector3(0, 4, 0);
+	desc.CameraParams.Target = Vector3(0, 3, 0);
 	gpRenderer->Initialize(desc);
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
 	Primitive* pMesh = new Primitive;
-	pMesh->LoadMesh("../../Media/sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
+	Primitive* pMesh2 = new Primitive;
+	Primitive* pMesh3 = new Primitive;
+	//pMesh->LoadMesh("../../Media/sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
 	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", BSDFType::Diffuse, Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	//pMesh->LoadSphere(1.0f, BSDFType::Diffuse, 128, 128, Vector3(0.0f, 1.0f, 10.5f));
+	pMesh->LoadSphere(1.0f, BSDFType::Mirror, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
+	pMesh2->LoadSphere(1.0f, BSDFType::Diffuse, 128, 128, Vector3(2.5f, 3.0f, 0.0f));
+	pMesh3->LoadSphere(1.0f, BSDFType::Glass, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
 
 	pScene->AddPrimitive(pMesh);
-	pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
-	pScene->AddLight(new EnvironmentalLight(12 * Color(0.4f, 0.6f, 0.8f)));
+	//pScene->AddPrimitive(pMesh2);
+	pScene->AddPrimitive(pMesh3);
+	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
+	pScene->AddLight(new EnvironmentalLight("../../Media/uffizi-large.hdr"));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 5.5f, 0.0f), Color(20.0f)));
 
 	pScene->InitAccelerator();
 	gpRenderer->BakeSamples();
 
-	gPreview.Initialize(*pScene, desc);
+	gpPreview = new Previewer;
+	gpPreview->Initialize(*pScene, desc);
 
 	// Initialize UI
-	gDialog.Init(gImageWidth, gImageHeight);
-	gDialog.SetCallback(NotifyEvent(GUIEvent));
+	gpDialog = new EDXDialog;
+	gpDialog->Init(gImageWidth, gImageHeight);
+	gpDialog->SetCallback(NotifyEvent(GUIEvent));
 
-	gDialog.AddText(0, "Image Res: 800, 600");
-	gDialog.AddText(1, "Samples per Pixel: ");
+	gpDialog->AddText(0, "Image Res: 800, 600");
+	gpDialog->AddText(1, "Samples per Pixel: ");
+	gpDialog->AddButton(2, "Render");
 }
 
 void OnRender(Object* pSender, EventArgs args)
@@ -84,13 +93,13 @@ void OnRender(Object* pSender, EventArgs args)
 		glDrawPixels(gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight, GL_RGBA, GL_FLOAT, (float*)gpRenderer->GetFilm()->GetPixelBuffer());
 	}
 	else
-		gPreview.OnRender();
+		gpPreview->OnRender();
 
 	char strText[_MAX_PATH] = { 0 };
 	_snprintf_s(strText, _MAX_PATH, "Samples per Pixel: %i\0", gpRenderer->GetFilm()->GetSampleCount());
-	((Text*)gDialog.GetControlWithID(1))->SetText(strText);
+	((Text*)gpDialog->GetControlWithID(1))->SetText(strText);
 
-	gDialog.Render();
+	gpDialog->Render();
 }
 
 void OnResize(Object* pSender, ResizeEventArgs args)
@@ -106,16 +115,16 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 	}
 	else
 	{
-		gPreview.OnResize(args.Width, args.Height);
+		gpPreview->OnResize(args.Width, args.Height);
 	}
 
-	gDialog.Resize(args.Width, args.Height);
+	gpDialog->Resize(args.Width, args.Height);
 
 
 	gImageWidth = args.Width;
 	gImageHeight = args.Height;
 
-	Text* pText = (Text*)gDialog.GetControlWithID(0);
+	Text* pText = (Text*)gpDialog->GetControlWithID(0);
 	char strText[_MAX_PATH] = { 0 };
 	_snprintf_s(strText, _MAX_PATH, "Image Res: %i, %i\0", gImageWidth, gImageHeight);
 	pText->SetText(strText);
@@ -123,13 +132,16 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 
 void OnMouseEvent(Object* pSender, MouseEventArgs args)
 {
+	if (gpDialog->MsgProc(args))
+		return;
+
 	if (!gRendering)
-		gPreview.GetCamera().HandleMouseMsg(args);
+		gpPreview->GetCamera().HandleMouseMsg(args);
 }
 
 void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 {
-	if (gDialog.HandleKeyboard(args))
+	if (gpDialog->HandleKeyboard(args))
 		return;
 
 	switch (args.key)
@@ -138,7 +150,7 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 		gRendering = !gRendering;
 		if (gRendering)
 		{
-			gpRenderer->SetCameraParams(gPreview.GetCamera().GetCameraParams());
+			gpRenderer->SetCameraParams(gpPreview->GetCamera().GetCameraParams());
 
 			glMatrixMode(GL_PROJECTION);
 			glLoadIdentity();
@@ -152,7 +164,7 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 		else
 		{
 			gpRenderer->StopRenderTasks();
-			gPreview.OnResize(Application::GetMainWindow()->GetWindowWidth(), Application::GetMainWindow()->GetWindowHeight());
+			gpPreview->OnResize(Application::GetMainWindow()->GetWindowWidth(), Application::GetMainWindow()->GetWindowHeight());
 		}
 		break;
 
@@ -162,7 +174,7 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 	}
 
 	if (!gRendering)
-		gPreview.GetCamera().HandleKeyboardMsg(args);
+		gpPreview->GetCamera().HandleKeyboardMsg(args);
 }
 
 void GUIEvent(Object* pObject, EventArgs args)
@@ -170,15 +182,38 @@ void GUIEvent(Object* pObject, EventArgs args)
 	EDXControl* pControl = (EDXControl*)pObject;
 	switch (pControl->GetID())
 	{
+	case 2:
+		gRendering = !gRendering;
+		if (gRendering)
+		{
+			gpRenderer->SetCameraParams(gpPreview->GetCamera().GetCameraParams());
+
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glOrtho(0, Application::GetMainWindow()->GetWindowWidth(), 0, Application::GetMainWindow()->GetWindowHeight(), -1, 1);
+
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+
+			gpRenderer->QueueRenderTasks();
+		}
+		else
+		{
+			gpRenderer->StopRenderTasks();
+			gpPreview->OnResize(Application::GetMainWindow()->GetWindowWidth(), Application::GetMainWindow()->GetWindowHeight());
+		}
+
+		break;
 	}
 }
 
 void OnRelease(Object* pSender, EventArgs args)
 {
 	gpRenderer->StopRenderTasks();
-	gpRenderer.Dereference();
-	gPreview.~Previewer();
-	gDialog.Release();
+
+	SafeDelete(gpRenderer);
+	SafeDelete(gpPreview);
+	SafeDelete(gpDialog);
 }
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdShow)

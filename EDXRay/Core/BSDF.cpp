@@ -212,7 +212,7 @@ namespace EDX
 			Vector3 vWo = diffGoem.WorldToLocal(vOut), vWi;
 
 			float fresnel = Fresnel(BSDFCoordinate::CosTheta(vWo));
-			float prob = fresnel;//0.5f * fFresnel + 0.25f;
+			float prob = 0.5f * fresnel + 0.25f;
 
 			if (sample.w <= prob && sampleBoth || (sampleReflect && !sampleBoth)) // Sample reflection
 			{

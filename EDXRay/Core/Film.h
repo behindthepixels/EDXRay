@@ -84,9 +84,6 @@ namespace EDX
 			int			mHalfPatchSize;
 			int			mHalfWindowSize;
 			int			mScale;
-			Array<2, Color>	mDenoisedPixelBuffer;
-			Array<2, Color>	mDownSampledBuffers[MAX_SCALE];
-			Array<2, int>	mRHFSampleCount;
 
 			EDXLock mRHFLock;
 

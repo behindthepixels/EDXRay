@@ -134,6 +134,8 @@ namespace EDX
 		{
 			mTaskSync.SetAbort(true);
 			ThreadScheduler::Instance()->JoinAllTasks();
+
+			mpFilm->Clear();
 		}
 
 		void Renderer::SetCameraParams(const CameraParameters& params)
