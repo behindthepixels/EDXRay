@@ -37,15 +37,34 @@ namespace EDX
 						mCDF[i] /= mIntegralVal;
 				}
 
-				int SampleDiscrete(float u, float* pPdf)
+				float SampleContinuous(float u, float* pPdf, int* pOffset = nullptr) const
 				{
-					float *ptr = std::upper_bound(mCDF.ModifiableData(), mCDF.ModifiableData() + mCDF.LinearSize(), u);
+					const float *ptr = std::upper_bound(mCDF.Data(), mCDF.Data() + mCDF.LinearSize(), u);
+					int offset = Math::Max(0, int(ptr - mCDF.Data() - 1));
+					if (pPdf)
+						*pPdf = mPDF[offset] / mIntegralVal;
+					if (pOffset)
+						*pOffset = offset;
+
+					float du = (u - mCDF[offset]) / (mCDF[offset + 1] - mCDF[offset]);
+
+					return (offset + du) / float(mSize);
+				}
+
+				int SampleDiscrete(float u, float* pPdf) const
+				{
+					const float *ptr = std::upper_bound(mCDF.Data(), mCDF.Data() + mCDF.LinearSize(), u);
 					int offset = Math::Max(0, int(ptr - mCDF.Data() - 1));
 					if (pPdf)
 						*pPdf = mPDF[offset] / (mIntegralVal * mSize);
 
 					return offset;
 				}
+			};
+
+			class Distribution2D
+			{
+
 			};
 
 			inline void ConcentricSampleDisk(float u1, float u2, float *dx, float *dy)
