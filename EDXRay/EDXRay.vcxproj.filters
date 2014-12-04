@@ -28,6 +28,9 @@
     <Filter Include="Source Files\Lights">
       <UniqueIdentifier>{3df1f16d-6a75-4f3d-a1de-add95089229f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Lights\SkyLight">
+      <UniqueIdentifier>{e0fcb5e0-b78d-4923-a428-7f25bf1d0784}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ForwardDecl.h">
@@ -111,6 +114,18 @@
     <ClInclude Include="Core\Filter.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Lights\SkyLight\ArHosekSkyModel.h">
+      <Filter>Source Files\Lights\SkyLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_CIEXYZ.h">
+      <Filter>Source Files\Lights\SkyLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_RGB.h">
+      <Filter>Source Files\Lights\SkyLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_Spectral.h">
+      <Filter>Source Files\Lights\SkyLight</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -157,6 +172,9 @@
     </ClCompile>
     <ClCompile Include="Integrators\PathTracing.cpp">
       <Filter>Source Files\Integrators</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp">
+      <Filter>Source Files\Lights\SkyLight</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -54,7 +54,7 @@ namespace EDX
 				float SampleContinuous(float u, float* pPdf, int* pOffset = nullptr) const
 				{
 					const float *ptr = std::upper_bound(mCDF.Data(), mCDF.Data() + mCDF.LinearSize(), u);
-					int offset = Math::Max(0, int(ptr - mCDF.Data() - 1));
+					int offset = Math::Clamp(int(ptr - mCDF.Data() - 1), 0, mSize - 1);
 					if (pPdf)
 						*pPdf = mPDF[offset] / mIntegralVal;
 					if (pOffset)

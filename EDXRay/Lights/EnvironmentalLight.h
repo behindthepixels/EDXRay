@@ -7,6 +7,8 @@
 #include "Graphics/Color.h"
 #include "Graphics/Texture.h"
 
+#include "SkyLight/ArHosekSkyModel.h"
+
 namespace EDX
 {
 	namespace RayTracer
@@ -35,22 +37,58 @@ namespace EDX
 				mIsEnvMap = true;
 				mpMap = new ImageTexture<Color, Color>(path, 1.0f);
 
-				auto width = mpMap->Width();
-				auto height = mpMap->Height();
-				mLuminance.Init(Vector2i(width, height));
-				for (auto y = 0; y < height; y++)
+				CalcLuminanceDistribution();
+			}
+
+			EnvironmentalLight(const Color& turbidity,
+				const Color& groundAlbedo,
+				const float sunElevation,
+				const int resX = 2400,
+				const int resY = 1200,
+				const uint sampCount = 1)
+				: Light(sampCount)
+			{
+				mIsEnvMap = true;
+
+				static const int NUM_CHANNELS = 3;
+				ArHosekSkyModelState* skyModelState[NUM_CHANNELS];
+				for (auto i = 0; i < NUM_CHANNELS; i++)
+					skyModelState[i] = arhosek_rgb_skymodelstate_alloc_init(turbidity[i], groundAlbedo[i], sunElevation);
+
+				const float sunZenith = float(Math::EDX_PI_2) - sunElevation;
+				Array<2, Color> skyRadiance;
+				skyRadiance.Init(Vector2i(resX, resY));
+				for (auto y = 0; y < resY * 0.5f; y++)
 				{
-					float v = y / float(height);
-					float sinTheta = Math::Sin(float(Math::EDX_PI) * (y + 0.5f) / float(height));
-					for (auto x = 0; x < width; x++)
+					float v = y / float(resY);
+					for (auto x = 0; x < resX; x++)
 					{
-						float u = x / float(width);
-						Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
-						mLuminance[Vector2i(x, y)] = mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear).Luminance() * sinTheta;
+						float u = x / float(resX);
+						float phi = u * float(Math::EDX_TWO_PI);
+						float theta = v * float(Math::EDX_PI);
+
+						float cosGamma = Math::Cos(theta) * Math::Cos(sunZenith)
+							+ Math::Sin(theta) * Math::Sin(sunZenith)
+							* Math::Cos(phi - float(Math::EDX_PI));
+						float gamma = acosf(cosGamma);
+
+						for (auto i = 0; i < NUM_CHANNELS; i++)
+						{
+							float r = arhosek_tristim_skymodel_radiance(skyModelState[i], theta, gamma, i);
+							assert(Math::NumericValid(r));
+							skyRadiance[Vector2i(x, y)][i] = 0.035f * r;
+							if (gamma < 0.016)
+								skyRadiance[Vector2i(x, y)][i] = 100.0f;
+						}
 					}
 				}
 
-				mpDistribution = new Sampling::Distribution2D(mLuminance.Data(), width, height);
+				for (auto i = 0; i < NUM_CHANNELS; i++)
+					arhosekskymodelstate_free(skyModelState[i]);
+
+				mpMap = new ImageTexture<Color, Color>(skyRadiance.Data(), resX, resY);
+
+				CalcLuminanceDistribution();
 			}
 
 			Color Illuminate(const Vector3& pos, const Sample& lightSample, Vector3* pDir, VisibilityTester* pVisTest, float* pPdf) const
@@ -91,11 +129,12 @@ namespace EDX
 
 			Color Emit(const Vector3& dir) const
 			{
-				float s = Math::SphericalPhi(dir) * float(Math::EDX_INV_2PI);
-				float t = Math::SphericalTheta(dir) * float(Math::EDX_INV_PI);
+				Vector3 negDir = -dir;
+				float s = Math::SphericalPhi(negDir) * float(Math::EDX_INV_2PI);
+				float t = Math::SphericalTheta(negDir) * float(Math::EDX_INV_PI);
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
-				return mpMap->Sample(Vector2(s, 1.0f - t), diff, TextureFilter::Linear);
+				return mpMap->Sample(Vector2(s, t), diff, TextureFilter::Linear);
 			}
 
 			float Pdf(const Vector3& pos, const Vector3& dir) const
@@ -106,6 +145,27 @@ namespace EDX
 			bool IsDelta() const
 			{
 				return false;
+			}
+
+		private:
+			void CalcLuminanceDistribution()
+			{
+				auto width = mpMap->Width();
+				auto height = mpMap->Height();
+				mLuminance.Init(Vector2i(width, height));
+				for (auto y = 0; y < height; y++)
+				{
+					float v = y / float(height);
+					float sinTheta = Math::Sin(float(Math::EDX_PI) * (y + 0.5f) / float(height));
+					for (auto x = 0; x < width; x++)
+					{
+						float u = x / float(width);
+						Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
+						mLuminance[Vector2i(x, y)] = mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear).Luminance() * sinTheta;
+					}
+				}
+
+				mpDistribution = new Sampling::Distribution2D(mLuminance.Data(), width, height);
 			}
 		};
 
