@@ -14,7 +14,9 @@ namespace EDX
 		class EnvironmentalLight : public Light
 		{
 		private:
-			RefPtr<Texture2D<Color>> mpMap;
+			RefPtr<Texture2D<Color>>			mpMap;
+			RefPtr<Sampling::Distribution2D>	mpDistribution;
+			Array2f								mLuminance;
 			bool mIsEnvMap;
 
 		public:
@@ -22,24 +24,57 @@ namespace EDX
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
-				mpMap = new ConstantTexture2D<Color>(intens);
 				mIsEnvMap = false;
+				mpMap = new ConstantTexture2D<Color>(intens);
 			}
 
 			EnvironmentalLight(const char* path,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
-				mpMap = new ImageTexture<Color, Color>(path, 1.0f);
 				mIsEnvMap = true;
+				mpMap = new ImageTexture<Color, Color>(path, 1.0f);
+
+				auto width = mpMap->Width();
+				auto height = mpMap->Height();
+				mLuminance.Init(Vector2i(width, height));
+				for (auto y = 0; y < height; y++)
+				{
+					float v = y / float(height);
+					float sinTheta = Math::Sin(float(Math::EDX_PI) * (y + 0.5f) / float(height));
+					for (auto x = 0; x < width; x++)
+					{
+						float u = x / float(width);
+						Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
+						mLuminance[Vector2i(x, y)] = mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear).Luminance() * sinTheta;
+					}
+				}
+
+				mpDistribution = new Sampling::Distribution2D(mLuminance.Data(), width, height);
 			}
 
 			Color Illuminate(const Vector3& pos, const Sample& lightSample, Vector3* pDir, VisibilityTester* pVisTest, float* pPdf) const
 			{
-				Vector3 vDir = Sampling::UniformSampleSphere(lightSample.u, lightSample.v);
-				*pDir = Vector3(vDir.x, vDir.z, -vDir.y);
+				if (mIsEnvMap)
+				{
+					float u, v;
+					mpDistribution->SampleContinuous(lightSample.u, lightSample.v, &u, &v, pPdf);
+
+					float phi = u * float(Math::EDX_TWO_PI);
+					float theta = v * float(Math::EDX_PI);
+
+					*pDir = Math::SphericalDirection(Math::Sin(theta),
+						Math::Cos(theta),
+						phi);
+				}
+				else
+				{
+					Vector3 dir = Sampling::UniformSampleSphere(lightSample.u, lightSample.v);
+					*pDir = Vector3(dir.x, dir.z, -dir.y);
+					*pPdf = Sampling::UniformSpherePDF();
+				}
+
 				pVisTest->SetRay(pos, *pDir);
-				*pPdf = Sampling::UniformSpherePDF();
 
 				//if (pfCosAtLight)
 				//{

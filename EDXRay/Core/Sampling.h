@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Math/Vector.h"
+#include "Math/EDXMath.h"
 #include "RNG/Random.h"
 #include "Memory/Array.h"
+#include "Memory/RefPtr.h"
 
 namespace EDX
 {
@@ -17,10 +19,14 @@ namespace EDX
 				Array1f mCDF;
 				int mSize;
 				float mIntegralVal;
+				friend class Distribution2D;
 
 			public:
-				Distribution1D(float* pFunc, int size)
+				Distribution1D(const float* pFunc, int size)
 				{
+					assert(pFunc);
+					assert(size > 0);
+
 					mSize = size;
 					mPDF.Init(size);
 					mCDF.Init(size + 1);
@@ -29,12 +35,20 @@ namespace EDX
 
 					float invSize = 1.0f / float(size);
 					mCDF[0] = 0.0f;
-					for (auto i = 0; i < mCDF.LinearSize(); i++)
+					for (auto i = 1; i < mCDF.LinearSize(); i++)
 						mCDF[i] = mCDF[i - 1] + mPDF[i - 1] * invSize;
 
 					mIntegralVal = mCDF[size];
-					for (auto i = 0; i < mCDF.LinearSize(); i++)
-						mCDF[i] /= mIntegralVal;
+					if (mIntegralVal == 0.0f)
+					{
+						for (auto i = 1; i < mCDF.LinearSize(); i++)
+							mCDF[i] = i / float(size);
+					}
+					else
+					{
+						for (auto i = 1; i < mCDF.LinearSize(); i++)
+							mCDF[i] /= mIntegralVal;
+					}
 				}
 
 				float SampleContinuous(float u, float* pPdf, int* pOffset = nullptr) const
@@ -64,7 +78,46 @@ namespace EDX
 
 			class Distribution2D
 			{
+			private:
+				vector<RefPtr<Distribution1D>>	mConditional;
+				RefPtr<Distribution1D>			mpMarginal;
 
+			public:
+				Distribution2D(const float* pFunc, int sizeX, int sizeY)
+				{
+					assert(pFunc);
+					assert(sizeX > 0);
+					assert(sizeY > 0);
+
+					mConditional.reserve(sizeY);
+					for (auto i = 0; i < sizeY; i++)
+						mConditional.push_back(new Distribution1D(&pFunc[i * sizeX], sizeX));
+
+					RefPtr<float, PtrType::Array> pMarginalFunc = new float[sizeY];
+					for (auto i = 0; i < sizeY; i++)
+						pMarginalFunc[i] = mConditional[i]->mIntegralVal;
+					mpMarginal = new Distribution1D(pMarginalFunc.Ptr(), sizeY);
+				}
+
+				void SampleContinuous(float u, float v, float* pSampledU, float* pSampledV, float* pPdf) const
+				{
+					float pdfs[2];
+					int iv;
+					*pSampledV = mpMarginal->SampleContinuous(v, &pdfs[1], &iv);
+					*pSampledU = mConditional[iv]->SampleContinuous(u, &pdfs[0]);
+					*pPdf = pdfs[0] * pdfs[1];
+					assert(Math::NumericValid(*pPdf));
+				}
+				float Pdf(float u, float v) const
+				{
+					int iu = Math::Clamp(u * mConditional[0]->mSize, 0, mConditional[0]->mSize - 1);
+					int iv = Math::Clamp(v * mpMarginal->mSize, 0, mpMarginal->mSize - 1);
+					if (mConditional[iv]->mIntegralVal * mpMarginal->mIntegralVal == 0.f)
+						return 0.f;
+
+					return (mConditional[iv]->mPDF[iu] * mpMarginal->mPDF[iv]) /
+						(mConditional[iv]->mIntegralVal * mpMarginal->mIntegralVal);
+				}
 			};
 
 			inline void ConcentricSampleDisk(float u1, float u2, float *dx, float *dy)

@@ -61,7 +61,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pMesh3->LoadSphere(1.0f, BSDFType::Glass, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
 
 	pScene->AddPrimitive(pMesh);
-	//pScene->AddPrimitive(pMesh2);
+	pScene->AddPrimitive(pMesh2);
 	pScene->AddPrimitive(pMesh3);
 	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
 	pScene->AddLight(new EnvironmentalLight("../../Media/uffizi-large.hdr"));
