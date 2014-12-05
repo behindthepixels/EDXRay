@@ -112,7 +112,7 @@ namespace EDX
 				{
 					int iu = Math::Clamp(u * mConditional[0]->mSize, 0, mConditional[0]->mSize - 1);
 					int iv = Math::Clamp(v * mpMarginal->mSize, 0, mpMarginal->mSize - 1);
-					if (mConditional[iv]->mIntegralVal * mpMarginal->mIntegralVal == 0.f)
+					if (mConditional[iv]->mIntegralVal * mpMarginal->mIntegralVal == 0.0f)
 						return 0.f;
 
 					return (mConditional[iv]->mPDF[iu] * mpMarginal->mPDF[iv]) /

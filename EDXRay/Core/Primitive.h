@@ -38,6 +38,12 @@ namespace EDX
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO);
+			void LoadPlane(const float length,
+				const BSDFType bsdfType = BSDFType::Diffuse,
+				const Color& color = Color::WHITE,
+				const Vector3& pos = Vector3::ZERO,
+				const Vector3& scl = Vector3::UNIT_SCALE,
+				const Vector3& rot = Vector3::ZERO);
 
 			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
 			const BSDF* GetBSDF(const uint triId) const;

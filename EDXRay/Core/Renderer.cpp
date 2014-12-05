@@ -37,10 +37,10 @@ namespace EDX
 
 			// Initialize scene
 			mpScene = new Scene;
-			mpIntegrator = new PathTracingIntegrator(8);
+			mpIntegrator = new DirectLightingIntegrator(8);
 
 			mpFilm = new FilmRHF;
-			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new MitchellNetravaliFilter);
+			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new GaussianFilter);
 
 			mpSampler = new RandomSampler;
 

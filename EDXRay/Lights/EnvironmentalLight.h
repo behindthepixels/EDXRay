@@ -76,9 +76,9 @@ namespace EDX
 						{
 							float r = arhosek_tristim_skymodel_radiance(skyModelState[i], theta, gamma, i);
 							assert(Math::NumericValid(r));
-							skyRadiance[Vector2i(x, y)][i] = 0.035f * r;
+							skyRadiance[Vector2i(x, y)][i] = r * 0.011f;
 							if (gamma < 0.016)
-								skyRadiance[Vector2i(x, y)][i] = 100.0f;
+								skyRadiance[Vector2i(x, y)][i] = 500.0f;
 						}
 					}
 				}
@@ -97,11 +97,15 @@ namespace EDX
 				{
 					float u, v;
 					mpDistribution->SampleContinuous(lightSample.u, lightSample.v, &u, &v, pPdf);
+					if (*pPdf == 0.0f)
+						return Color::BLACK;
 
 					float phi = u * float(Math::EDX_TWO_PI);
 					float theta = v * float(Math::EDX_PI);
+					float sinTheta = Math::Sin(theta);
+					*pPdf = sinTheta != 0.0f ? *pPdf / (2.0f * float(Math::EDX_PI) * float(Math::EDX_PI) * sinTheta) : 0.0f;
 
-					*pDir = Math::SphericalDirection(Math::Sin(theta),
+					*pDir = Math::SphericalDirection(sinTheta,
 						Math::Cos(theta),
 						phi);
 				}
@@ -139,7 +143,16 @@ namespace EDX
 
 			float Pdf(const Vector3& pos, const Vector3& dir) const
 			{
-				return Sampling::UniformSpherePDF();
+				if (mIsEnvMap)
+				{
+					float theta = Math::SphericalTheta(dir);
+					float phi = Math::SphericalPhi(dir);
+					float sinTheta = Math::Sin(theta);
+					return mpDistribution->Pdf(phi * float(Math::EDX_INV_2PI), theta * float(Math::EDX_INV_PI)) /
+						(2.0f * float(Math::EDX_PI) * float(Math::EDX_PI) * sinTheta);
+				}
+				else
+					return Sampling::UniformSpherePDF();
 			}
 
 			bool IsDelta() const

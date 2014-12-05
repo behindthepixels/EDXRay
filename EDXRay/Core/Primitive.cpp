@@ -78,6 +78,31 @@ namespace EDX
 				mpMaterialIndices[i] = pObjMesh->GetMaterialIdx(i);
 		}
 
+		void Primitive::LoadPlane(const float length,
+			const BSDFType bsdfType,
+			const Color& color,
+			const Vector3& pos,
+			const Vector3& scl,
+			const Vector3& rot)
+		{
+			ObjMesh* pObjMesh = new ObjMesh;
+			pObjMesh->LoadPlane(pos, scl, rot, length);
+
+			mpMesh = new TriangleMesh;
+			mpMesh->LoadMesh(pObjMesh, bsdfType);
+
+			// Initialize materials
+			const auto& materialInfo = pObjMesh->GetMaterialInfo();
+			for (auto i = 0; i < materialInfo.size(); i++)
+			{
+				mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].color));
+			}
+
+			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
+			for (auto i = 0; i < mpMesh->GetTriangleCount(); i++)
+				mpMaterialIndices[i] = pObjMesh->GetMaterialIdx(i);
+		}
+
 		void Primitive::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
 		{
 			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
