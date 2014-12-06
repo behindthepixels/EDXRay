@@ -37,7 +37,7 @@ namespace EDX
 
 			// Initialize scene
 			mpScene = new Scene;
-			mpIntegrator = new DirectLightingIntegrator(8);
+			mpIntegrator = new PathTracingIntegrator(8);
 
 			mpFilm = new FilmRHF;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new GaussianFilter);
@@ -134,8 +134,6 @@ namespace EDX
 		{
 			mTaskSync.SetAbort(true);
 			ThreadScheduler::Instance()->JoinAllTasks();
-
-			mpFilm->Clear();
 		}
 
 		void Renderer::SetCameraParams(const CameraParameters& params)

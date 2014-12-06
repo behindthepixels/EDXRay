@@ -43,8 +43,8 @@ namespace EDX
 			EnvironmentalLight(const Color& turbidity,
 				const Color& groundAlbedo,
 				const float sunElevation,
-				const int resX = 2400,
-				const int resY = 1200,
+				const int resX = 1200,
+				const int resY = 600,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
@@ -60,10 +60,10 @@ namespace EDX
 				skyRadiance.Init(Vector2i(resX, resY));
 				for (auto y = 0; y < resY * 0.5f; y++)
 				{
-					float v = y / float(resY);
+					float v = (y + 0.5f) / float(resY);
 					for (auto x = 0; x < resX; x++)
 					{
-						float u = x / float(resX);
+						float u = (x + 0.5f) / float(resX);
 						float phi = u * float(Math::EDX_TWO_PI);
 						float theta = v * float(Math::EDX_PI);
 
@@ -77,8 +77,8 @@ namespace EDX
 							float r = arhosek_tristim_skymodel_radiance(skyModelState[i], theta, gamma, i);
 							assert(Math::NumericValid(r));
 							skyRadiance[Vector2i(x, y)][i] = r * 0.011f;
-							if (gamma < 0.016)
-								skyRadiance[Vector2i(x, y)][i] = 500.0f;
+							if (gamma < 0.02)
+								skyRadiance[Vector2i(x, y)][i] = 1900.0f;
 						}
 					}
 				}
@@ -168,11 +168,11 @@ namespace EDX
 				mLuminance.Init(Vector2i(width, height));
 				for (auto y = 0; y < height; y++)
 				{
-					float v = y / float(height);
+					float v = (y + 0.5f) / float(height);
 					float sinTheta = Math::Sin(float(Math::EDX_PI) * (y + 0.5f) / float(height));
 					for (auto x = 0; x < width; x++)
 					{
-						float u = x / float(width);
+						float u = (x + 0.5f) / float(width);
 						Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
 						mLuminance[Vector2i(x, y)] = mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear).Luminance() * sinTheta;
 					}

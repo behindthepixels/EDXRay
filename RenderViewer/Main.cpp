@@ -62,12 +62,12 @@ void OnInit(Object* pSender, EventArgs args)
 	pMesh3->LoadSphere(1.0f, BSDFType::Glass, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
 	pMesh4->LoadPlane(1000.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
 
-	//pScene->AddPrimitive(pMesh);
+	pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
-	//pScene->AddPrimitive(pMesh3);
+	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
 	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
-	pScene->AddLight(new EnvironmentalLight(Color(7.0f), Color(0.7f), Math::ToRadians(80.0f)));
+	pScene->AddLight(new EnvironmentalLight(Color(3.0f), Color(0.2f), Math::ToRadians(70.0f)));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 5.5f, 0.0f), Color(20.0f)));
 
 	pScene->InitAccelerator();
@@ -173,6 +173,10 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 
 	case 'N':
 		gpRenderer->GetFilm()->Denoise();
+		break;
+
+	case 'P':
+		gpRenderer->StopRenderTasks();
 		break;
 	}
 
