@@ -23,7 +23,7 @@ namespace EDX
 			case BSDFType::Glass:
 				return new Glass(color);
 			case BSDFType::Principled:
-				return new Principled(color, 0.1);
+				return new Principled(color, 0.02f);
 			}
 
 			assert(0);

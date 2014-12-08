@@ -31,6 +31,9 @@ namespace EDX
 			float dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
 			*pPdf = microfacetPdf * dwh_dwi;
 
+			if (pSampledTypes != nullptr)
+				*pSampledTypes = mScatterType;
+
 			return GetColor(diffGoem) * Eval(wo, wi, types);
 		}
 	}

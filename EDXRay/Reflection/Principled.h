@@ -13,12 +13,12 @@ namespace EDX
 
 		public:
 			Principled(const Color reflectance = Color::WHITE, float roughness = 1.0f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, reflectance)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::Diffuse, reflectance)
 				, mRoughness(roughness)
 			{
 			}
 			Principled(const char* pFile, float roughness = 1.0f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, pFile)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::Diffuse, pFile)
 				, mRoughness(roughness)
 			{
 			}
