@@ -26,7 +26,7 @@ namespace EDX
 
 		enum class BSDFType
 		{
-			Diffuse, Mirror, Glass
+			Diffuse, Mirror, Glass, Principled
 		};
 
 		class BSDF
@@ -65,8 +65,10 @@ namespace EDX
 			static BSDF* CreateBSDF(const BSDFType type, const Color& color);
 			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
 
+			static float Fresnel(float cosi, float etai, float etat);
+
 		private:
-			virtual Color Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const = 0;
+			virtual float Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const = 0;
 			virtual float Pdf(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const = 0;
 		};
 
@@ -87,7 +89,7 @@ namespace EDX
 
 		private:
 			float Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types = BSDF_ALL) const;
-			Color Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
+			float Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
 		};
 
 		class Mirror : public BSDF
@@ -108,7 +110,7 @@ namespace EDX
 				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const;
 
 		private:
-			Color Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
+			float Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
 			float Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types = BSDF_ALL) const;
 		};
 
@@ -137,14 +139,14 @@ namespace EDX
 				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const;
 
 		private:
-			Color Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
+			float Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
 			float Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types = BSDF_ALL) const;
-			float Fresnel(float fCosi) const;
 		};
 
 		namespace BSDFCoordinate
 		{
 			inline float CosTheta(const Vector3& vec) { return vec.z; }
+			inline float CosTheta2(const Vector3& vec) { return vec.z * vec.z; }
 			inline float AbsCosTheta(const Vector3& vec) { return Math::Abs(vec.z); }
 			inline float SinTheta2(const Vector3& vec) { return max(0.0f, 1.0f - CosTheta(vec) * CosTheta(vec)); }
 			inline float SinTheta(const Vector3& vec) { return Math::Sqrt(SinTheta2(vec)); }
@@ -154,13 +156,26 @@ namespace EDX
 				if (sintheta == 0.0f) return 1.0f;
 				return Math::Clamp(vec.x / sintheta, -1.0f, 1.0f);
 			}
-
 			inline float SinPhi(const Vector3& vec)
 			{
 				float sintheta = SinTheta(vec);
 				if (sintheta == 0.0f)
 					return 0.0f;
 				return Math::Clamp(vec.y / sintheta, -1.0f, 1.0f);
+			}
+			inline float TanTheta(const Vector3& vec)
+			{
+				float temp = 1 - vec.z * vec.z;
+				if (temp <= 0.0f)
+					return 0.0f;
+				return Math::Sqrt(temp) / vec.z;
+			}
+			inline float TanTheta2(const Vector3& vec)
+			{
+				float temp = 1 - vec.z * vec.z;
+				if (temp <= 0.0f)
+					return 0.0f;
+				return temp / (vec.z * vec.z);
 			}
 
 			inline bool SameHemisphere(const Vector3& vec1, const Vector3& vec2) { return vec1.z * vec2.z > 0.0f; }

@@ -46,6 +46,7 @@
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_CIEXYZ.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_RGB.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_Spectral.h" />
+    <ClInclude Include="Reflection\Principled.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
     <ClInclude Include="Tracer\BVH.h" />
     <ClInclude Include="Tracer\BVHBuildTask.h" />
@@ -66,6 +67,7 @@
     <ClCompile Include="Integrators\DirectLighting.cpp" />
     <ClCompile Include="Integrators\PathTracing.cpp" />
     <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp" />
+    <ClCompile Include="Reflection\Principled.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
     <ClCompile Include="Tracer\BVH.cpp" />
   </ItemGroup>

@@ -57,17 +57,17 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", BSDFType::Diffuse, Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", BSDFType::Diffuse, Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	pMesh->LoadSphere(1.0f, BSDFType::Mirror, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
+	pMesh->LoadSphere(1.0f, BSDFType::Principled, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
 	pMesh2->LoadSphere(1.0f, BSDFType::Diffuse, 128, 128, Vector3(2.5f, 3.0f, 0.0f));
 	pMesh3->LoadSphere(1.0f, BSDFType::Glass, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
-	pMesh4->LoadPlane(1000.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
+	pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
 
 	pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
 	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
 	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
-	pScene->AddLight(new EnvironmentalLight(Color(3.0f), Color(0.2f), Math::ToRadians(70.0f)));
+	pScene->AddLight(new EnvironmentalLight("../../Media/uffizi-large.hdr"));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 5.5f, 0.0f), Color(20.0f)));
 
 	pScene->InitAccelerator();

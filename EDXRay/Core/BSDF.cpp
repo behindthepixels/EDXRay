@@ -1,4 +1,5 @@
 #include "BSDF.h"
+#include "../Reflection/Principled.h"
 #include "Math/EDXMath.h"
 #include "DifferentialGeom.h"
 #include "Sampling.h"
@@ -21,6 +22,8 @@ namespace EDX
 				return new Mirror(color);
 			case BSDFType::Glass:
 				return new Glass(color);
+			case BSDFType::Principled:
+				return new Principled(color, 0.1);
 			}
 
 			assert(0);
@@ -85,23 +88,50 @@ namespace EDX
 			return Pdf(vWo, vWi, types);
 		}
 
+		float BSDF::Fresnel(float cosi, float etai, float etat)
+		{
+			cosi = Math::Clamp(cosi, -1.0f, 1.0f);
+
+			bool entering = cosi > 0.0f;
+			float ei = etai, et = etat;
+			if (!entering)
+				swap(ei, et);
+
+			float sint = ei / et * Math::Sqrt(Math::Max(0.0f, 1.0f - cosi * cosi));
+
+			if (sint >= 1.0f)
+				return 1.0f;
+			else
+			{
+				float cost = Math::Sqrt(Math::Max(0.0f, 1.0f - sint * sint));
+				cosi = Math::Abs(cosi);
+
+				float para = ((etat * cosi) - (etai * cost)) /
+					((etat * cosi) + (etai * cost));
+				float perp = ((etai * cosi) - (etat * cost)) /
+					((etai * cosi) + (etat * cost));
+
+				return (para * para + perp * perp) / 2.0f;
+			}
+		}
+
 		// -----------------------------------------------------------------------------------------------------------------------
 		// Lambertian BRDF Implementation
 		// -----------------------------------------------------------------------------------------------------------------------
-		Color LambertianDiffuse::Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types) const
+		float LambertianDiffuse::Eval(const Vector3& wo, const Vector3& wi, ScatterType types) const
 		{
-			if (!BSDFCoordinate::SameHemisphere(vOut, vIn))
-				return Color::BLACK;
+			if (!BSDFCoordinate::SameHemisphere(wo, wi))
+				return 0.0f;
 
 			return float(Math::EDX_INV_PI);
 		}
 
-		float LambertianDiffuse::Pdf(const Vector3& vOut, const Vector3& vIn, ScatterType types /* = BSDF_ALL */) const
+		float LambertianDiffuse::Pdf(const Vector3& wo, const Vector3& wi, ScatterType types /* = BSDF_ALL */) const
 		{
-			if (!BSDFCoordinate::SameHemisphere(vOut, vIn))
+			if (!BSDFCoordinate::SameHemisphere(wo, wi))
 				return 0.0f;
 
-			return BSDFCoordinate::AbsCosTheta(vIn) * float(Math::EDX_INV_PI);
+			return BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI);
 		}
 
 		Color LambertianDiffuse::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf,
@@ -137,9 +167,9 @@ namespace EDX
 			return Color::BLACK;
 		}
 
-		Color Mirror::Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types) const
+		float Mirror::Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types) const
 		{
-			return Color::BLACK;
+			return 0.0f;
 		}
 
 		float Mirror::Pdf(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
@@ -181,9 +211,9 @@ namespace EDX
 			return Color::BLACK;
 		}
 
-		Color Glass::Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types) const
+		float Glass::Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types) const
 		{
-			return Color::BLACK;
+			return 0.0f;
 		}
 
 		float Glass::Pdf(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
@@ -211,7 +241,7 @@ namespace EDX
 
 			Vector3 vWo = diffGoem.WorldToLocal(vOut), vWi;
 
-			float fresnel = Fresnel(BSDFCoordinate::CosTheta(vWo));
+			float fresnel = Fresnel(BSDFCoordinate::CosTheta(vWo), mEtai, mEtat);
 			float prob = 0.5f * fresnel + 0.25f;
 
 			if (sample.w <= prob && sampleBoth || (sampleReflect && !sampleBoth)) // Sample reflection
@@ -259,33 +289,6 @@ namespace EDX
 			}
 
 			return Color::BLACK;
-		}
-
-		float Glass::Fresnel(float fCosi) const
-		{
-			fCosi = Math::Clamp(fCosi, -1.0f, 1.0f);
-
-			bool entering = fCosi > 0.0f;
-			float ei = mEtai, et = mEtat;
-			if (!entering)
-				swap(ei, et);
-
-			float sint = ei / et * Math::Sqrt(Math::Max(0.0f, 1.0f - fCosi * fCosi));
-
-			if (sint >= 1.0f)
-				return 1.0f;
-			else
-			{
-				float fCost = Math::Sqrt(Math::Max(0.0f, 1.0f - sint * sint));
-				fCosi = Math::Abs(fCosi);
-
-				float fPara = ((mEtat * fCosi) - (mEtai * fCost)) /
-					((mEtat * fCosi) + (mEtai * fCost));
-				float fPerp = ((mEtai * fCosi) - (mEtat * fCost)) /
-					((mEtai * fCosi) + (mEtat * fCost));
-
-				return (fPara * fPara + fPerp * fPerp) / 2.0f;
-			}
 		}
 	}
 }

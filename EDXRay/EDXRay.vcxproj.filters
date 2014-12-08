@@ -31,6 +31,9 @@
     <Filter Include="Source Files\Lights\SkyLight">
       <UniqueIdentifier>{e0fcb5e0-b78d-4923-a428-7f25bf1d0784}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Reflection">
+      <UniqueIdentifier>{d56e4f40-4f1c-443d-a253-1f561a60f7cb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ForwardDecl.h">
@@ -126,6 +129,9 @@
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_Spectral.h">
       <Filter>Source Files\Lights\SkyLight</Filter>
     </ClInclude>
+    <ClInclude Include="Reflection\Principled.h">
+      <Filter>Source Files\Reflection</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -175,6 +181,9 @@
     </ClCompile>
     <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp">
       <Filter>Source Files\Lights\SkyLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Reflection\Principled.cpp">
+      <Filter>Source Files\Reflection</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
