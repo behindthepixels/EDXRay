@@ -111,7 +111,7 @@ namespace EDX
 				float perp = ((etai * cosi) - (etat * cost)) /
 					((etai * cosi) + (etat * cost));
 
-				return (para * para + perp * perp) / 2.0f;
+				return 0.5f * (para * para + perp * perp);
 			}
 		}
 

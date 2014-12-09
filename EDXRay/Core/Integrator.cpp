@@ -59,7 +59,7 @@ namespace EDX
 				lightPdf = pLight->Pdf(position, lightDir);
 				if (lightPdf > 0.0f)
 				{
-					float misWeight = Sampling::PowerHeuristic(1, lightPdf, 1, bsdfPdf);
+					float misWeight = Sampling::PowerHeuristic(1, bsdfPdf, 1, lightPdf);
 
 					DifferentialGeom isect;
 					Ray rayLight = Ray(position, lightDir);
@@ -68,6 +68,10 @@ namespace EDX
 					{
 						if (pLight == (Light*)isect.mpAreaLight)
 							Li = isect.Emit(-lightDir);
+					}
+					else if (pScene->GetEnvironmentMap() == pLight)
+					{
+						Li = pLight->Emit(-lightDir);
 					}
 
 					if (!Li.IsBlack())

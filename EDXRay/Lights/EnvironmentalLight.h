@@ -19,24 +19,20 @@ namespace EDX
 			RefPtr<Texture2D<Color>>			mpMap;
 			RefPtr<Sampling::Distribution2D>	mpDistribution;
 			Array2f								mLuminance;
-			float mScalar;
 			bool mIsEnvMap;
 
 		public:
 			EnvironmentalLight(const Color& intens,
 				const uint sampCount = 1)
 				: Light(sampCount)
-				, mScalar(1.0f)
 			{
 				mIsEnvMap = false;
 				mpMap = new ConstantTexture2D<Color>(intens);
 			}
 
 			EnvironmentalLight(const char* path,
-				const float scale = 1.0f,
 				const uint sampCount = 1)
 				: Light(sampCount)
-				, mScalar(scale)
 			{
 				mIsEnvMap = true;
 				mpMap = new ImageTexture<Color, Color>(path, 1.0f);
@@ -51,7 +47,6 @@ namespace EDX
 				const int resY = 600,
 				const uint sampCount = 1)
 				: Light(sampCount)
-				, mScalar(1.0f)
 			{
 				mIsEnvMap = true;
 
@@ -133,7 +128,7 @@ namespace EDX
 				//	*pfEmitPDFW = Sampling::UniformSpherePDF() * mfInvSceneBoundArea;
 				//}
 
-				return Emit(-*pDir) * mScalar;
+				return Emit(-*pDir);
 			}
 
 			Color Emit(const Vector3& dir) const

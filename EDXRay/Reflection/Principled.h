@@ -59,7 +59,7 @@ namespace EDX
 				if (D == 0.0f)
 					return 0.0f;
 
-				float F = BSDF::Fresnel(Math::Dot(wi, wh), 1.5, 1.0f);
+				float F = BSDF::Fresnel(Math::Dot(wo, wh), 1.5, 1.0f);
 				float G = GGX_G(wo, wi, wh, mRoughness);
 
 				return F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));

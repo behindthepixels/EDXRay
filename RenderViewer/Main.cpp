@@ -67,7 +67,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
 	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
-	pScene->AddLight(new EnvironmentalLight("../../Media/uffizi-large.hdr", 0.25f));
+	pScene->SetEnvironmentMap(new EnvironmentalLight("../../Media/uffizi-large.hdr"));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 5.5f, 0.0f), Color(20.0f)));
 
 	pScene->InitAccelerator();

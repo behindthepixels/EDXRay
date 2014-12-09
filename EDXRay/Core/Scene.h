@@ -14,6 +14,7 @@ namespace EDX
 		private:
 			vector<RefPtr<Primitive>>	mPrimitives;
 			vector<RefPtr<Light>>		mLights;
+			RefPtr<Light>				mEnvMap;
 			RefPtr<BVH2>				mAccel;
 
 		public:
@@ -28,8 +29,10 @@ namespace EDX
 			// Scene management
 			void AddPrimitive(Primitive* pPrim);
 			void AddLight(Light* pLight);
+			void SetEnvironmentMap(Light* pLight);
 			const vector<RefPtr<Primitive>>& GetPrimitives() const { return mPrimitives; }
 			const vector<RefPtr<Light>>& GetLights() const { return mLights; }
+			const Light* GetEnvironmentMap() const { return mEnvMap.Ptr(); }
 
 			void InitAccelerator();
 		};

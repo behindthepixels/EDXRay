@@ -39,6 +39,12 @@ namespace EDX
 			mLights.push_back(pLight);
 		}
 
+		void Scene::SetEnvironmentMap(Light* pLight)
+		{
+			AddLight(pLight);
+			mEnvMap = pLight;
+		}
+
 		void Scene::InitAccelerator()
 		{
 			mAccel = new BVH2();

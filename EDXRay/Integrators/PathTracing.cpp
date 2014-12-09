@@ -71,8 +71,8 @@ namespace EDX
 				{
 					if (specBounce)
 					{
-						for (const auto& lt : pScene->GetLights())
-							L += pathThroughput * lt->Emit(-pathRay.mDir);
+						if (pScene->GetEnvironmentMap())
+							L += pathThroughput * pScene->GetEnvironmentMap()->Emit(-pathRay.mDir);
 					}
 					break;
 				}
