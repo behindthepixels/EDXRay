@@ -31,7 +31,7 @@
     <Filter Include="Source Files\Lights\SkyLight">
       <UniqueIdentifier>{e0fcb5e0-b78d-4923-a428-7f25bf1d0784}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Reflection">
+    <Filter Include="Source Files\BSDFs">
       <UniqueIdentifier>{d56e4f40-4f1c-443d-a253-1f561a60f7cb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -129,8 +129,11 @@
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_Spectral.h">
       <Filter>Source Files\Lights\SkyLight</Filter>
     </ClInclude>
-    <ClInclude Include="Reflection\Principled.h">
-      <Filter>Source Files\Reflection</Filter>
+    <ClInclude Include="BSDFs\RoughConductor.h">
+      <Filter>Source Files\BSDFs</Filter>
+    </ClInclude>
+    <ClInclude Include="BSDFs\RoughDielectric.h">
+      <Filter>Source Files\BSDFs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -182,8 +185,11 @@
     <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp">
       <Filter>Source Files\Lights\SkyLight</Filter>
     </ClCompile>
-    <ClCompile Include="Reflection\Principled.cpp">
-      <Filter>Source Files\Reflection</Filter>
+    <ClCompile Include="BSDFs\RoughConductor.cpp">
+      <Filter>Source Files\BSDFs</Filter>
+    </ClCompile>
+    <ClCompile Include="BSDFs\RoughDielectric.cpp">
+      <Filter>Source Files\BSDFs</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

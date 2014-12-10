@@ -14,7 +14,7 @@ namespace EDX
 		private:
 			vector<RefPtr<Primitive>>	mPrimitives;
 			vector<RefPtr<Light>>		mLights;
-			RefPtr<Light>				mEnvMap;
+			Light*						mEnvMap;
 			RefPtr<BVH2>				mAccel;
 
 		public:
@@ -32,7 +32,7 @@ namespace EDX
 			void SetEnvironmentMap(Light* pLight);
 			const vector<RefPtr<Primitive>>& GetPrimitives() const { return mPrimitives; }
 			const vector<RefPtr<Light>>& GetLights() const { return mLights; }
-			const Light* GetEnvironmentMap() const { return mEnvMap.Ptr(); }
+			const Light* GetEnvironmentMap() const { return mEnvMap; }
 
 			void InitAccelerator();
 		};

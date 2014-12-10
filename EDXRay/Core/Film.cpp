@@ -91,7 +91,7 @@ namespace EDX
 			Film::Init(width, height, pFilter);
 			mSampleHistogram.Init(width, height);
 
-			mMaxDist = 0.7f;
+			mMaxDist = 0.6f;
 			mHalfPatchSize = 1;
 			mHalfWindowSize = 6;
 			mScale = 3;

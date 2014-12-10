@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BSDFs\RoughConductor.h" />
+    <ClInclude Include="BSDFs\RoughDielectric.h" />
     <ClInclude Include="Core\BSDF.h" />
     <ClInclude Include="Core\Camera.h" />
     <ClInclude Include="Core\Config.h" />
@@ -46,13 +48,14 @@
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_CIEXYZ.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_RGB.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_Spectral.h" />
-    <ClInclude Include="Reflection\Principled.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
     <ClInclude Include="Tracer\BVH.h" />
     <ClInclude Include="Tracer\BVHBuildTask.h" />
     <ClInclude Include="Tracer\Triangle4.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BSDFs\RoughConductor.cpp" />
+    <ClCompile Include="BSDFs\RoughDielectric.cpp" />
     <ClCompile Include="Core\BSDF.cpp" />
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\DifferentialGeom.cpp" />
@@ -67,7 +70,6 @@
     <ClCompile Include="Integrators\DirectLighting.cpp" />
     <ClCompile Include="Integrators\PathTracing.cpp" />
     <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp" />
-    <ClCompile Include="Reflection\Principled.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
     <ClCompile Include="Tracer\BVH.cpp" />
   </ItemGroup>

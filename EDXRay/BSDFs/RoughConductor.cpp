@@ -1,11 +1,11 @@
-#include "Principled.h"
+#include "RoughConductor.h"
 #include "../Core/Sampler.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
-		Color Principled::SampleScattered(const Vector3& _wo, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf,
+		Color RoughConductor::SampleScattered(const Vector3& _wo, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf,
 			ScatterType types, ScatterType* pSampledTypes) const
 		{
 			if (!MatchesTypes(types))
@@ -14,7 +14,7 @@ namespace EDX
 				return Color::BLACK;
 			}
 
-			Vector3 wo = diffGoem.WorldToLocal(_wo), wi;
+			Vector3 wo = diffGeom.WorldToLocal(_wo), wi;
 
 			float microfacetPdf;
 			Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness);
@@ -23,7 +23,7 @@ namespace EDX
 				return 0.0f;
 
 			wi = Math::Reflect(-wo, wh);
-			*pvIn = diffGoem.LocalToWorld(wi);
+			*pvIn = diffGeom.LocalToWorld(wi);
 
 			if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
 				return Color::BLACK;
@@ -34,7 +34,7 @@ namespace EDX
 			if (pSampledTypes != nullptr)
 				*pSampledTypes = mScatterType;
 
-			return GetColor(diffGoem) * Eval(wo, wi, types);
+			return GetColor(diffGeom) * Eval(wo, wi, types);
 		}
 	}
 }

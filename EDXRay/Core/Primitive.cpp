@@ -51,6 +51,7 @@ namespace EDX
 
 		void Primitive::LoadSphere(const float radius,
 			const BSDFType bsdfType,
+			const Color& reflectance,
 			const int slices,
 			const int stacks,
 			const Vector3& pos,
@@ -70,7 +71,7 @@ namespace EDX
 				if (materialInfo[i].strTexturePath[0])
 					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].strTexturePath));
 				else
-					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].color));
+					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
 			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
@@ -80,6 +81,7 @@ namespace EDX
 
 		void Primitive::LoadPlane(const float length,
 			const BSDFType bsdfType,
+			const Color& reflectance,
 			const Color& color,
 			const Vector3& pos,
 			const Vector3& scl,
@@ -95,7 +97,7 @@ namespace EDX
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();
 			for (auto i = 0; i < materialInfo.size(); i++)
 			{
-				mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].color));
+				mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
 			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];

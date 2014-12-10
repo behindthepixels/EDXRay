@@ -1,5 +1,6 @@
 #include "BSDF.h"
-#include "../Reflection/Principled.h"
+#include "../BSDFs/RoughConductor.h"
+#include "../BSDFs/RoughDielectric.h"
 #include "Math/EDXMath.h"
 #include "DifferentialGeom.h"
 #include "Sampling.h"
@@ -22,8 +23,10 @@ namespace EDX
 				return new Mirror(color);
 			case BSDFType::Glass:
 				return new Glass(color);
-			case BSDFType::Principled:
-				return new Principled(color, 0.02f);
+			case BSDFType::RoughConductor:
+				return new RoughConductor(color, 0.05f);
+			case BSDFType::RoughDielectric:
+				return new RoughDielectric(color, 0.05f);
 			}
 
 			assert(0);
@@ -57,9 +60,9 @@ namespace EDX
 		}
 
 
-		Color BSDF::Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGoem, ScatterType types) const
+		Color BSDF::Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types) const
 		{
-			if (Math::Dot(vOut, diffGoem.mGeomNormal) * Math::Dot(vIn, diffGoem.mGeomNormal) > 0.0f)
+			if (Math::Dot(vOut, diffGeom.mGeomNormal) * Math::Dot(vIn, diffGeom.mGeomNormal) > 0.0f)
 				types = ScatterType(types & ~BSDF_TRANSMISSION);
 			else
 				types = ScatterType(types & ~BSDF_REFLECTION);
@@ -69,26 +72,26 @@ namespace EDX
 				return Color::BLACK;
 			}
 
-			Vector3 vWo = diffGoem.WorldToLocal(vOut);
-			Vector3 vWi = diffGoem.WorldToLocal(vIn);
+			Vector3 vWo = diffGeom.WorldToLocal(vOut);
+			Vector3 vWi = diffGeom.WorldToLocal(vIn);
 
-			return GetColor(diffGoem) * Eval(vWo, vWi, types);
+			return GetColor(diffGeom) * Eval(vWo, vWi, types);
 		}
 
-		float BSDF::Pdf(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
+		float BSDF::Pdf(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
 		{
 			if (!MatchesTypes(types))
 			{
 				return 0.0f;
 			}
 
-			Vector3 vWo = diffGoem.WorldToLocal(vOut);
-			Vector3 vWi = diffGoem.WorldToLocal(vIn);
+			Vector3 vWo = diffGeom.WorldToLocal(vOut);
+			Vector3 vWi = diffGeom.WorldToLocal(vIn);
 
 			return Pdf(vWo, vWi, types);
 		}
 
-		float BSDF::Fresnel(float cosi, float etai, float etat)
+		float BSDF::FresnelDielectric(float cosi, float etai, float etat)
 		{
 			cosi = Math::Clamp(cosi, -1.0f, 1.0f);
 
@@ -115,6 +118,72 @@ namespace EDX
 			}
 		}
 
+		float BSDF::FresnelConductor(float cosi, const float& eta, const float k)
+		{
+			float tmp = (eta*eta + k*k) * cosi * cosi;
+			float Rparl2 = (tmp - (2.f * eta * cosi) + 1) /
+				(tmp + (2.f * eta * cosi) + 1);
+			float tmp_f = eta*eta + k*k;
+			float Rperp2 =
+				(tmp_f - (2.f * eta * cosi) + cosi * cosi) /
+				(tmp_f + (2.f * eta * cosi) + cosi * cosi);
+
+			return 0.5f * (Rparl2 + Rperp2);
+		}
+
+		float BSDF::GGX_D(const Vector3& wh, float alpha)
+		{
+			const float tanTheta2 = BSDFCoordinate::TanTheta2(wh),
+				cosTheta2 = BSDFCoordinate::CosTheta2(wh);
+
+			const float root = alpha / (cosTheta2 * (alpha * alpha + tanTheta2));
+
+			return float(Math::EDX_INV_PI) * (root * root);
+		}
+
+		Vector3 BSDF::GGX_SampleNormal(float u1, float u2, float* pPdf, float alpha)
+		{
+			float roughnessSqr = alpha * alpha;
+			float tanThetaMSqr = roughnessSqr * u1 / (1.0f - u1);
+			float cosThetaH = 1.0f / std::sqrt(1 + tanThetaMSqr);
+
+			float cosThetaH2 = cosThetaH * cosThetaH,
+				cosThetaH3 = cosThetaH2 * cosThetaH,
+				temp = roughnessSqr + tanThetaMSqr;
+
+			*pPdf = float(Math::EDX_INV_PI) * roughnessSqr / (cosThetaH3 * temp * temp);
+
+			float sinThetaH = Math::Sqrt(Math::Max(0.0f, 1.0f - cosThetaH2));
+			float phiH = u2 * float(Math::EDX_TWO_PI);
+
+			Vector3 dir = Math::SphericalDirection(sinThetaH, cosThetaH, phiH);
+			return Vector3(dir.x, dir.z, dir.y);
+		}
+
+		float BSDF::GGX_G(const Vector3& wo, const Vector3& wi, const Vector3& wh, float alpha)
+		{
+			auto SmithG1 = [&](const Vector3& v, const Vector3& wh)
+			{
+				const float tanTheta = Math::Abs(BSDFCoordinate::TanTheta(v));
+
+				if (tanTheta == 0.0f)
+					return 1.0f;
+
+				if (Math::Dot(v, wh) * BSDFCoordinate::CosTheta(v) <= 0)
+					return 0.0f;
+
+				const float root = alpha * tanTheta;
+				return 2.0f / (1.0f + std::sqrt(1.0f + root*root));
+			};
+
+			return SmithG1(wo, wh) * SmithG1(wi, wh);
+		}
+
+		float BSDF::GGX_Pdf(const Vector3& wh, float alpha)
+		{
+			return GGX_D(wh, alpha) * BSDFCoordinate::CosTheta(wh);
+		}
+
 		// -----------------------------------------------------------------------------------------------------------------------
 		// Lambertian BRDF Implementation
 		// -----------------------------------------------------------------------------------------------------------------------
@@ -134,7 +203,7 @@ namespace EDX
 			return BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI);
 		}
 
-		Color LambertianDiffuse::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf,
+		Color LambertianDiffuse::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf,
 			ScatterType types, ScatterType* pSampledTypes) const
 		{
 			if (!MatchesTypes(types))
@@ -143,26 +212,26 @@ namespace EDX
 				return Color::BLACK;
 			}
 
-			Vector3 vWo = diffGoem.WorldToLocal(vOut), vWi;
+			Vector3 vWo = diffGeom.WorldToLocal(vOut), vWi;
 			vWi = Sampling::CosineSampleHemisphere(sample.u, sample.v);
 
 			if (vWo.z < 0.0f)
 				vWi.z *= -1.0f;
 
-			*pvIn = diffGoem.LocalToWorld(vWi);
+			*pvIn = diffGeom.LocalToWorld(vWi);
 			*pPdf = Pdf(vWo, vWi, types);
 			if (pSampledTypes != NULL)
 			{
 				*pSampledTypes = mScatterType;
 			}
 
-			return GetColor(diffGoem) * Eval(vWo, vWi, types);
+			return GetColor(diffGeom) * Eval(vWo, vWi, types);
 		}
 
 		// -----------------------------------------------------------------------------------------------------------------------
 		// Mirror Implementation
 		// -----------------------------------------------------------------------------------------------------------------------
-		Color Mirror::Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGoem, ScatterType types) const
+		Color Mirror::Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types) const
 		{
 			return Color::BLACK;
 		}
@@ -172,7 +241,7 @@ namespace EDX
 			return 0.0f;
 		}
 
-		float Mirror::Pdf(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
+		float Mirror::Pdf(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
 		{
 			return 0.0f;
 		}
@@ -182,7 +251,7 @@ namespace EDX
 			return 0.0f;
 		}
 
-		Color Mirror::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf, ScatterType types /* = BSDF_ALL */, ScatterType* pSampledTypes /* = NULL */) const
+		Color Mirror::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf, ScatterType types /* = BSDF_ALL */, ScatterType* pSampledTypes /* = NULL */) const
 		{
 			if (!MatchesTypes(types))
 			{
@@ -190,23 +259,23 @@ namespace EDX
 				return Color::BLACK;
 			}
 
-			Vector3 vWo = diffGoem.WorldToLocal(vOut), vWi;
+			Vector3 vWo = diffGeom.WorldToLocal(vOut), vWi;
 			vWi = Vector3(-vWo.x, -vWo.y, vWo.z);
 
-			*pvIn = diffGoem.LocalToWorld(vWi);
+			*pvIn = diffGeom.LocalToWorld(vWi);
 			*pPdf = 1.0f;
 			if (pSampledTypes != NULL)
 			{
 				*pSampledTypes = mScatterType;
 			}
 
-			return GetColor(diffGoem) / BSDFCoordinate::AbsCosTheta(vWi);
+			return GetColor(diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
 		}
 
 		// -----------------------------------------------------------------------------------------------------------------------
 		// Glass Implementation
 		// -----------------------------------------------------------------------------------------------------------------------
-		Color Glass::Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGoem, ScatterType types) const
+		Color Glass::Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types) const
 		{
 			return Color::BLACK;
 		}
@@ -216,7 +285,7 @@ namespace EDX
 			return 0.0f;
 		}
 
-		float Glass::Pdf(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGoem, ScatterType types /* = BSDF_ALL */) const
+		float Glass::Pdf(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
 		{
 			return 0.0f;
 		}
@@ -226,7 +295,7 @@ namespace EDX
 			return 0.0f;
 		}
 
-		Color Glass::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGoem, Vector3* pvIn, float* pPdf, ScatterType types /* = BSDF_ALL */, ScatterType* pSampledTypes /* = NULL */) const
+		Color Glass::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf, ScatterType types /* = BSDF_ALL */, ScatterType* pSampledTypes /* = NULL */) const
 		{
 			bool sampleReflect = (types & (BSDF_REFLECTION | BSDF_SPECULAR)) == (BSDF_REFLECTION | BSDF_SPECULAR);
 			bool sampleRefract = (types & (BSDF_TRANSMISSION | BSDF_SPECULAR)) == (BSDF_TRANSMISSION | BSDF_SPECULAR);
@@ -239,23 +308,23 @@ namespace EDX
 
 			bool sampleBoth = sampleReflect == sampleRefract;
 
-			Vector3 vWo = diffGoem.WorldToLocal(vOut), vWi;
+			Vector3 vWo = diffGeom.WorldToLocal(vOut), vWi;
 
-			float fresnel = Fresnel(BSDFCoordinate::CosTheta(vWo), mEtai, mEtat);
+			float fresnel = FresnelDielectric(BSDFCoordinate::CosTheta(vWo), mEtai, mEtat);
 			float prob = 0.5f * fresnel + 0.25f;
 
 			if (sample.w <= prob && sampleBoth || (sampleReflect && !sampleBoth)) // Sample reflection
 			{
 				vWi = Vector3(-vWo.x, -vWo.y, vWo.z);
 
-				*pvIn = diffGoem.LocalToWorld(vWi);
+				*pvIn = diffGeom.LocalToWorld(vWi);
 				*pPdf = !sampleBoth ? 1.0f : prob;
 				if (pSampledTypes != NULL)
 				{
 					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_SPECULAR);
 				}
 
-				return fresnel * GetColor(diffGoem) / BSDFCoordinate::AbsCosTheta(vWi);
+				return fresnel * GetColor(diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
@@ -278,14 +347,14 @@ namespace EDX
 
 				vWi = Vector3(sintOverSini * -vWo.x, sintOverSini * -vWo.y, cost);
 
-				*pvIn = diffGoem.LocalToWorld(vWi);
+				*pvIn = diffGeom.LocalToWorld(vWi);
 				*pPdf = !sampleBoth ? 1.0f : 1.0f - prob;
 				if (pSampledTypes != NULL)
 				{
 					*pSampledTypes = ScatterType(BSDF_TRANSMISSION | BSDF_SPECULAR);
 				}
 
-				return (1.0f - fresnel) * GetColor(diffGoem) / BSDFCoordinate::AbsCosTheta(vWi);
+				return (1.0f - fresnel) * GetColor(diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 
 			return Color::BLACK;
