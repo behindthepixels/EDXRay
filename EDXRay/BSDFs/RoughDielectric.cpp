@@ -18,39 +18,64 @@ namespace EDX
 			}
 
 			bool sampleBoth = sampleReflect == sampleRefract;
-			Vector3 wo = diffGeom.WorldToLocal(_wo), wi;
+			const Vector3 wo = diffGeom.WorldToLocal(_wo);
 
 			float microfacetPdf;
-			Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness);
+			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness);
 			if (microfacetPdf == 0.0f)
 				return 0.0f;
 
-			float fresnel = FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
-			float prob = fresnel;
+			float F = FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
+			float prob = 0.5f * F + 0.25f;
 
-
+			Vector3 wi;
 			if (sample.w <= prob && sampleBoth || (sampleReflect && !sampleBoth)) // Sample reflection
 			{
 				wi = Math::Reflect(-wo, wh);
+				if (BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo) <= 0.0f)
+				{
+					*pPdf = 0.0f;
+					return Color::BLACK;
+				}
 
 				*pvIn = diffGeom.LocalToWorld(wi);
+
 				*pPdf = !sampleBoth ? microfacetPdf : microfacetPdf * prob;
+				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
+				*pPdf *= dwh_dwi;
+
 				if (pSampledTypes != nullptr)
 					*pSampledTypes = ReflectScatter;
 
-				return GetColor(diffGeom) * fresnel * GGX_D(wh, mRoughness) * GGX_G(wo, wi, wh, mRoughness) * Math::AbsDot(wo, wh) /
-					(BSDFCoordinate::AbsCosTheta(wo) * BSDFCoordinate::AbsCosTheta(wh));
+
+				return GetColor(diffGeom) * Eval(wo, wi, types);
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
 				wi = Math::Refract(-wo, wh, mEtat / mEtai);
+				if (BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo) >= 0.0f || wi == Vector3::ZERO)
+				{
+					*pPdf = 0.0f;
+					return Color::BLACK;
+				}
+
 				*pvIn = diffGeom.LocalToWorld(wi);
+
 				*pPdf = !sampleBoth ? microfacetPdf : microfacetPdf * (1.0f - prob);
+				bool entering = BSDFCoordinate::CosTheta(wo) > 0.0f;
+				float etai = mEtai, etat = mEtat;
+				if (!entering)
+					swap(etai, etat);
+
+				const float ODotH = Math::Dot(wo, wh), IDotH = Math::Dot(wi, wh);
+				float sqrtDenom = etai * ODotH + etat * IDotH;
+				float dwh_dwi = (etat * etat * Math::Abs(IDotH)) / (sqrtDenom * sqrtDenom);
+				*pPdf *= dwh_dwi;
+
 				if (pSampledTypes != nullptr)
 					*pSampledTypes = RefractScatter;
 
-				return GetColor(diffGeom) * (1.0f - fresnel) * GGX_D(wh, mRoughness) * GGX_G(wo, wi, wh, mRoughness) * Math::AbsDot(wo, wh) /
-					(BSDFCoordinate::AbsCosTheta(wo) * BSDFCoordinate::AbsCosTheta(wh));
+				return GetColor(diffGeom) * Eval(wo, wi, types);
 			}
 
 			return Color::BLACK;

@@ -44,6 +44,7 @@ namespace EDX
 				bool sampleReflect = (types & ReflectScatter) == ReflectScatter;
 				bool sampleRefract = (types & RefractScatter) == RefractScatter;
 				bool reflect = BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo) > 0.0f;
+				bool entering = BSDFCoordinate::CosTheta(wo) > 0.0f;
 
 				Vector3 wh;
 				float dwh_dwi;
@@ -53,28 +54,32 @@ namespace EDX
 						return 0.0f;
 
 					wh = Math::Normalize(wo + wi);
-					dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
+					if (!entering)
+						wh *= -1.0f;
 
+					dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				}
 				else
 				{
 					if ((RefractScatter & types) != RefractScatter)
 						return 0.0f;
 
-					float eta = BSDFCoordinate::CosTheta(wo) > 0.0f ? mEtat / mEtai : mEtat / mEtai;
-					wh = Math::Normalize(wo + wi * eta);
+					float etai = mEtai, etat = mEtat;
+					if (!entering)
+						swap(etai, etat);
+
+					wh = -Math::Normalize(etai * wo + etat * wi);
 
 					const float ODotH = Math::Dot(wo, wh), IDotH = Math::Dot(wi, wh);
-					float sqrtDenom = ODotH + eta * IDotH;
-					dwh_dwi = (eta * eta * IDotH) / (sqrtDenom * sqrtDenom);
+					float sqrtDenom = etai * ODotH + etat * IDotH;
+					dwh_dwi = (etat * etat * Math::Abs(IDotH)) / (sqrtDenom * sqrtDenom);
 				}
-				if (BSDFCoordinate::CosTheta(wh) < 0.0f)
-					wh *= -1.0f;
 
 				float whProb = GGX_Pdf(wh, mRoughness);
 				if (sampleReflect && sampleRefract)
 				{
 					float F = BSDF::FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
+					F = 0.5f * F + 0.25f;
 					whProb *= reflect ? F : 1.0f - F;
 				}
 
@@ -84,7 +89,10 @@ namespace EDX
 			float Eval(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
 			{
 				bool reflect = BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo) > 0.0f;
-				float eta = BSDFCoordinate::CosTheta(wo) > 0.0f ? mEtat / mEtai : mEtat / mEtai;
+				bool entering = BSDFCoordinate::CosTheta(wo) > 0.0f;
+				float etai = mEtai, etat = mEtat;
+				if (!entering)
+					swap(etai, etat);
 
 				Vector3 wh;
 				if (reflect)
@@ -92,17 +100,21 @@ namespace EDX
 					if ((ReflectScatter & types) != ReflectScatter)
 						return 0.0f;
 
-					wh = Math::Normalize(wo + wi);
+					wh = wo + wi;
+					if (wh == Vector3::ZERO)
+						return 0.0f;
+
+					wh = Math::Normalize(wh);
+					if (!entering)
+						wh *= -1.0f;
 				}
 				else
 				{
 					if ((RefractScatter & types) != RefractScatter)
 						return 0.0f;
 
-					wh = Math::Normalize(wo + wi * eta);
+					wh = -Math::Normalize(etai * wo + etat * wi);
 				}
-				if (BSDFCoordinate::CosTheta(wh) < 0.0f)
-					wh *= -1.0f;
 
 				float D = GGX_D(wh, mRoughness);
 				if (D == 0.0f)
@@ -118,14 +130,16 @@ namespace EDX
 				else
 				{
 					const float ODotH = Math::Dot(wo, wh), IDotH = Math::Dot(wi, wh);
+					const float ODotN = BSDFCoordinate::CosTheta(wo), IDotN = BSDFCoordinate::CosTheta(wi);
 
-					float sqrtDenom = ODotH + eta * IDotH;
-					float value = ((1 - F) * D * G * eta * eta * ODotH * IDotH) /
-						(BSDFCoordinate::CosTheta(wo) * sqrtDenom * sqrtDenom);
+					float sqrtDenom = etai * ODotH + etat * IDotH;
+					float value = ((1 - F) * D * G * etat * etat * ODotH * IDotH) /
+						(sqrtDenom * sqrtDenom * ODotN * IDotN);
 
 					// TODO: Fix solid angle compression when tracing radiance
 					float factor = 1.0f;
 
+					assert(Math::NumericValid(value));
 					return Math::Abs(value * factor * factor);
 				}
 			}

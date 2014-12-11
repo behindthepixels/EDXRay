@@ -144,7 +144,7 @@ namespace EDX
 		Vector3 BSDF::GGX_SampleNormal(float u1, float u2, float* pPdf, float alpha)
 		{
 			float roughnessSqr = alpha * alpha;
-			float tanThetaMSqr = roughnessSqr * u1 / (1.0f - u1);
+			float tanThetaMSqr = roughnessSqr * u1 / (1.0f - u1 + 1e-10f);
 			float cosThetaH = 1.0f / std::sqrt(1 + tanThetaMSqr);
 
 			float cosThetaH2 = cosThetaH * cosThetaH,

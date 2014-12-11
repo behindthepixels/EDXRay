@@ -41,7 +41,7 @@ namespace EDX
 			BSDF(ScatterType t, BSDFType t2, const char* pFile);
 			virtual ~BSDF() {}
 
-			bool MatchesTypes(ScatterType flags) const { return (mScatterType & flags) == mScatterType; }
+			bool MatchesTypes(ScatterType flags) const { return (mScatterType & flags) != 0; }
 			bool IsSpecular() const { return (ScatterType(BSDF_SPECULAR | BSDF_DIFFUSE | BSDF_GLOSSY) & mScatterType) == ScatterType(BSDF_SPECULAR); }
 
 			virtual Color Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const;
