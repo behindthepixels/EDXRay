@@ -19,6 +19,7 @@ namespace EDX
 			RefPtr<Texture2D<Color>>			mpMap;
 			RefPtr<Sampling::Distribution2D>	mpDistribution;
 			Array2f								mLuminance;
+			float								mScale;
 			bool mIsEnvMap;
 
 		public:
@@ -27,14 +28,17 @@ namespace EDX
 				: Light(sampCount)
 			{
 				mIsEnvMap = false;
+				mScale = 1.0f;
 				mpMap = new ConstantTexture2D<Color>(intens);
 			}
 
 			EnvironmentalLight(const char* path,
+				const float scale = 1.0f,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
 				mIsEnvMap = true;
+				mScale = scale;
 				mpMap = new ImageTexture<Color, Color>(path, 1.0f);
 
 				CalcLuminanceDistribution();
@@ -49,6 +53,7 @@ namespace EDX
 				: Light(sampCount)
 			{
 				mIsEnvMap = true;
+				mScale = 1.0f;
 
 				static const int NUM_CHANNELS = 3;
 				ArHosekSkyModelState* skyModelState[NUM_CHANNELS];
@@ -138,7 +143,7 @@ namespace EDX
 				float t = Math::SphericalTheta(negDir) * float(Math::EDX_INV_PI);
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
-				return mpMap->Sample(Vector2(s, t), diff, TextureFilter::Linear);
+				return mpMap->Sample(Vector2(s, t), diff, TextureFilter::TriLinear) * mScale;
 			}
 
 			float Pdf(const Vector3& pos, const Vector3& dir) const

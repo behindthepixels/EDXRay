@@ -26,7 +26,7 @@ namespace EDX
 			case BSDFType::RoughConductor:
 				return new RoughConductor(color, 0.05f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(color, 0.05f);
+				return new RoughDielectric(color, 0.3f);
 			}
 
 			assert(0);
@@ -133,6 +133,9 @@ namespace EDX
 
 		float BSDF::GGX_D(const Vector3& wh, float alpha)
 		{
+			if (wh.z <= 0.0f)
+				return 0.0f;
+
 			const float tanTheta2 = BSDFCoordinate::TanTheta2(wh),
 				cosTheta2 = BSDFCoordinate::CosTheta2(wh);
 

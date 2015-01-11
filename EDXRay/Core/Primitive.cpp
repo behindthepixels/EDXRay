@@ -14,7 +14,6 @@ namespace EDX
 		}
 
 		void Primitive::LoadMesh(const char* path,
-			const BSDFType bsdfType,
 			const Vector3& pos,
 			const Vector3& scl,
 			const Vector3& rot)
@@ -23,7 +22,7 @@ namespace EDX
 			pObjMesh->LoadFromObj(pos, scl, rot, path, true);
 
 			mpMesh = new TriangleMesh;
-			mpMesh->LoadMesh(pObjMesh, bsdfType);
+			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();
@@ -49,6 +48,29 @@ namespace EDX
 				mpMaterialIndices[i] = pObjMesh->GetMaterialIdx(i);
 		}
 
+		void Primitive::LoadMesh(const char* path,
+			const BSDFType bsdfType,
+			const Color& reflectance,
+			const Vector3& pos,
+			const Vector3& scl,
+			const Vector3& rot)
+		{
+			ObjMesh* pObjMesh = new ObjMesh;
+			pObjMesh->LoadFromObj(pos, scl, rot, path, true);
+
+			mpMesh = new TriangleMesh;
+			mpMesh->LoadMesh(pObjMesh);
+
+			// Initialize materials
+			const auto& materialInfo = pObjMesh->GetMaterialInfo();
+			for (auto i = 0; i < materialInfo.size(); i++)
+				mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
+
+			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
+			for (auto i = 0; i < mpMesh->GetTriangleCount(); i++)
+				mpMaterialIndices[i] = pObjMesh->GetMaterialIdx(i);
+		}
+
 		void Primitive::LoadSphere(const float radius,
 			const BSDFType bsdfType,
 			const Color& reflectance,
@@ -62,7 +84,7 @@ namespace EDX
 			pObjMesh->LoadSphere(pos, scl, rot, radius, slices, stacks);
 
 			mpMesh = new TriangleMesh;
-			mpMesh->LoadMesh(pObjMesh, bsdfType);
+			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();
@@ -91,7 +113,7 @@ namespace EDX
 			pObjMesh->LoadPlane(pos, scl, rot, length);
 
 			mpMesh = new TriangleMesh;
-			mpMesh->LoadMesh(pObjMesh, bsdfType);
+			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();

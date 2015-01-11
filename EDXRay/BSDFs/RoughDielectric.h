@@ -43,14 +43,19 @@ namespace EDX
 			{
 				bool sampleReflect = (types & ReflectScatter) == ReflectScatter;
 				bool sampleRefract = (types & RefractScatter) == RefractScatter;
-				bool reflect = BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo) > 0.0f;
-				bool entering = BSDFCoordinate::CosTheta(wo) > 0.0f;
+				const float ODotN = BSDFCoordinate::CosTheta(wo), IDotN = BSDFCoordinate::CosTheta(wi);
+				const float fac = ODotN * IDotN;
+				if (fac == 0.0f)
+					return 0.0f;
+
+				bool reflect = fac > 0.0f;
+				bool entering = ODotN > 0.0f;
 
 				Vector3 wh;
 				float dwh_dwi;
 				if (reflect)
 				{
-					if ((ReflectScatter & types) != ReflectScatter)
+					if (!sampleReflect)
 						return 0.0f;
 
 					wh = Math::Normalize(wo + wi);
@@ -61,7 +66,7 @@ namespace EDX
 				}
 				else
 				{
-					if ((RefractScatter & types) != RefractScatter)
+					if (!sampleRefract)
 						return 0.0f;
 
 					float etai = mEtai, etat = mEtat;
@@ -79,17 +84,25 @@ namespace EDX
 				if (sampleReflect && sampleRefract)
 				{
 					float F = BSDF::FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
-					F = 0.5f * F + 0.25f;
+					//F = 0.5f * F + 0.25f;
 					whProb *= reflect ? F : 1.0f - F;
 				}
 
+				assert(Math::NumericValid(whProb));
+				assert(Math::NumericValid(dwh_dwi));
 				return Math::Abs(whProb * dwh_dwi);
 			}
 
 			float Eval(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
 			{
-				bool reflect = BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo) > 0.0f;
-				bool entering = BSDFCoordinate::CosTheta(wo) > 0.0f;
+				const float ODotN = BSDFCoordinate::CosTheta(wo), IDotN = BSDFCoordinate::CosTheta(wi);
+				const float fac = ODotN * IDotN;
+				if (fac == 0.0f)
+					return 0.0f;
+
+				bool reflect = fac > 0.0f;
+				bool entering = ODotN > 0.0f;
+
 				float etai = mEtai, etat = mEtat;
 				if (!entering)
 					swap(etai, etat);
@@ -130,7 +143,6 @@ namespace EDX
 				else
 				{
 					const float ODotH = Math::Dot(wo, wh), IDotH = Math::Dot(wi, wh);
-					const float ODotN = BSDFCoordinate::CosTheta(wo), IDotN = BSDFCoordinate::CosTheta(wi);
 
 					float sqrtDenom = etai * ODotH + etat * IDotH;
 					float value = ((1 - F) * D * G * etat * etat * ODotH * IDotH) /

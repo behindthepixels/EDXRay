@@ -37,7 +37,7 @@ namespace EDX
 				Release();
 			}
 
-			void LoadMesh(const ObjMesh* pObjMesh, const BSDFType bsdfType);
+			void LoadMesh(const ObjMesh* pObjMesh);
 
 			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
 

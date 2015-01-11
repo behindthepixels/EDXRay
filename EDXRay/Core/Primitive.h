@@ -27,7 +27,12 @@ namespace EDX
 			~Primitive();
 
 			void LoadMesh(const char* path,
+				const Vector3& pos = Vector3::ZERO,
+				const Vector3& scl = Vector3::UNIT_SCALE,
+				const Vector3& rot = Vector3::ZERO);
+			void LoadMesh(const char* path,
 				const BSDFType bsdfType = BSDFType::Diffuse,
+				const Color& reflectance = Color(0.8f, 0.8f, 0.8f),
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO);

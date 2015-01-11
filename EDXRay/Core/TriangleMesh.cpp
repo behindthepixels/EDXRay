@@ -11,7 +11,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		void TriangleMesh::LoadMesh(const ObjMesh* pObjMesh, const BSDFType bsdfType)
+		void TriangleMesh::LoadMesh(const ObjMesh* pObjMesh)
 		{
 			mpObjMesh = pObjMesh;
 

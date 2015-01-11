@@ -228,6 +228,9 @@ namespace EDX
 
 					for (auto i = 0; i < scaledImage.LinearSize(); i++)
 						scaledImage[i] += posTerm[i] - negTerm[i];
+
+					if (s == 0)
+						scaledImage = posTerm;
 				}
 
 				prevImage = scaledImage;
@@ -305,12 +308,10 @@ namespace EDX
 		float FilmRHF::ChiSquareDistance(const Vector2i& coord0, const Vector2i& coord1, const int halfPatchSize, const Histogram& histogram)
 		{
 			int normFactor = 0;
-			auto PixelWiseDist = [this, &normFactor, &histogram](const Vector2i& c0, const Vector2i& c1, const int binIdx) -> float
+			int count = 0;
+			auto PixelWiseDist = [this, &normFactor, &count, &histogram](const Vector2i& c0, const Vector2i& c1, const int binIdx) -> float
 			{
 				float ret = 0.0f;
-
-				const float weight0 = histogram.totalWeights[c0];
-				const float weight1 = histogram.totalWeights[c1];
 				for (auto c = 0; c < 3; c++)
 				{
 					const float histo0 = histogram.histogramWeights[binIdx][c0][c];
@@ -318,17 +319,23 @@ namespace EDX
 					const float sum = histo0 + histo1;
 					if (sum > 1.0f)
 					{
+						const float weight0 = histogram.totalWeights[c0];
+						const float weight1 = histogram.totalWeights[c1];
+
 						const float diff = weight1 * histo0 - weight0 * histo1;
 
 						ret += diff * diff / ((weight0 * weight1) * sum);
 						normFactor++;
 					}
+					else
+						count++;
 				}
 
 				return ret;
 			};
 
 			float patchWiseDist = 0.0f;
+			const float maxNormFac = 3 * Histogram::NUM_BINS * (2 * halfPatchSize + 1) * (2 * halfPatchSize + 1);
 			for (auto binIdx = 0; binIdx < Histogram::NUM_BINS; binIdx++)
 			{
 				for (auto i = -halfPatchSize; i <= halfPatchSize; i++)
@@ -339,6 +346,9 @@ namespace EDX
 						Vector2i c1 = coord1 + Vector2i(i, j);
 
 						patchWiseDist += PixelWiseDist(c0, c1, binIdx);
+
+						if (patchWiseDist / (maxNormFac - count) >= mMaxDist)
+							return Math::EDX_INFINITY;
 					}
 				}
 			}
@@ -476,7 +486,7 @@ namespace EDX
 					Color sum = Color::BLACK;
 					for (auto l = -1; l <= 2; l++)
 					{
-						auto clampedL = Math::Clamp(crd + l, 0, scaledDimX - 1);
+						auto clampedL = Math::Clamp(crd + l, 0, dimX - 1);
 						sum += weights[2 - l] * input[Vector2i(clampedL, y)];
 					}
 
@@ -505,7 +515,7 @@ namespace EDX
 					Color sum = Color::BLACK;
 					for (auto l = -1; l <= 2; l++)
 					{
-						auto clampedL = Math::Clamp(crd + l, 0, scaledDimY - 1);
+						auto clampedL = Math::Clamp(crd + l, 0, dimY - 1);
 						sum += weights[2 - l] * auxBuf[Vector2i(x, clampedL)];
 					}
 

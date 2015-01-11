@@ -26,7 +26,7 @@ namespace EDX
 				return 0.0f;
 
 			float F = FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
-			float prob = 0.5f * F + 0.25f;
+			float prob = F;
 
 			Vector3 wi;
 			if (sample.w <= prob && sampleBoth || (sampleReflect && !sampleBoth)) // Sample reflection
