@@ -56,7 +56,7 @@ namespace EDX
 				static const int NUM_BINS = 20;
 				static const float MAX_VAL;
 
-				int numSamples;
+				uint64 numSamples;
 				Array<2, Color> histogramWeights[NUM_BINS];
 				Array<2, float> totalWeights;
 

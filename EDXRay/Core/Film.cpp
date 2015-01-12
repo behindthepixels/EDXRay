@@ -228,9 +228,6 @@ namespace EDX
 
 					for (auto i = 0; i < scaledImage.LinearSize(); i++)
 						scaledImage[i] += posTerm[i] - negTerm[i];
-
-					if (s == 0)
-						scaledImage = posTerm;
 				}
 
 				prevImage = scaledImage;
