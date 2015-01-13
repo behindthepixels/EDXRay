@@ -24,7 +24,7 @@ namespace EDX
 			case BSDFType::Glass:
 				return new Glass(color);
 			case BSDFType::RoughConductor:
-				return new RoughConductor(color, 0.05f);
+				return new RoughConductor(color, 0.08f);
 			case BSDFType::RoughDielectric:
 				return new RoughDielectric(color, 0.3f);
 			}

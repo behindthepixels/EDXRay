@@ -56,14 +56,11 @@ namespace EDX
 				static const int NUM_BINS = 20;
 				static const float MAX_VAL;
 
-				uint64 numSamples;
 				Array<2, Color> histogramWeights[NUM_BINS];
 				Array<2, float> totalWeights;
 
 				void Init(int w, int h)
 				{
-					numSamples = 0;
-
 					totalWeights.Init(Vector2i(w, h));
 					for (auto i = 0; i < NUM_BINS; i++)
 						histogramWeights[i].Init(Vector2i(w, h));
@@ -71,7 +68,6 @@ namespace EDX
 
 				void Clear()
 				{
-					numSamples = 0;
 					totalWeights.Clear();
 					for (auto i = 0; i < NUM_BINS; i++)
 						histogramWeights[i].Clear();

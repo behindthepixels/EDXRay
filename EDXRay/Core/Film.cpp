@@ -173,7 +173,6 @@ namespace EDX
 					}
 
 					mSampleHistogram.totalWeights[Vector2i(colAdd, rowAdd)] += 1.0f;
-					mSampleHistogram.numSamples++;
 				}
 			}
 		}
@@ -183,6 +182,11 @@ namespace EDX
 			Array<2, Color> scaledImage;
 			Array<2, Color> prevImage;
 			Histogram scaledHistogram;
+
+			float totalWeight = 0.0f;
+			for (auto i = 0; i < mSampleHistogram.totalWeights.LinearSize(); i++)
+				totalWeight += mSampleHistogram.totalWeights[i];
+
 			for (auto s = mScale - 1; s >= 0; s--)
 			{
 				float scale = 1.0f / float(1 << s);
@@ -197,7 +201,7 @@ namespace EDX
 					for (auto i = 0; i < scaledHistogram.totalWeights.LinearSize(); i++)
 						scaledTotalWeight += scaledHistogram.totalWeights[i];
 
-					float ratio = mSampleHistogram.numSamples / scaledTotalWeight;
+					float ratio = totalWeight / scaledTotalWeight;
 					for (auto b = 0; b < Histogram::NUM_BINS; b++)
 					{
 						for (auto i = 0; i < scaledHistogram.histogramWeights[b].LinearSize(); i++)

@@ -23,8 +23,8 @@ using namespace EDX;
 using namespace EDX::RayTracer;
 using namespace EDX::GUI;
 
-int gImageWidth = 640;
-int gImageHeight = 480;
+int gImageWidth = 1280;
+int gImageHeight = 720;
 
 Renderer*	gpRenderer = nullptr;
 Previewer*	gpPreview = nullptr;
@@ -58,13 +58,13 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	pMesh->LoadSphere(1.0f, BSDFType::RoughConductor, Color::WHITE, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
-	pMesh2->LoadSphere(1.0f, BSDFType::Diffuse, Color(0.2f), 128, 128, Vector3(2.5f, 3.0f, 0.0f));
+	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color::WHITE, Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh3->LoadSphere(1.0f, BSDFType::RoughDielectric, Color::WHITE, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
-	pMesh3->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color::WHITE, Vector3(0.0f, 3.0f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, -50.0f, 0.0f));
+	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color::WHITE, Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
 
 	//pScene->AddPrimitive(pMesh);
-	//pScene->AddPrimitive(pMesh2);
+	pScene->AddPrimitive(pMesh2);
 	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
 	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
