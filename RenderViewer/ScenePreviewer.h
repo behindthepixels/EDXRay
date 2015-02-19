@@ -75,6 +75,10 @@ namespace EDX
 
 			void OnRender()
 			{
+				glMatrixMode(GL_PROJECTION);
+				const Matrix& mProj = mCamera.GetProjMatrix();
+				glLoadTransposeMatrixf((float*)&mProj);
+
 				glMatrixMode(GL_MODELVIEW);
 
 				const Matrix& mView = mCamera.GetViewMatrix();

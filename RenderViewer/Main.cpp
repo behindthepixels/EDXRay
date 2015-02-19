@@ -28,7 +28,6 @@ int gImageHeight = 720;
 
 Renderer*	gpRenderer = nullptr;
 Previewer*	gpPreview = nullptr;
-EDXDialog*	gpDialog = nullptr;
 bool gRendering = false;
 
 void GUIEvent(Object* pObject, EventArgs args);
@@ -49,7 +48,7 @@ void OnInit(Object* pSender, EventArgs args)
 	gpRenderer->Initialize(desc);
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
-	Primitive* pMesh = new Primitive;
+	//Primitive* pMesh = new Primitive;
 	Primitive* pMesh2 = new Primitive;
 	Primitive* pMesh3 = new Primitive;
 	Primitive* pMesh4 = new Primitive;
@@ -57,11 +56,11 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	pMesh->LoadSphere(1.0f, BSDFType::RoughConductor, Color::WHITE, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
+	//pMesh->LoadSphere(1.0f, BSDFType::RoughConductor, Color::WHITE, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
 	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color::WHITE, Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh3->LoadSphere(1.0f, BSDFType::RoughDielectric, Color::WHITE, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
 	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color::WHITE, Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
-	pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
+	pMesh4->LoadPlane(10.0f, BSDFType::Mirror, Color(0.2f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
 
 	//pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
@@ -79,13 +78,7 @@ void OnInit(Object* pSender, EventArgs args)
 	gpPreview->Initialize(*pScene, desc);
 
 	// Initialize UI
-	gpDialog = new EDXDialog;
-	gpDialog->Init(gImageWidth, gImageHeight);
-	gpDialog->SetCallback(NotifyEvent(GUIEvent));
-
-	gpDialog->AddText(0, "Image Res: 800, 600");
-	gpDialog->AddText(1, "Samples per Pixel: ");
-	gpDialog->AddButton(2, "Render");
+	EDXGui::Init();
 }
 
 void OnRender(Object* pSender, EventArgs args)
@@ -94,17 +87,40 @@ void OnRender(Object* pSender, EventArgs args)
 
 	if (gRendering)
 	{
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, Application::GetMainWindow()->GetWindowWidth(), 0, Application::GetMainWindow()->GetWindowHeight(), -1, 1);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
 		glRasterPos3f(0.0f, 0.0f, 0.0f);
 		glDrawPixels(gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight, GL_RGBA, GL_FLOAT, (float*)gpRenderer->GetFilm()->GetPixelBuffer());
 	}
 	else
 		gpPreview->OnRender();
 
-	char strText[_MAX_PATH] = { 0 };
-	_snprintf_s(strText, _MAX_PATH, "Samples per Pixel: %i\0", gpRenderer->GetFilm()->GetSampleCount());
-	((Text*)gpDialog->GetControlWithID(1))->SetText(strText);
-
-	gpDialog->Render();
+	EDXGui::BeginFrame();
+	EDXGui::BeginDialog(LayoutStrategy::DockRight);
+	{
+		EDXGui::Text("Image Res: %i, %i", gImageWidth, gImageHeight);
+		EDXGui::Text("Samples per Pixel: %i", gpRenderer->GetFilm()->GetSampleCount());
+		if (EDXGui::Button("Render"))
+		{
+			gRendering = !gRendering;
+			if (gRendering)
+			{
+				gpRenderer->SetCameraParams(gpPreview->GetCamera().GetCameraParams());
+				gpRenderer->QueueRenderTasks();
+			}
+			else
+			{
+				gpRenderer->StopRenderTasks();
+			}
+		}
+	}
+	EDXGui::EndDialog();
+	EDXGui::EndFrame();
 }
 
 void OnResize(Object* pSender, ResizeEventArgs args)
@@ -123,22 +139,12 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 		gpPreview->OnResize(args.Width, args.Height);
 	}
 
-	gpDialog->Resize(args.Width, args.Height);
-
-
-	gImageWidth = args.Width;
-	gImageHeight = args.Height;
-
-	Text* pText = (Text*)gpDialog->GetControlWithID(0);
-	char strText[_MAX_PATH] = { 0 };
-	_snprintf_s(strText, _MAX_PATH, "Image Res: %i, %i\0", gImageWidth, gImageHeight);
-	pText->SetText(strText);
+	EDXGui::Resize(args.Width, args.Height);
 }
 
 void OnMouseEvent(Object* pSender, MouseEventArgs args)
 {
-	if (gpDialog->MsgProc(args))
-		return;
+	EDXGui::HandleMouseEvent(args);
 
 	if (!gRendering)
 		gpPreview->GetCamera().HandleMouseMsg(args);
@@ -146,74 +152,10 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 
 void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 {
-	if (gpDialog->HandleKeyboard(args))
-		return;
-
-	switch (args.key)
-	{
-	case 'R':
-		gRendering = !gRendering;
-		if (gRendering)
-		{
-			gpRenderer->SetCameraParams(gpPreview->GetCamera().GetCameraParams());
-
-			glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-			glOrtho(0, Application::GetMainWindow()->GetWindowWidth(), 0, Application::GetMainWindow()->GetWindowHeight(), -1, 1);
-
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-
-			gpRenderer->QueueRenderTasks();
-		}
-		else
-		{
-			gpRenderer->StopRenderTasks();
-			gpPreview->OnResize(Application::GetMainWindow()->GetWindowWidth(), Application::GetMainWindow()->GetWindowHeight());
-		}
-		break;
-
-	case 'N':
-		gpRenderer->GetFilm()->Denoise();
-		break;
-
-	case 'P':
-		gpRenderer->StopRenderTasks();
-		break;
-	}
+	EDXGui::HandleKeyboardEvent(args);
 
 	if (!gRendering)
 		gpPreview->GetCamera().HandleKeyboardMsg(args);
-}
-
-void GUIEvent(Object* pObject, EventArgs args)
-{
-	EDXControl* pControl = (EDXControl*)pObject;
-	switch (pControl->GetID())
-	{
-	case 2:
-		gRendering = !gRendering;
-		if (gRendering)
-		{
-			gpRenderer->SetCameraParams(gpPreview->GetCamera().GetCameraParams());
-
-			glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-			glOrtho(0, Application::GetMainWindow()->GetWindowWidth(), 0, Application::GetMainWindow()->GetWindowHeight(), -1, 1);
-
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-
-			gpRenderer->QueueRenderTasks();
-		}
-		else
-		{
-			gpRenderer->StopRenderTasks();
-			gpPreview->OnResize(Application::GetMainWindow()->GetWindowWidth(), Application::GetMainWindow()->GetWindowHeight());
-		}
-
-		break;
-	}
 }
 
 void OnRelease(Object* pSender, EventArgs args)
@@ -222,7 +164,7 @@ void OnRelease(Object* pSender, EventArgs args)
 
 	SafeDelete(gpRenderer);
 	SafeDelete(gpPreview);
-	SafeDelete(gpDialog);
+	EDXGui::Release();
 }
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdShow)
