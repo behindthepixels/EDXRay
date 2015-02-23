@@ -57,10 +57,10 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadSphere(1.0f, BSDFType::RoughConductor, Color::WHITE, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
-	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color::WHITE, Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
+	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::Glass, Color::WHITE, Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh3->LoadSphere(1.0f, BSDFType::RoughDielectric, Color::WHITE, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
-	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color::WHITE, Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
-	pMesh4->LoadPlane(10.0f, BSDFType::Mirror, Color(0.2f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
+	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::Glass, Color::WHITE, Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
+	pMesh4->LoadPlane(10.0f, BSDFType::RoughConductor, Color(0.96f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
 
 	//pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
@@ -147,7 +147,7 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 	EDXGui::HandleMouseEvent(args);
 
 	if (!gRendering)
-		gpPreview->GetCamera().HandleMouseMsg(args);
+		gpPreview->HandleMouseMsg(args);
 }
 
 void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
