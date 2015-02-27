@@ -120,6 +120,48 @@ void OnRender(Object* pSender, EventArgs args)
 		}
 	}
 	EDXGui::EndDialog();
+
+	if (gpPreview->GetPickingIndex() != -1)
+	{
+		EDXGui::BeginDialog(LayoutStrategy::Floating);
+		{
+			EDXGui::Text("Material Editor");
+			ComboBoxItem items[] = {
+				0, "Lambertian",
+				1, "Smooth Conductor",
+				2, "Smooth Dielectric",
+				3, "Rough Conductor",
+				4, "Rough Dielectric",
+			};
+
+			static int selectedMat = 0;
+			EDXGui::ComboBox(items, 5, selectedMat);
+			switch (selectedMat)
+			{
+			case 0:
+				break;
+			case 1:
+				break;
+			case 2:
+				break;
+			case 3:
+			{
+				static float conductorRough = 0.0f;
+				EDXGui::Slider("Roughness", &conductorRough, 0.0f, 1.0f);
+				break;
+			}
+			case 4:
+			{
+				static float dielecRough = 0.0f;
+				EDXGui::Slider("Roughness", &dielecRough, 0.0f, 1.0f);
+				break;
+			}
+			default:
+				break;
+			}
+		}
+		EDXGui::EndDialog();
+	}
 	EDXGui::EndFrame();
 }
 
@@ -144,7 +186,8 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 
 void OnMouseEvent(Object* pSender, MouseEventArgs args)
 {
-	EDXGui::HandleMouseEvent(args);
+	if (EDXGui::HandleMouseEvent(args))
+		return;
 
 	if (!gRendering)
 		gpPreview->HandleMouseMsg(args);
@@ -152,7 +195,8 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 
 void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 {
-	EDXGui::HandleKeyboardEvent(args);
+	if (EDXGui::HandleKeyboardEvent(args))
+		return;
 
 	if (!gRendering)
 		gpPreview->GetCamera().HandleKeyboardMsg(args);

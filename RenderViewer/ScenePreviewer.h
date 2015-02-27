@@ -24,6 +24,29 @@ namespace EDX
 			vector<RefPtr<OpenGL::Texture2D>> mTextures;
 		};
 
+		struct MaterialDesc
+		{
+			BSDFType type;
+			float param0, param1, param2, param3, param4, param5;
+
+			MaterialDesc(const BSDFType _type = BSDFType::Diffuse,
+				const float p0 = 0.0f,
+				const float p1 = 0.0f,
+				const float p2 = 0.0f,
+				const float p3 = 0.0f,
+				const float p4 = 0.0f,
+				const float p5 = 0.0f)
+				: type(_type)
+				, param0(p0)
+				, param1(p1)
+				, param2(p2)
+				, param3(p3)
+				, param4(p4)
+				, param5(p5)
+			{
+			}
+		};
+
 		class Previewer
 		{
 		private:
@@ -206,6 +229,11 @@ namespace EDX
 			Camera& GetCamera()
 			{
 				return mCamera;
+			}
+
+			int GetPickingIndex() const
+			{
+				return mPickedIdx;
 			}
 		};
 	}
