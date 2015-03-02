@@ -52,12 +52,7 @@ namespace EDX
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
-				bool entering = BSDFCoordinate::CosTheta(wo) > 0.0f;
-				float etai = mEtai, etat = mEtat;
-				if (!entering)
-					swap(etai, etat);
-
-				wi = Math::Refract(-wo, wh, etat / etai);
+				wi = Math::Refract(-wo, wh, mEtat / mEtai);
 				if (BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo) >= 0.0f || wi == Vector3::ZERO)
 				{
 					*pPdf = 0.0f;
@@ -67,6 +62,10 @@ namespace EDX
 				*pvIn = diffGeom.LocalToWorld(wi);
 
 				*pPdf = !sampleBoth ? microfacetPdf : microfacetPdf * (1.0f - prob);
+				bool entering = BSDFCoordinate::CosTheta(wo) > 0.0f;
+				float etai = mEtai, etat = mEtat;
+				if (!entering)
+					swap(etai, etat);
 
 				const float ODotH = Math::Dot(wo, wh), IDotH = Math::Dot(wi, wh);
 				float sqrtDenom = etai * ODotH + etat * IDotH;
