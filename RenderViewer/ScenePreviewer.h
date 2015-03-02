@@ -21,30 +21,8 @@ namespace EDX
 			ObjMesh* mpMesh;
 			RefPtr<OpenGL::VertexBuffer> mpVBO;
 			RefPtr<OpenGL::IndexBuffer> mpIBO;
+			vector<bool> mTextured;
 			vector<RefPtr<OpenGL::Texture2D>> mTextures;
-		};
-
-		struct MaterialDesc
-		{
-			BSDFType type;
-			float param0, param1, param2, param3, param4, param5;
-
-			MaterialDesc(const BSDFType _type = BSDFType::Diffuse,
-				const float p0 = 0.0f,
-				const float p1 = 0.0f,
-				const float p2 = 0.0f,
-				const float p3 = 0.0f,
-				const float p4 = 0.0f,
-				const float p5 = 0.0f)
-				: type(_type)
-				, param0(p0)
-				, param1(p1)
-				, param2(p2)
-				, param3(p3)
-				, param4(p4)
-				, param5(p5)
-			{
-			}
 		};
 
 		class Previewer
@@ -53,7 +31,8 @@ namespace EDX
 			Camera mCamera;
 			vector<RefPtr<GLMesh>> mMeshes;
 			const Scene* mpScene;
-			int mPickedIdx;
+			int mPickedPrimIdx;
+			int mPickedTriIdx;
 
 		public:
 			void Initialize(const Scene& scene, const RenderJobDesc& jobDesc)
@@ -68,7 +47,7 @@ namespace EDX
 					jobDesc.ImageHeight,
 					jobDesc.CameraParams.FieldOfView,
 					0.01f);
-				mPickedIdx = -1;
+				mPickedPrimIdx = -1;
 
 				auto& prims = mpScene->GetPrimitives();
 				for (auto& it : prims)
@@ -83,16 +62,18 @@ namespace EDX
 					glMesh->mpIBO->SetData(3 * pMesh->GetTriangleCount() * sizeof(uint), (void*)pMesh->GetIndexAt(0));
 
 					const auto& materialInfo = pMesh->GetMaterialInfo();
+					glMesh->mTextures.resize(materialInfo.size());
+					glMesh->mTextured.resize(materialInfo.size());
 					for (auto i = 0; i < materialInfo.size(); i++)
 					{
 						if (materialInfo[i].strTexturePath[0])
-							glMesh->mTextures.push_back(OpenGL::Texture2D::Create(materialInfo[i].strTexturePath));
+						{
+							glMesh->mTextures[i] = OpenGL::Texture2D::Create(materialInfo[i].strTexturePath);
+							glMesh->mTextured[i] = true;
+						}
 						else
 						{
-							Color4b c = materialInfo[i].color;
-							OpenGL::Texture2D* pTex = new OpenGL::Texture2D;
-							pTex->Load(ImageFormat::RGBA, ImageFormat::RGBA, ImageDataType::Byte, &c, 1, 1);
-							glMesh->mTextures.push_back(pTex);
+							glMesh->mTextured[i] = false;
 						}
 					}
 
@@ -111,18 +92,17 @@ namespace EDX
 
 				glEnable(GL_LIGHTING);
 				glEnable(GL_LIGHT0);
-				GLfloat mat_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-				GLfloat mat_ambient[] = { 0.3f, 0.3f, 0.3f, 1.0 };
+				GLfloat mat_ambient[] = { 0.2f, 0.2f, 0.2f, 1.0 };
 				GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
 				GLfloat mat_shininess[] = { 50.0 };
 				GLfloat light_position[] = { 1.0, 1.0, -1.0, 0.0 };
 				glShadeModel(GL_SMOOTH);
 
-				glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
 				glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
 				glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 				glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 				glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+				glLightfv(GL_LIGHT0, GL_AMBIENT, mat_specular);
 
 				glMatrixMode(GL_MODELVIEW);
 				const Matrix& mView = mCamera.GetViewMatrix();
@@ -132,7 +112,6 @@ namespace EDX
 				const Matrix& mProj = mCamera.GetProjMatrix();
 				glLoadTransposeMatrixf((float*)&mProj);
 
-				glEnable(GL_TEXTURE_2D);
 				glEnable(GL_DEPTH_TEST);
 				glEnable(GL_ALPHA_TEST);
 				glAlphaFunc(GL_GREATER, 0.0f);
@@ -154,31 +133,45 @@ namespace EDX
 
 					for (auto i = 0; i < pObjMesh->GetSubsetCount(); i++)
 					{
-						it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->Bind();
-						it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->SetFilter(TextureFilter::Anisotropic16x);
-						auto setTriangleCount = pObjMesh->GetSubsetStartIdx(i + 1) - pObjMesh->GetSubsetStartIdx(i);
-						glDrawRangeElements(GL_TRIANGLES, 0, setTriangleCount, setTriangleCount, GL_UNSIGNED_INT, (void*)(pObjMesh->GetSubsetStartIdx(i) * sizeof(uint)));
-						it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->UnBind();
-					}
-
-					if (idx == mPickedIdx)
-					{
-						glDisable(GL_LIGHTING);
-						glColor3f(1.0f, 1.0f, 0.0f);
-						glPolygonMode(GL_FRONT, GL_LINE);
-						glPolygonMode(GL_BACK, GL_FILL);
-						glLineWidth(3.0f);
-						for (auto i = 0; i < pObjMesh->GetSubsetCount(); i++)
+						if (it->mTextured[pObjMesh->GetSubsetMtlIndex(i)])
 						{
+							glEnable(GL_TEXTURE_2D);
+							glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*)&Color::WHITE);
 							it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->Bind();
 							it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->SetFilter(TextureFilter::Anisotropic16x);
+						}
+						else
+						{
+							glDisable(GL_TEXTURE_2D);
+							Color color;
+							auto pBsdf = mpScene->GetPrimitives()[idx]->GetBSDF_FromIdx(pObjMesh->GetSubsetMtlIndex(i));
+							pBsdf->GetParameter("Red", &color.r);
+							pBsdf->GetParameter("Green", &color.g);
+							pBsdf->GetParameter("Blue", &color.b);
+							glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*)&color);
+						}
+
+						auto setTriangleCount = pObjMesh->GetSubsetStartIdx(i + 1) - pObjMesh->GetSubsetStartIdx(i);
+						glDrawRangeElements(GL_TRIANGLES, 0, setTriangleCount, setTriangleCount, GL_UNSIGNED_INT, (void*)(pObjMesh->GetSubsetStartIdx(i) * sizeof(uint)));
+
+						if (it->mTextured[i])
+							it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->UnBind();
+
+						if (idx == mPickedPrimIdx && pObjMesh->GetSubsetMtlIndex(i) == pObjMesh->GetMaterialIdx(mPickedTriIdx))
+						{
+							glDisable(GL_LIGHTING);
+							glColor3f(1.0f, 1.0f, 0.0f);
+							glPolygonMode(GL_FRONT, GL_LINE);
+							glPolygonMode(GL_BACK, GL_FILL);
+							glLineWidth(3.0f);
+
 							auto setTriangleCount = pObjMesh->GetSubsetStartIdx(i + 1) - pObjMesh->GetSubsetStartIdx(i);
 							glDrawRangeElements(GL_TRIANGLES, 0, setTriangleCount, setTriangleCount, GL_UNSIGNED_INT, (void*)(pObjMesh->GetSubsetStartIdx(i) * sizeof(uint)));
-							it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->UnBind();
+
+							glLineWidth(1.0f);
+							glEnable(GL_LIGHTING);
+							glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 						}
-						glLineWidth(1.0f);
-						glEnable(GL_LIGHTING);
-						glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 					}
 
 					glDisableClientState(GL_VERTEX_ARRAY);
@@ -213,9 +206,15 @@ namespace EDX
 
 				Intersection isect;
 				if (mpScene->Intersect(ray, &isect))
-					mPickedIdx = isect.mPrimId;
+				{
+					mPickedPrimIdx = isect.mPrimId;
+					mPickedTriIdx = isect.mTriId;
+				}
 				else
-					mPickedIdx = -1;
+				{
+					mPickedPrimIdx = -1;
+					mPickedTriIdx = -1;
+				}
 			}
 
 			void HandleMouseMsg(const MouseEventArgs& args)
@@ -231,9 +230,14 @@ namespace EDX
 				return mCamera;
 			}
 
-			int GetPickingIndex() const
+			int GetPickedPrimId() const
 			{
-				return mPickedIdx;
+				return mPickedPrimIdx;
+			}
+
+			int GetPickedTriangleId() const
+			{
+				return mPickedTriIdx;
 			}
 		};
 	}

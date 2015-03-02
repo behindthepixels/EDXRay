@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BSDFs\Principled.h" />
     <ClInclude Include="BSDFs\RoughConductor.h" />
     <ClInclude Include="BSDFs\RoughDielectric.h" />
     <ClInclude Include="Core\BSDF.h" />
@@ -54,6 +55,7 @@
     <ClInclude Include="Tracer\Triangle4.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BSDFs\Principled.cpp" />
     <ClCompile Include="BSDFs\RoughConductor.cpp" />
     <ClCompile Include="BSDFs\RoughDielectric.cpp" />
     <ClCompile Include="Core\BSDF.cpp" />

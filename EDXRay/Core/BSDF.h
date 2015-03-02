@@ -26,7 +26,7 @@ namespace EDX
 
 		enum class BSDFType
 		{
-			Diffuse, Mirror, Glass, RoughConductor, RoughDielectric
+			Diffuse, Mirror, Glass, RoughConductor, RoughDielectric, Principled
 		};
 
 		class BSDF
@@ -38,10 +38,11 @@ namespace EDX
 
 		public:
 			BSDF(ScatterType t, BSDFType t2, const Color& color);
+			BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex);
 			BSDF(ScatterType t, BSDFType t2, const char* pFile);
 			virtual ~BSDF() {}
 
-			bool MatchesTypes(ScatterType flags) const { return (mScatterType & flags) != 0; }
+			bool MatchesTypes(ScatterType flags) const { return (mScatterType & flags) == mScatterType; }
 			bool IsSpecular() const { return (ScatterType(BSDF_SPECULAR | BSDF_DIFFUSE | BSDF_GLOSSY) & mScatterType) == ScatterType(BSDF_SPECULAR); }
 
 			virtual Color Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const;
@@ -60,14 +61,89 @@ namespace EDX
 
 			const ScatterType GetScatterType() const { return mScatterType; }
 			const BSDFType GetBSDFType() const { return mBSDFType; }
-			const Texture2D<Color>* GetTexture() const { return mpTexture.Ptr(); }
-
-			static BSDF* CreateBSDF(const BSDFType type, const Color& color);
-			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
+			const RefPtr<Texture2D<Color>> GetTexture() const { return mpTexture; }
 
 		protected:
 			virtual float Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const = 0;
 			virtual float Pdf(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const = 0;
+
+		public:
+			virtual int GetParameterCount() const { return mpTexture->Editable() ? 3 : 0; }
+			virtual string GetParameterName(const int idx) const
+			{
+				if (!mpTexture->Editable())
+					return "";
+
+				assert(idx < 3);
+				switch (idx)
+				{
+				case 0:
+					return "Red";
+				case 1:
+					return "Green";
+				case 2:
+					return "Blue";
+				default:
+					return "";
+				}
+			}
+			virtual bool GetParameter(const string& name, float* pVal, float* pMin = nullptr, float* pMax = nullptr) const
+			{
+				if (!mpTexture->Editable())
+					return false;
+
+				assert(pVal);
+
+				if (name == "Red")
+				{
+					*pVal = mpTexture->GetValue().r;
+					if (pMin)
+						*pMin = 0.0f;
+					if (pMax)
+						*pMax = 1.0f;
+					return true;
+				}
+				else if (name == "Green")
+				{
+					*pVal = mpTexture->GetValue().g;
+					if (pMin)
+						*pMin = 0.0f;
+					if (pMax)
+						*pMax = 1.0f;
+					return true;
+				}
+				else if (name == "Blue")
+				{
+					*pVal = mpTexture->GetValue().b;
+					if (pMin)
+						*pMin = 0.0f;
+					if (pMax)
+						*pMax = 1.0f;
+					return true;
+				}
+
+				return false;
+			}
+			virtual void SetParameter(const string& name, const float value)
+			{
+				if (!mpTexture->Editable())
+					return;
+
+				Color color = mpTexture->GetValue();
+				if (name == "Red")
+					mpTexture->SetValue(Color(value, color.g, color.b));
+				else if (name == "Green")
+					mpTexture->SetValue(Color(color.r, value, color.b));
+				else if (name == "Blue")
+					mpTexture->SetValue(Color(color.r, color.g, value));
+
+				return;
+			}
+
+		public:
+			static BSDF* CreateBSDF(const BSDFType type, const Color& color);
+			static BSDF* CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex);
+			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
 
 		protected:
 			static float FresnelDielectric(float cosi, float etai, float etat);
@@ -82,8 +158,12 @@ namespace EDX
 		class LambertianDiffuse : public BSDF
 		{
 		public:
-			LambertianDiffuse(const Color cColor = Color::WHITE)
+			LambertianDiffuse(const Color& cColor = Color::WHITE)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, cColor)
+			{
+			}
+			LambertianDiffuse(const RefPtr<Texture2D<Color>>& pTex)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, pTex)
 			{
 			}
 			LambertianDiffuse(const char* pFile)
@@ -102,8 +182,12 @@ namespace EDX
 		class Mirror : public BSDF
 		{
 		public:
-			Mirror(const Color cColor = Color::WHITE)
+			Mirror(const Color& cColor = Color::WHITE)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, cColor)
+			{
+			}
+			Mirror(const RefPtr<Texture2D<Color>>& pTex)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, pTex)
 			{
 			}
 			Mirror(const char* strTexPath)
@@ -127,8 +211,14 @@ namespace EDX
 			float mEtai, mEtat;
 
 		public:
-			Glass(const Color cColor = Color::WHITE, float etai = 1.0f, float etat = 1.5f)
+			Glass(const Color& cColor = Color::WHITE, float etai = 1.0f, float etat = 1.5f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, cColor)
+				, mEtai(etai)
+				, mEtat(etat)
+			{
+			}
+			Glass(const RefPtr<Texture2D<Color>>& pTex, float etai = 1.0f, float etat = 1.5f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, pTex)
 				, mEtai(etai)
 				, mEtat(etat)
 			{
@@ -145,6 +235,45 @@ namespace EDX
 			Color SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf,
 				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const;
 
+		public:
+			int GetParameterCount() const { return BSDF::GetParameterCount() + 1; }
+			string GetParameterName(const int idx) const
+			{
+				if (idx < BSDF::GetParameterCount())
+					return BSDF::GetParameterName(idx);
+
+				if (idx == GetParameterCount() - 1)
+					return "IOR";
+
+				return "";
+			}
+			bool GetParameter(const string& name, float* pVal, float* pMin = nullptr, float* pMax = nullptr) const
+			{
+				if (BSDF::GetParameter(name, pVal, pMin, pMax))
+					return true;
+
+				if (name == "IOR")
+				{
+					*pVal = this->mEtat;
+					if (pMin)
+						*pMin = 1.0f;
+					if (pMax)
+						*pMax = 1.8f;
+
+					return true;
+				}
+
+				return false;
+			}
+			void SetParameter(const string& name, const float value)
+			{
+				BSDF::SetParameter(name, value);
+
+				if (name == "IOR")
+					this->mEtat = value;
+
+				return;
+			}
 		private:
 			float Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
 			float Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types = BSDF_ALL) const;

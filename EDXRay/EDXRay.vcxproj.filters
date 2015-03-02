@@ -135,6 +135,9 @@
     <ClInclude Include="BSDFs\RoughDielectric.h">
       <Filter>Source Files\BSDFs</Filter>
     </ClInclude>
+    <ClInclude Include="BSDFs\Principled.h">
+      <Filter>Source Files\BSDFs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -189,6 +192,9 @@
       <Filter>Source Files\BSDFs</Filter>
     </ClCompile>
     <ClCompile Include="BSDFs\RoughDielectric.cpp">
+      <Filter>Source Files\BSDFs</Filter>
+    </ClCompile>
+    <ClCompile Include="BSDFs\Principled.cpp">
       <Filter>Source Files\BSDFs</Filter>
     </ClCompile>
   </ItemGroup>

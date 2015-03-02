@@ -14,21 +14,25 @@
 #include "Lights/DirectionalLight.h"
 #include "Lights/EnvironmentalLight.h"
 #include "Core/BSDF.h"
+#include "BSDFs/RoughConductor.h"
+#include "BSDFs/RoughDielectric.h"
 
 #include "ScenePreviewer.h"
 
 #include "Graphics/EDXGui.h"
+#include "Windows/Bitmap.h"
 
 using namespace EDX;
 using namespace EDX::RayTracer;
 using namespace EDX::GUI;
 
-int gImageWidth = 1280;
-int gImageHeight = 720;
+int gImageWidth = 800;
+int gImageHeight = 600;
 
 Renderer*	gpRenderer = nullptr;
 Previewer*	gpPreview = nullptr;
 bool gRendering = false;
+Color gCursorColor;
 
 void GUIEvent(Object* pObject, EventArgs args);
 
@@ -57,10 +61,10 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadSphere(1.0f, BSDFType::RoughConductor, Color::WHITE, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
-	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::Glass, Color::WHITE, Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
+	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.6f, 0.27f, 0.27f), Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh3->LoadSphere(1.0f, BSDFType::RoughDielectric, Color::WHITE, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
-	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::Glass, Color::WHITE, Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
-	pMesh4->LoadPlane(10.0f, BSDFType::RoughConductor, Color(0.96f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
+	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::Diffuse, Color(0.27f, 0.27f, 0.6f), Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
+	pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.25f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
 
 	//pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
@@ -105,7 +109,8 @@ void OnRender(Object* pSender, EventArgs args)
 	{
 		EDXGui::Text("Image Res: %i, %i", gImageWidth, gImageHeight);
 		EDXGui::Text("Samples per Pixel: %i", gpRenderer->GetFilm()->GetSampleCount());
-		if (EDXGui::Button("Render"))
+		EDXGui::Text("(%.2f, %.2f, %.2f)", gCursorColor.r, gCursorColor.g, gCursorColor.b);
+		if (EDXGui::Button(!gRendering ? "Render" : "Stop Rendering"))
 		{
 			gRendering = !gRendering;
 			if (gRendering)
@@ -118,10 +123,16 @@ void OnRender(Object* pSender, EventArgs args)
 				gpRenderer->StopRenderTasks();
 			}
 		}
+		if (EDXGui::Button("Save Image"))
+		{
+			char name[256];
+			sprintf_s(name, "EDXRay_%i.bmp", time(0));
+			Bitmap::SaveBitmapFile(name, (_byte*)gpRenderer->GetFilm()->GetPixelBuffer(), gImageWidth, gImageHeight);
+		}
 	}
 	EDXGui::EndDialog();
 
-	if (gpPreview->GetPickingIndex() != -1)
+	if (gpPreview->GetPickedPrimId() != -1 && !gRendering)
 	{
 		EDXGui::BeginDialog(LayoutStrategy::Floating);
 		{
@@ -132,32 +143,30 @@ void OnRender(Object* pSender, EventArgs args)
 				2, "Smooth Dielectric",
 				3, "Rough Conductor",
 				4, "Rough Dielectric",
+				5, "Principled",
 			};
 
-			static int selectedMat = 0;
-			EDXGui::ComboBox(items, 5, selectedMat);
-			switch (selectedMat)
+			const auto primId = gpPreview->GetPickedPrimId();
+			const auto triId = gpPreview->GetPickedTriangleId();
+			auto prim = gpRenderer->GetScene()->GetPrimitives()[primId].Ptr();
+
+			static BSDFType bsdfType;
+			bsdfType = prim->GetBSDF(triId)->GetBSDFType();
+			EDXGui::ComboBox("Materials:", items, 6, (int&)bsdfType);
+
+			if (bsdfType != prim->GetBSDF(triId)->GetBSDFType())
+				prim->SetBSDF(bsdfType, triId);
+
+			auto pBsdf = prim->GetBSDF(triId);
+			for (auto i = 0; i < pBsdf->GetParameterCount(); i++)
 			{
-			case 0:
-				break;
-			case 1:
-				break;
-			case 2:
-				break;
-			case 3:
-			{
-				static float conductorRough = 0.0f;
-				EDXGui::Slider("Roughness", &conductorRough, 0.0f, 1.0f);
-				break;
-			}
-			case 4:
-			{
-				static float dielecRough = 0.0f;
-				EDXGui::Slider("Roughness", &dielecRough, 0.0f, 1.0f);
-				break;
-			}
-			default:
-				break;
+				float value, min, max;
+				string name = pBsdf->GetParameterName(i);
+				if (pBsdf->GetParameter(name, &value, &min, &max))
+				{
+					EDXGui::Slider(name.c_str(), &value, min, max);
+					pBsdf->SetParameter(name, value);
+				}
 			}
 		}
 		EDXGui::EndDialog();
@@ -188,6 +197,11 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 {
 	if (EDXGui::HandleMouseEvent(args))
 		return;
+
+	if (args.Action == MouseAction::Move)
+	{
+		gCursorColor = gpRenderer->GetFilm()->GetPixelBuffer()[args.x + (gImageHeight - args.y - 1) * gImageWidth];
+	}
 
 	if (!gRendering)
 		gpPreview->HandleMouseMsg(args);

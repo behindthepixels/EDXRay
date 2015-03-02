@@ -23,13 +23,25 @@ namespace EDX
 				return 0.0f;
 
 			wi = Math::Reflect(-wo, wh);
-			*pvIn = diffGeom.LocalToWorld(wi);
-
 			if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
 				return Color::BLACK;
 
+			*pvIn = diffGeom.LocalToWorld(wi);
+
+
 			float dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
 			*pPdf = microfacetPdf * dwh_dwi;
+
+			if (Math::Dot(_wo, diffGeom.mGeomNormal) * Math::Dot(*pvIn, diffGeom.mGeomNormal) > 0.0f)
+				types = ScatterType(types & ~BSDF_TRANSMISSION);
+			else
+				types = ScatterType(types & ~BSDF_REFLECTION);
+
+			if (!MatchesTypes(types))
+			{
+				*pPdf = 0.0f;
+				return Color::BLACK;
+			}
 
 			if (pSampledTypes != nullptr)
 				*pSampledTypes = mScatterType;

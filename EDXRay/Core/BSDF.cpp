@@ -1,6 +1,7 @@
 #include "BSDF.h"
 #include "../BSDFs/RoughConductor.h"
 #include "../BSDFs/RoughDielectric.h"
+#include "../BSDFs/Principled.h"
 #include "Math/EDXMath.h"
 #include "DifferentialGeom.h"
 #include "Sampling.h"
@@ -27,6 +28,29 @@ namespace EDX
 				return new RoughConductor(color, 0.08f);
 			case BSDFType::RoughDielectric:
 				return new RoughDielectric(color, 0.3f);
+			case BSDFType::Principled:
+				return new Principled(color);
+			}
+
+			assert(0);
+			return NULL;
+		}
+		BSDF* BSDF::CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex)
+		{
+			switch (type)
+			{
+			case BSDFType::Diffuse:
+				return new LambertianDiffuse(pTex);
+			case BSDFType::Mirror:
+				return new Mirror(pTex);
+			case BSDFType::Glass:
+				return new Glass(pTex);
+			case BSDFType::RoughConductor:
+				return new RoughConductor(pTex, 0.08f);
+			case BSDFType::RoughDielectric:
+				return new RoughDielectric(pTex, 0.3f);
+			case BSDFType::Principled:
+				return new Principled(pTex);
 			}
 
 			assert(0);
@@ -42,6 +66,12 @@ namespace EDX
 				return new Mirror(strTexPath);
 			case BSDFType::Glass:
 				return new Glass(strTexPath);
+			case BSDFType::RoughConductor:
+				return new RoughConductor(strTexPath, 0.08f);
+			case BSDFType::RoughDielectric:
+				return new RoughDielectric(strTexPath, 0.3f);
+			case BSDFType::Principled:
+				return new Principled(strTexPath);
 			}
 
 			assert(0);
@@ -52,6 +82,11 @@ namespace EDX
 			: mScatterType(t), mBSDFType(t2)
 		{
 			mpTexture = new ConstantTexture2D<Color>(color);
+		}
+		BSDF::BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex)
+			: mScatterType(t), mBSDFType(t2)
+		{
+			mpTexture = pTex;
 		}
 		BSDF::BSDF(ScatterType t, BSDFType t2, const char* pFile)
 			: mScatterType(t), mBSDFType(t2)
@@ -80,6 +115,11 @@ namespace EDX
 
 		float BSDF::Pdf(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
 		{
+			if (Math::Dot(vOut, diffGeom.mGeomNormal) * Math::Dot(vIn, diffGeom.mGeomNormal) > 0.0f)
+				types = ScatterType(types & ~BSDF_TRANSMISSION);
+			else
+				types = ScatterType(types & ~BSDF_REFLECTION);
+
 			if (!MatchesTypes(types))
 			{
 				return 0.0f;
@@ -192,9 +232,6 @@ namespace EDX
 		// -----------------------------------------------------------------------------------------------------------------------
 		float LambertianDiffuse::Eval(const Vector3& wo, const Vector3& wi, ScatterType types) const
 		{
-			if (!BSDFCoordinate::SameHemisphere(wo, wi))
-				return 0.0f;
-
 			return float(Math::EDX_INV_PI);
 		}
 
@@ -222,6 +259,18 @@ namespace EDX
 				vWi.z *= -1.0f;
 
 			*pvIn = diffGeom.LocalToWorld(vWi);
+
+			if (Math::Dot(vOut, diffGeom.mGeomNormal) * Math::Dot(*pvIn, diffGeom.mGeomNormal) > 0.0f)
+				types = ScatterType(types & ~BSDF_TRANSMISSION);
+			else
+				types = ScatterType(types & ~BSDF_REFLECTION);
+
+			if (!MatchesTypes(types))
+			{
+				*pPdf = 0.0f;
+				return Color::BLACK;
+			}
+
 			*pPdf = Pdf(vWo, vWi, types);
 			if (pSampledTypes != NULL)
 			{

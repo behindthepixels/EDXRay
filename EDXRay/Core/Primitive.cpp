@@ -133,9 +133,21 @@ namespace EDX
 			mpMesh->PostIntersect(ray, pDiffGeom);
 		}
 
-		const BSDF* Primitive::GetBSDF(const uint triId) const
+		BSDF* Primitive::GetBSDF(const uint triId) const
 		{
 			return mpBSDFs[mpMaterialIndices[triId]].Ptr();
+		}
+
+		BSDF* Primitive::GetBSDF_FromIdx(const uint idx) const
+		{
+			return mpBSDFs[idx].Ptr();
+		}
+
+		void Primitive::SetBSDF(const BSDFType type, const int triId)
+		{
+			auto& bsdf = mpBSDFs[mpMaterialIndices[triId]];
+			auto newBsdf = BSDF::CreateBSDF(type, bsdf->GetTexture());
+			bsdf = newBsdf;
 		}
 	}
 }
