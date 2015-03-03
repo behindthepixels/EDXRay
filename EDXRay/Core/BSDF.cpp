@@ -376,7 +376,7 @@ namespace EDX
 					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_SPECULAR);
 				}
 
-				return fresnel * GetColor(diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
+				return fresnel * GetColor(diffGeom).Luminance() / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
