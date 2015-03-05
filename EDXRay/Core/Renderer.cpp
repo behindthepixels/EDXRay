@@ -55,6 +55,16 @@ namespace EDX
 			ThreadScheduler::DeleteInstance();
 		}
 
+		void Renderer::Resize(int width, int height)
+		{
+			mJobDesc.ImageWidth = width;
+			mJobDesc.ImageHeight = height;
+
+			mpCamera->Resize(width, height);
+			mpFilm->Resize(width, height);
+			mTaskSync.Init(width, height);
+		}
+
 		void Renderer::RenderFrame(SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory)
 		{
 			RenderTile* pTask;

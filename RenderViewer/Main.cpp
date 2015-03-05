@@ -26,9 +26,6 @@ using namespace EDX;
 using namespace EDX::RayTracer;
 using namespace EDX::GUI;
 
-int gImageWidth = 800;
-int gImageHeight = 600;
-
 Renderer*	gpRenderer = nullptr;
 Previewer*	gpPreview = nullptr;
 bool gRendering = false;
@@ -43,8 +40,8 @@ void OnInit(Object* pSender, EventArgs args)
 	gpRenderer = new Renderer;
 
 	RenderJobDesc desc;
-	desc.ImageWidth = gImageWidth;
-	desc.ImageHeight = gImageHeight;
+	desc.ImageWidth = Application::GetMainWindow()->GetWindowWidth();
+	desc.ImageHeight = Application::GetMainWindow()->GetWindowHeight();
 	desc.SamplesPerPixel = 4096;
 	desc.CameraParams.FieldOfView = 45;
 	desc.CameraParams.Pos = Vector3(0, 3, 5);
@@ -61,9 +58,9 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadSphere(1.0f, BSDFType::RoughConductor, Color::WHITE, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
-	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.6f, 0.27f, 0.27f), Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
+	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.7f, 0.37f, 0.3f), Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh3->LoadSphere(1.0f, BSDFType::RoughDielectric, Color::WHITE, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
-	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::Diffuse, Color(0.27f, 0.27f, 0.6f), Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
+	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.25f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
 
 	//pScene->AddPrimitive(pMesh);
@@ -71,8 +68,8 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
 	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
-	pScene->SetEnvironmentMap(new EnvironmentalLight("../../Media/uffizi-large.hdr"));
-	//pScene->SetEnvironmentMap(new EnvironmentalLight(Color(3.0f), Color(0.2f), Math::ToRadians(70.0f)));
+	pScene->SetEnvironmentMap(new EnvironmentalLight("../../Media/uffizi-large.hdr", 1.0f, 35.0f));
+	//pScene->SetEnvironmentMap(new EnvironmentalLight(Color(3.0f), Color(0.2f), 20.0f, 230.0f));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 5.5f, 0.0f), Color(20.0f)));
 
 	pScene->InitAccelerator();
@@ -93,7 +90,7 @@ void OnRender(Object* pSender, EventArgs args)
 	{
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(0, Application::GetMainWindow()->GetWindowWidth(), 0, Application::GetMainWindow()->GetWindowHeight(), -1, 1);
+		glOrtho(0, gpRenderer->GetJobDesc().ImageWidth, 0, gpRenderer->GetJobDesc().ImageHeight, -1, 1);
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
@@ -107,7 +104,7 @@ void OnRender(Object* pSender, EventArgs args)
 	EDXGui::BeginFrame();
 	EDXGui::BeginDialog(LayoutStrategy::DockRight);
 	{
-		EDXGui::Text("Image Res: %i, %i", gImageWidth, gImageHeight);
+		EDXGui::Text("Image Res: %i, %i", gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight);
 		EDXGui::Text("Samples per Pixel: %i", gpRenderer->GetFilm()->GetSampleCount());
 		EDXGui::Text("(%.2f, %.2f, %.2f)", gCursorColor.r, gCursorColor.g, gCursorColor.b);
 		if (EDXGui::Button(!gRendering ? "Render" : "Stop Rendering"))
@@ -127,7 +124,7 @@ void OnRender(Object* pSender, EventArgs args)
 		{
 			char name[256];
 			sprintf_s(name, "EDXRay_%i.bmp", time(0));
-			Bitmap::SaveBitmapFile(name, (_byte*)gpRenderer->GetFilm()->GetPixelBuffer(), gImageWidth, gImageHeight);
+			Bitmap::SaveBitmapFile(name, (float*)gpRenderer->GetFilm()->GetPixelBuffer(), gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight);
 		}
 	}
 	EDXGui::EndDialog();
@@ -179,16 +176,20 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 	// Set opengl params
 	glViewport(0, 0, args.Width, args.Height);
 
+	gpPreview->OnResize(args.Width, args.Height);
+
 	if (gRendering)
 	{
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(0, args.Width, 0, args.Height, -1, 1);
+
+		gpRenderer->StopRenderTasks();
+		gpRenderer->Resize(args.Width, args.Height);
+		gpRenderer->QueueRenderTasks();
 	}
 	else
-	{
-		gpPreview->OnResize(args.Width, args.Height);
-	}
+		gpRenderer->Resize(args.Width, args.Height);
 
 	EDXGui::Resize(args.Width, args.Height);
 }
@@ -200,7 +201,7 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 
 	if (args.Action == MouseAction::Move)
 	{
-		gCursorColor = gpRenderer->GetFilm()->GetPixelBuffer()[args.x + (gImageHeight - args.y - 1) * gImageWidth];
+		gCursorColor = gpRenderer->GetFilm()->GetPixelBuffer()[args.x + (gpRenderer->GetJobDesc().ImageHeight - args.y - 1) * gpRenderer->GetJobDesc().ImageWidth];
 	}
 
 	if (!gRendering)
@@ -236,7 +237,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdS
 	mainWindow->SetMouseHandler(MouseEvent(OnMouseEvent));
 	mainWindow->SetkeyboardHandler(KeyboardEvent(OnKeyboardEvent));
 
-	mainWindow->Create(L"EDXRay", gImageWidth, gImageHeight);
+	mainWindow->Create(L"EDXRay", 1024, 640);
 
 	Application::Run(mainWindow);
 

@@ -20,6 +20,7 @@ namespace EDX
 			RefPtr<Sampling::Distribution2D>	mpDistribution;
 			Array2f								mLuminance;
 			float								mScale;
+			float								mRotation;
 			bool mIsEnvMap;
 
 		public:
@@ -34,11 +35,13 @@ namespace EDX
 
 			EnvironmentalLight(const char* path,
 				const float scale = 1.0f,
+				const float rotate = 0.0f,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
 				mIsEnvMap = true;
 				mScale = scale;
+				mRotation = Math::ToRadians(rotate);
 				mpMap = new ImageTexture<Color, Color>(path, 1.0f);
 
 				CalcLuminanceDistribution();
@@ -47,6 +50,7 @@ namespace EDX
 			EnvironmentalLight(const Color& turbidity,
 				const Color& groundAlbedo,
 				const float sunElevation,
+				const float rotate = 0.0f,
 				const int resX = 1200,
 				const int resY = 600,
 				const uint sampCount = 1)
@@ -55,12 +59,15 @@ namespace EDX
 				mIsEnvMap = true;
 				mScale = 1.0f;
 
+				float sunElevationRad = Math::ToRadians(sunElevation);
+				mRotation = Math::ToRadians(rotate);
+
 				static const int NUM_CHANNELS = 3;
 				ArHosekSkyModelState* skyModelState[NUM_CHANNELS];
 				for (auto i = 0; i < NUM_CHANNELS; i++)
-					skyModelState[i] = arhosek_rgb_skymodelstate_alloc_init(turbidity[i], groundAlbedo[i], sunElevation);
+					skyModelState[i] = arhosek_rgb_skymodelstate_alloc_init(turbidity[i], groundAlbedo[i], sunElevationRad);
 
-				const float sunZenith = float(Math::EDX_PI_2) - sunElevation;
+				const float sunZenith = float(Math::EDX_PI_2) - sunElevationRad;
 				Array<2, Color> skyRadiance;
 				skyRadiance.Init(Vector2i(resX, resY));
 				for (auto y = 0; y < resY * 0.5f; y++)
@@ -139,7 +146,11 @@ namespace EDX
 			Color Emit(const Vector3& dir) const
 			{
 				Vector3 negDir = -dir;
-				float s = Math::SphericalPhi(negDir) * float(Math::EDX_INV_2PI);
+				float s = Math::SphericalPhi(negDir);
+				s += mRotation;
+				if (s > float(Math::EDX_TWO_PI))
+					s -= float(Math::EDX_TWO_PI);
+				s *= float(Math::EDX_INV_2PI);
 				float t = Math::SphericalTheta(negDir) * float(Math::EDX_INV_PI);
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
@@ -178,6 +189,9 @@ namespace EDX
 					for (auto x = 0; x < width; x++)
 					{
 						float u = (x + 0.5f) / float(width);
+						u += mRotation * float(Math::EDX_INV_2PI);
+						if (u >= 1.0f)
+							u -= 1.0f;
 						Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
 						mLuminance[Vector2i(x, y)] = mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear).Luminance() * sinTheta;
 					}

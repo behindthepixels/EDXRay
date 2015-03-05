@@ -92,8 +92,11 @@ namespace EDX
 
 				Color albedo = GetColor(diffGeom);
 				float specTint = Math::Max(mSpecularTint, mMetallic);
-				Color specAlbedo = Math::Lerp(albedo, Color::WHITE, 1.0f - specTint);
-				specAlbedo = Math::Lerp(specAlbedo, Color::WHITE, (1.0f - wo.z) * (1.0f - wo.z) * (1.0f - wo.z));
+				Color specAlbedo = Math::Lerp(albedo, albedo.Luminance(), 1.0f - specTint);
+
+				Vector3 wh = Math::Normalize(wo + wi);
+				float OneMinusODotH = 1.0f - Math::Dot(wo, wh);
+				specAlbedo = Math::Lerp(specAlbedo, albedo.Luminance(), OneMinusODotH * OneMinusODotH * OneMinusODotH);
 
 				return albedo * (1.0f - mMetallic) * DiffuseTerm(wo, wi, types) + specAlbedo * SpecularTerm(wo, wi);
 			}

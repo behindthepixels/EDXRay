@@ -34,6 +34,7 @@ namespace EDX
 			~Renderer();
 			
 			void Initialize(const RenderJobDesc& desc);
+			void Resize(int width, int height);
 
 			void RenderFrame(SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory);
 			void RenderImage(int threadId, RandomGen& random, MemoryArena& memory);
