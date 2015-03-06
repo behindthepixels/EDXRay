@@ -146,7 +146,7 @@ namespace EDX
 		void Primitive::SetBSDF(const BSDFType type, const int triId)
 		{
 			auto& bsdf = mpBSDFs[mpMaterialIndices[triId]];
-			auto newBsdf = BSDF::CreateBSDF(type, bsdf->GetTexture());
+			auto newBsdf = BSDF::CreateBSDF(type, bsdf->GetTexture(), bsdf->IsTextured());
 			bsdf = newBsdf;
 		}
 	}

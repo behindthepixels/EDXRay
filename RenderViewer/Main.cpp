@@ -61,7 +61,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.7f, 0.37f, 0.3f), Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh3->LoadSphere(1.0f, BSDFType::RoughDielectric, Color::WHITE, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
 	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
-	pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.25f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f));
+	pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.25f), Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 2.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 180.0f, 0.0f));
 
 	//pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
@@ -69,7 +69,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->AddPrimitive(pMesh4);
 	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(18.2f)));
 	pScene->SetEnvironmentMap(new EnvironmentalLight("../../Media/uffizi-large.hdr", 1.0f, 35.0f));
-	//pScene->SetEnvironmentMap(new EnvironmentalLight(Color(3.0f), Color(0.2f), 20.0f, 230.0f));
+	//pScene->SetEnvironmentMap(new EnvironmentalLight(Color(3.0f), Color(0.2f), 70.0f, 10));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 5.5f, 0.0f), Color(20.0f)));
 
 	pScene->InitAccelerator();
@@ -123,7 +123,9 @@ void OnRender(Object* pSender, EventArgs args)
 		if (EDXGui::Button("Save Image"))
 		{
 			char name[256];
-			sprintf_s(name, "EDXRay_%i.bmp", time(0));
+			char directory[MAX_PATH];
+			sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
+			sprintf_s(name, "%sEDXRay_%i.bmp", directory, time(0));
 			Bitmap::SaveBitmapFile(name, (float*)gpRenderer->GetFilm()->GetPixelBuffer(), gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight);
 		}
 	}
@@ -157,12 +159,54 @@ void OnRender(Object* pSender, EventArgs args)
 			auto pBsdf = prim->GetBSDF(triId);
 			for (auto i = 0; i < pBsdf->GetParameterCount(); i++)
 			{
-				float value, min, max;
 				string name = pBsdf->GetParameterName(i);
-				if (pBsdf->GetParameter(name, &value, &min, &max))
+				Parameter param = pBsdf->GetParameter(name);
+				switch (param.Type)
 				{
-					EDXGui::Slider(name.c_str(), &value, min, max);
-					pBsdf->SetParameter(name, value);
+				case Parameter::Float:
+					EDXGui::Slider(name.c_str(), &param.Value, param.Min, param.Max);
+					pBsdf->SetParameter(name, param);
+					break;
+				case Parameter::Color:
+				{
+					Color color = Color(param.R, param.G, param.B);
+					EDXGui::ColorSlider(&color);
+					param.R = color.r;
+					param.G = color.g;
+					param.B = color.b;
+					pBsdf->SetParameter(name, param);
+
+					if (EDXGui::Button("Texture"))
+					{
+						char filePath[MAX_PATH];
+						char directory[MAX_PATH];
+						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
+						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "Image Files\0*.*", filePath))
+						{
+							strcpy_s(param.TexPath, MAX_PATH, filePath);
+							pBsdf->SetParameter("TextureMap", param);
+						}
+					}
+					break;
+				}
+				case Parameter::Texture:
+					if (EDXGui::Button("Texture"))
+					{
+						char filePath[MAX_PATH];
+						char directory[MAX_PATH];
+						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
+						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "Image Files\0*.*", filePath))
+						{
+							strcpy_s(param.TexPath, MAX_PATH, filePath);
+							pBsdf->SetParameter("TextureMap", param);
+						}
+					}
+					else if (EDXGui::Button("Constant Color"))
+					{
+						param.R = 0.6f; param.G = 0.6f; param.B = 0.6f;
+						pBsdf->SetParameter("Color", param);
+					}
+					break;
 				}
 			}
 		}

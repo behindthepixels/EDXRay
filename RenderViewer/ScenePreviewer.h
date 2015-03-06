@@ -21,7 +21,6 @@ namespace EDX
 			ObjMesh* mpMesh;
 			RefPtr<OpenGL::VertexBuffer> mpVBO;
 			RefPtr<OpenGL::IndexBuffer> mpIBO;
-			vector<bool> mTextured;
 			vector<RefPtr<OpenGL::Texture2D>> mTextures;
 		};
 
@@ -63,17 +62,15 @@ namespace EDX
 
 					const auto& materialInfo = pMesh->GetMaterialInfo();
 					glMesh->mTextures.resize(materialInfo.size());
-					glMesh->mTextured.resize(materialInfo.size());
 					for (auto i = 0; i < materialInfo.size(); i++)
 					{
 						if (materialInfo[i].strTexturePath[0])
 						{
 							glMesh->mTextures[i] = OpenGL::Texture2D::Create(materialInfo[i].strTexturePath);
-							glMesh->mTextured[i] = true;
 						}
 						else
 						{
-							glMesh->mTextured[i] = false;
+							glMesh->mTextures[i] = nullptr;
 						}
 					}
 
@@ -133,28 +130,36 @@ namespace EDX
 
 					for (auto i = 0; i < pObjMesh->GetSubsetCount(); i++)
 					{
-						if (it->mTextured[pObjMesh->GetSubsetMtlIndex(i)])
+						auto mtlIdx = pObjMesh->GetSubsetMtlIndex(i);
+						auto pBsdf = mpScene->GetPrimitives()[idx]->GetBSDF_FromIdx(mtlIdx);
+						if (pBsdf->IsTextured())
 						{
 							glEnable(GL_TEXTURE_2D);
 							glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*)&Color::WHITE);
-							it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->Bind();
-							it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->SetFilter(TextureFilter::Anisotropic16x);
+
+							if (it->mTextures[mtlIdx] == nullptr)
+								it->mTextures[mtlIdx] = OpenGL::Texture2D::Create(pBsdf->GetTexture()->GetFilePath().c_str());
+
+							it->mTextures[mtlIdx]->Bind();
+							it->mTextures[mtlIdx]->SetFilter(TextureFilter::Anisotropic16x);
 						}
 						else
 						{
 							glDisable(GL_TEXTURE_2D);
-							Color color;
 							auto pBsdf = mpScene->GetPrimitives()[idx]->GetBSDF_FromIdx(pObjMesh->GetSubsetMtlIndex(i));
-							pBsdf->GetParameter("Red", &color.r);
-							pBsdf->GetParameter("Green", &color.g);
-							pBsdf->GetParameter("Blue", &color.b);
+							Parameter param;
+							param = pBsdf->GetParameter("Color");
+							Color color = Color(param.R, param.G, param.B);
 							glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*)&color);
+
+							if (it->mTextures[mtlIdx] != nullptr)
+								it->mTextures[mtlIdx] = nullptr;
 						}
 
 						auto setTriangleCount = pObjMesh->GetSubsetStartIdx(i + 1) - pObjMesh->GetSubsetStartIdx(i);
 						glDrawRangeElements(GL_TRIANGLES, 0, setTriangleCount, setTriangleCount, GL_UNSIGNED_INT, (void*)(pObjMesh->GetSubsetStartIdx(i) * sizeof(uint)));
 
-						if (it->mTextured[i])
+						if (pBsdf->IsTextured())
 							it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->UnBind();
 
 						if (idx == mPickedPrimIdx && pObjMesh->GetSubsetMtlIndex(i) == pObjMesh->GetMaterialIdx(mPickedTriIdx))

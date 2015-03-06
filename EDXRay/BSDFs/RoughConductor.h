@@ -17,8 +17,8 @@ namespace EDX
 				, mRoughness(roughness)
 			{
 			}
-			RoughConductor(const RefPtr<Texture2D<Color>>& pTex, float roughness = 1.0f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, pTex)
+			RoughConductor(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured, float roughness = 1.0f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, pTex, isTextured)
 				, mRoughness(roughness)
 			{
 			}
@@ -70,7 +70,11 @@ namespace EDX
 			}
 
 		public:
-			int GetParameterCount() const { return BSDF::GetParameterCount() + 1; }
+			int GetParameterCount() const
+			{
+				return BSDF::GetParameterCount() + 1;
+			}
+
 			string GetParameterName(const int idx) const
 			{
 				if (idx < BSDF::GetParameterCount())
@@ -81,29 +85,32 @@ namespace EDX
 
 				return "";
 			}
-			bool GetParameter(const string& name, float* pVal, float* pMin = nullptr, float* pMax = nullptr) const
+
+			Parameter GetParameter(const string& name) const
 			{
-				if (BSDF::GetParameter(name, pVal, pMin, pMax))
-					return true;
+				Parameter ret = BSDF::GetParameter(name);
+				if (ret.Type != Parameter::None)
+					return ret;
 
 				if (name == "Roughness")
 				{
-					*pVal = this->mRoughness;
-					if (pMin)
-						*pMin = 0.001f;
-					if (pMax)
-						*pMax = 1.0f;
-					return true;
+					ret.Type = Parameter::Float;
+					ret.Value = this->mRoughness;
+					ret.Min = 0.02f;
+					ret.Max = 1.0f;
+
+					return ret;
 				}
 
-				return false;
+				return ret;
 			}
-			void SetParameter(const string& name, const float value)
+
+			void SetParameter(const string& name, const Parameter& param)
 			{
-				BSDF::SetParameter(name, value);
+				BSDF::SetParameter(name, param);
 
 				if (name == "Roughness")
-					this->mRoughness = value;
+					this->mRoughness = param.Value;
 
 				return;
 			}

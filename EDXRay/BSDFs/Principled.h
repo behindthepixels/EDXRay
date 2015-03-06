@@ -28,11 +28,12 @@ namespace EDX
 			{
 			}
 			Principled(const RefPtr<Texture2D<Color>>& pTex,
+				const bool isTextured,
 				float roughness = 0.3f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
 				float specTint = 0.0f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Principled, pTex)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Principled, pTex, isTextured)
 				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
@@ -151,7 +152,11 @@ namespace EDX
 			}
 
 		public:
-			int GetParameterCount() const { return BSDF::GetParameterCount() + 4; }
+			int GetParameterCount() const
+			{
+				return BSDF::GetParameterCount() + 4;
+			}
+
 			string GetParameterName(const int idx) const
 			{
 				if (idx < BSDF::GetParameterCount())
@@ -169,62 +174,65 @@ namespace EDX
 
 				return "";
 			}
-			bool GetParameter(const string& name, float* pVal, float* pMin = nullptr, float* pMax = nullptr) const
+
+			Parameter GetParameter(const string& name) const
 			{
-				if (BSDF::GetParameter(name, pVal, pMin, pMax))
-					return true;
+				Parameter ret = BSDF::GetParameter(name);
+				if (ret.Type != Parameter::None)
+					return ret;
 
 				if (name == "Roughness")
 				{
-					*pVal = this->mRoughness;
-					if (pMin)
-						*pMin = 0.02f;
-					if (pMax)
-						*pMax = 1.0f;
-					return true;
+					ret.Type = Parameter::Float;
+					ret.Value = this->mRoughness;
+					ret.Min = 0.02f;
+					ret.Max = 1.0f;
+
+					return ret;
 				}
 				else if (name == "Specular")
 				{
-					*pVal = this->mSpecular;
-					if (pMin)
-						*pMin = 0.0f;
-					if (pMax)
-						*pMax = 1.0f;
-					return true;
+					ret.Type = Parameter::Float;
+					ret.Value = this->mSpecular;
+					ret.Min = 0.0f;
+					ret.Max = 1.0f;
+
+					return ret;
 				}
 				else if (name == "Metallic")
 				{
-					*pVal = this->mMetallic;
-					if (pMin)
-						*pMin = 0.0f;
-					if (pMax)
-						*pMax = 1.0f;
-					return true;
+					ret.Type = Parameter::Float;
+					ret.Value = this->mMetallic;
+					ret.Min = 0.0f;
+					ret.Max = 1.0f;
+
+					return ret;
 				}
 				else if (name == "SpecularTint")
 				{
-					*pVal = this->mSpecularTint;
-					if (pMin)
-						*pMin = 0.0f;
-					if (pMax)
-						*pMax = 1.0f;
-					return true;
+					ret.Type = Parameter::Float;
+					ret.Value = this->mSpecularTint;
+					ret.Min = 0.0f;
+					ret.Max = 1.0f;
+
+					return ret;
 				}
 
-				return false;
+				return ret;
 			}
-			void SetParameter(const string& name, const float value)
+
+			void SetParameter(const string& name, const Parameter& param)
 			{
-				BSDF::SetParameter(name, value);
+				BSDF::SetParameter(name, param);
 
 				if (name == "Roughness")
-					this->mRoughness = value;
+					this->mRoughness = param.Value;
 				else if (name == "Specular")
-					this->mSpecular = value;
+					this->mSpecular = param.Value;
 				else if (name == "Metallic")
-					this->mMetallic = value;
+					this->mMetallic = param.Value;
 				else if (name == "SpecularTint")
-					this->mSpecularTint = value;
+					this->mSpecularTint = param.Value;
 
 				return;
 			}

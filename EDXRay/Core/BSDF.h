@@ -26,19 +26,52 @@ namespace EDX
 
 		enum class BSDFType
 		{
-			Diffuse, Mirror, Glass, RoughConductor, RoughDielectric, Principled
+			Diffuse,
+			Mirror,
+			Glass,
+			RoughConductor,
+			RoughDielectric,
+			Principled
 		};
 
-		class BSDF
+		struct Parameter
+		{
+			enum
+			{
+				Float,
+				Color,
+				Texture,
+				None
+			} Type;
+
+			union
+			{
+				struct { float R; float G; float B; };
+				struct { float Value; float Min; float Max; };
+				char TexPath[260 /*MAX_PATH*/];
+			};
+		};
+
+		class IEditable
 		{
 		public:
+			virtual int GetParameterCount() const = 0;
+			virtual string GetParameterName(const int idx) const = 0;
+			virtual Parameter GetParameter(const string& name) const = 0;
+			virtual void SetParameter(const string& name, const Parameter& param) = 0;
+		};
+
+		class BSDF : public IEditable
+		{
+		protected:
 			const ScatterType mScatterType;
 			const BSDFType mBSDFType;
+			bool mTextured;
 			RefPtr<Texture2D<Color>> mpTexture;
 
 		public:
 			BSDF(ScatterType t, BSDFType t2, const Color& color);
-			BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex);
+			BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const bool isTextured);
 			BSDF(ScatterType t, BSDFType t2, const char* pFile);
 			virtual ~BSDF() {}
 
@@ -62,87 +95,88 @@ namespace EDX
 			const ScatterType GetScatterType() const { return mScatterType; }
 			const BSDFType GetBSDFType() const { return mBSDFType; }
 			const RefPtr<Texture2D<Color>> GetTexture() const { return mpTexture; }
+			bool IsTextured() const { return mTextured; }
 
 		protected:
 			virtual float Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const = 0;
 			virtual float Pdf(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const = 0;
 
 		public:
-			virtual int GetParameterCount() const { return mpTexture->Editable() ? 3 : 0; }
+			virtual int GetParameterCount() const
+			{
+				return mTextured ? 1 : 1;
+			}
+
 			virtual string GetParameterName(const int idx) const
 			{
-				if (!mpTexture->Editable())
-					return "";
-
-				assert(idx < 3);
-				switch (idx)
+				assert(idx < 1);
+				if (mTextured)
 				{
-				case 0:
-					return "Red";
-				case 1:
-					return "Green";
-				case 2:
-					return "Blue";
-				default:
-					return "";
+					if (idx == 0)
+						return "TextureMap";
+					else
+						return "";
+				}
+				else
+				{
+					if (idx == 0)
+						return "Color";
+					else
+						return "";
 				}
 			}
-			virtual bool GetParameter(const string& name, float* pVal, float* pMin = nullptr, float* pMax = nullptr) const
+
+			virtual Parameter GetParameter(const string& name) const
 			{
-				if (!mpTexture->Editable())
-					return false;
+				Parameter ret;
 
-				assert(pVal);
+				if (mTextured && name == "TextureMap")
+				{
+					ret.Type = Parameter::Texture;
+					return ret;
+				}
+				else if (!mTextured && name == "Color")
+				{
+					ret.Type = Parameter::Color;
+					Color color = mpTexture->GetValue();
+					ret.R = color.r;
+					ret.G = color.g;
+					ret.B = color.b;
 
-				if (name == "Red")
-				{
-					*pVal = mpTexture->GetValue().r;
-					if (pMin)
-						*pMin = 0.0f;
-					if (pMax)
-						*pMax = 1.0f;
-					return true;
+					return ret;
 				}
-				else if (name == "Green")
+				else
 				{
-					*pVal = mpTexture->GetValue().g;
-					if (pMin)
-						*pMin = 0.0f;
-					if (pMax)
-						*pMax = 1.0f;
-					return true;
+					ret.Type = Parameter::None;
+					return ret;
 				}
-				else if (name == "Blue")
-				{
-					*pVal = mpTexture->GetValue().b;
-					if (pMin)
-						*pMin = 0.0f;
-					if (pMax)
-						*pMax = 1.0f;
-					return true;
-				}
-
-				return false;
 			}
-			virtual void SetParameter(const string& name, const float value)
+
+			virtual void SetParameter(const string& name, const Parameter& param)
 			{
-				if (!mpTexture->Editable())
+				if (name == "TextureMap")
+				{
+					mTextured = true;
+					mpTexture = new ImageTexture<Color, Color4b>(param.TexPath);
 					return;
-
-				Color color = mpTexture->GetValue();
-				if (name == "Red")
-					mpTexture->SetValue(Color(value, color.g, color.b));
-				else if (name == "Green")
-					mpTexture->SetValue(Color(color.r, value, color.b));
-				else if (name == "Blue")
-					mpTexture->SetValue(Color(color.r, color.g, value));
+				}
+				else if (name == "Color")
+				{
+					if (mTextured)
+					{
+						mpTexture = new ConstantTexture2D<Color>(Color(param.R, param.G, param.B));
+						mTextured = false;
+					}
+					else
+						mpTexture->SetValue(Color(param.R, param.G, param.B));
+				}
 
 				return;
 			}
 
 		public:
 			static BSDF* CreateBSDF(const BSDFType type, const Color& color);
-			static BSDF* CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex);
+			static BSDF* CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const bool isTextured);
 			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
 
 		protected:
@@ -162,8 +196,8 @@ namespace EDX
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, cColor)
 			{
 			}
-			LambertianDiffuse(const RefPtr<Texture2D<Color>>& pTex)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, pTex)
+			LambertianDiffuse(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, pTex, isTextured)
 			{
 			}
 			LambertianDiffuse(const char* pFile)
@@ -186,8 +220,8 @@ namespace EDX
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, cColor)
 			{
 			}
-			Mirror(const RefPtr<Texture2D<Color>>& pTex)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, pTex)
+			Mirror(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, pTex, isTextured)
 			{
 			}
 			Mirror(const char* strTexPath)
@@ -217,8 +251,8 @@ namespace EDX
 				, mEtat(etat)
 			{
 			}
-			Glass(const RefPtr<Texture2D<Color>>& pTex, float etai = 1.0f, float etat = 1.5f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, pTex)
+			Glass(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured, float etai = 1.0f, float etat = 1.5f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, pTex, isTextured)
 				, mEtai(etai)
 				, mEtat(etat)
 			{
@@ -236,7 +270,11 @@ namespace EDX
 				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const;
 
 		public:
-			int GetParameterCount() const { return BSDF::GetParameterCount() + 1; }
+			int GetParameterCount() const
+			{
+				return BSDF::GetParameterCount() + 1;
+			}
+
 			string GetParameterName(const int idx) const
 			{
 				if (idx < BSDF::GetParameterCount())
@@ -247,33 +285,36 @@ namespace EDX
 
 				return "";
 			}
-			bool GetParameter(const string& name, float* pVal, float* pMin = nullptr, float* pMax = nullptr) const
+
+			Parameter GetParameter(const string& name) const
 			{
-				if (BSDF::GetParameter(name, pVal, pMin, pMax))
-					return true;
+				Parameter ret = BSDF::GetParameter(name);
+				if (ret.Type != Parameter::None)
+					return ret;
 
 				if (name == "IOR")
 				{
-					*pVal = this->mEtat;
-					if (pMin)
-						*pMin = 1.0f;
-					if (pMax)
-						*pMax = 1.8f;
+					ret.Type = Parameter::Float;
+					ret.Value = this->mEtat;
+					ret.Min = 1.0f + 1e-4f;
+					ret.Max = 1.8f;
 
-					return true;
+					return ret;
 				}
 
-				return false;
+				return ret;
 			}
-			void SetParameter(const string& name, const float value)
+			
+			void SetParameter(const string& name, const Parameter& param)
 			{
-				BSDF::SetParameter(name, value);
+				BSDF::SetParameter(name, param);
 
 				if (name == "IOR")
-					this->mEtat = value;
+					this->mEtat = param.Value;
 
 				return;
 			}
+
 		private:
 			float Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types = BSDF_ALL) const;
 			float Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types = BSDF_ALL) const;
