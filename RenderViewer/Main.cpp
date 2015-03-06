@@ -181,7 +181,7 @@ void OnRender(Object* pSender, EventArgs args)
 						char filePath[MAX_PATH];
 						char directory[MAX_PATH];
 						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
-						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "Image Files\0*.*", filePath))
+						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
 						{
 							strcpy_s(param.TexPath, MAX_PATH, filePath);
 							pBsdf->SetParameter("TextureMap", param);
@@ -190,21 +190,21 @@ void OnRender(Object* pSender, EventArgs args)
 					break;
 				}
 				case Parameter::Texture:
-					if (EDXGui::Button("Texture"))
+					if (EDXGui::Button("Constant Color"))
+					{
+						param.R = 0.6f; param.G = 0.6f; param.B = 0.6f;
+						pBsdf->SetParameter("Color", param);
+					}
+					else if (EDXGui::Button("Texture"))
 					{
 						char filePath[MAX_PATH];
 						char directory[MAX_PATH];
 						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
-						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "Image Files\0*.*", filePath))
+						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
 						{
 							strcpy_s(param.TexPath, MAX_PATH, filePath);
 							pBsdf->SetParameter("TextureMap", param);
 						}
-					}
-					else if (EDXGui::Button("Constant Color"))
-					{
-						param.R = 0.6f; param.G = 0.6f; param.B = 0.6f;
-						pBsdf->SetParameter("Color", param);
 					}
 					break;
 				}

@@ -138,7 +138,7 @@ namespace EDX
 							glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*)&Color::WHITE);
 
 							if (it->mTextures[mtlIdx] == nullptr)
-								it->mTextures[mtlIdx] = OpenGL::Texture2D::Create(pBsdf->GetTexture()->GetFilePath().c_str());
+								it->mTextures[mtlIdx] = OpenGL::Texture2D::Create(pBsdf->GetTexture()->GetFilePath());
 
 							it->mTextures[mtlIdx]->Bind();
 							it->mTextures[mtlIdx]->SetFilter(TextureFilter::Anisotropic16x);
