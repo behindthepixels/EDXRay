@@ -148,6 +148,7 @@ void OnRender(Object* pSender, EventArgs args)
 			const auto primId = gpPreview->GetPickedPrimId();
 			const auto triId = gpPreview->GetPickedTriangleId();
 			auto prim = gpRenderer->GetScene()->GetPrimitives()[primId].Ptr();
+			auto previewMesh = gpPreview->GetMesh(primId);
 
 			static BSDFType bsdfType;
 			bsdfType = prim->GetBSDF(triId)->GetBSDFType();
@@ -169,13 +170,6 @@ void OnRender(Object* pSender, EventArgs args)
 					break;
 				case Parameter::Color:
 				{
-					Color color = Color(param.R, param.G, param.B);
-					EDXGui::ColorSlider(&color);
-					param.R = color.r;
-					param.G = color.g;
-					param.B = color.b;
-					pBsdf->SetParameter(name, param);
-
 					if (EDXGui::Button("Texture"))
 					{
 						char filePath[MAX_PATH];
@@ -185,17 +179,23 @@ void OnRender(Object* pSender, EventArgs args)
 						{
 							strcpy_s(param.TexPath, MAX_PATH, filePath);
 							pBsdf->SetParameter("TextureMap", param);
+							previewMesh->SetTexture(triId, param.TexPath);
 						}
+					}
+					else
+					{
+						Color color = Color(param.R, param.G, param.B);
+						EDXGui::ColorSlider(&color);
+						param.R = color.r;
+						param.G = color.g;
+						param.B = color.b;
+						pBsdf->SetParameter(name, param);
+						previewMesh->SetTexture(triId, nullptr);
 					}
 					break;
 				}
 				case Parameter::Texture:
-					if (EDXGui::Button("Constant Color"))
-					{
-						param.R = 0.6f; param.G = 0.6f; param.B = 0.6f;
-						pBsdf->SetParameter("Color", param);
-					}
-					else if (EDXGui::Button("Texture"))
+					if (EDXGui::Button("Texture"))
 					{
 						char filePath[MAX_PATH];
 						char directory[MAX_PATH];
@@ -204,7 +204,14 @@ void OnRender(Object* pSender, EventArgs args)
 						{
 							strcpy_s(param.TexPath, MAX_PATH, filePath);
 							pBsdf->SetParameter("TextureMap", param);
+							previewMesh->SetTexture(triId, param.TexPath);
 						}
+					}
+					else if (EDXGui::Button("Constant Color"))
+					{
+						param.R = 0.6f; param.G = 0.6f; param.B = 0.6f;
+						pBsdf->SetParameter("Color", param);
+						previewMesh->SetTexture(triId, nullptr);
 					}
 					break;
 				}

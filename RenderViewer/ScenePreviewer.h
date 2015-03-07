@@ -22,6 +22,14 @@ namespace EDX
 			RefPtr<OpenGL::VertexBuffer> mpVBO;
 			RefPtr<OpenGL::IndexBuffer> mpIBO;
 			vector<RefPtr<OpenGL::Texture2D>> mTextures;
+
+			void SetTexture(int triId, const char* filePath)
+			{
+				if (filePath)
+					mTextures[mpMesh->GetMaterialIdx(triId)] = OpenGL::Texture2D::Create(filePath);
+				else
+					mTextures[mpMesh->GetMaterialIdx(triId)] = nullptr;
+			}
 		};
 
 		class Previewer
@@ -132,13 +140,10 @@ namespace EDX
 					{
 						auto mtlIdx = pObjMesh->GetSubsetMtlIndex(i);
 						auto pBsdf = mpScene->GetPrimitives()[idx]->GetBSDF_FromIdx(mtlIdx);
-						if (pBsdf->IsTextured())
+						if (it->mTextures[mtlIdx])
 						{
 							glEnable(GL_TEXTURE_2D);
 							glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*)&Color::WHITE);
-
-							if (it->mTextures[mtlIdx] == nullptr)
-								it->mTextures[mtlIdx] = OpenGL::Texture2D::Create(pBsdf->GetTexture()->GetFilePath());
 
 							it->mTextures[mtlIdx]->Bind();
 							it->mTextures[mtlIdx]->SetFilter(TextureFilter::Anisotropic16x);
@@ -159,8 +164,8 @@ namespace EDX
 						auto setTriangleCount = pObjMesh->GetSubsetStartIdx(i + 1) - pObjMesh->GetSubsetStartIdx(i);
 						glDrawRangeElements(GL_TRIANGLES, 0, setTriangleCount, setTriangleCount, GL_UNSIGNED_INT, (void*)(pObjMesh->GetSubsetStartIdx(i) * sizeof(uint)));
 
-						if (pBsdf->IsTextured())
-							it->mTextures[pObjMesh->GetSubsetMtlIndex(i)]->UnBind();
+						if (it->mTextures[mtlIdx])
+							it->mTextures[mtlIdx]->UnBind();
 
 						if (idx == mPickedPrimIdx && pObjMesh->GetSubsetMtlIndex(i) == pObjMesh->GetMaterialIdx(mPickedTriIdx))
 						{
@@ -233,6 +238,11 @@ namespace EDX
 			Camera& GetCamera()
 			{
 				return mCamera;
+			}
+
+			GLMesh* GetMesh(int meshId) const
+			{
+				return mMeshes[meshId].Ptr();
 			}
 
 			int GetPickedPrimId() const
