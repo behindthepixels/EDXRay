@@ -209,7 +209,7 @@ namespace EDX
 				{
 					ret.Type = Parameter::Float;
 					ret.Value = this->mRoughness;
-					ret.Min = 0.02f;
+					ret.Min = 1e-4f;
 					ret.Max = 1.0f;
 
 					return ret;

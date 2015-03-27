@@ -94,7 +94,7 @@ namespace EDX
 
 			const ScatterType GetScatterType() const { return mScatterType; }
 			const BSDFType GetBSDFType() const { return mBSDFType; }
-			const RefPtr<Texture2D<Color>> GetTexture() const { return mpTexture; }
+			const RefPtr<Texture2D<Color>>& GetTexture() const { return mpTexture; }
 			bool IsTextured() const { return mTextured; }
 
 		protected:

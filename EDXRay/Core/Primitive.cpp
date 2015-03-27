@@ -104,7 +104,6 @@ namespace EDX
 		void Primitive::LoadPlane(const float length,
 			const BSDFType bsdfType,
 			const Color& reflectance,
-			const Color& color,
 			const Vector3& pos,
 			const Vector3& scl,
 			const Vector3& rot)

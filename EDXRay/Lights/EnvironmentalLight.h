@@ -90,7 +90,7 @@ namespace EDX
 							assert(Math::NumericValid(r));
 							skyRadiance[Vector2i(x, y)][i] = r * 0.011f;
 							if (gamma < 0.02)
-								skyRadiance[Vector2i(x, y)][i] = 1900.0f;
+								skyRadiance[Vector2i(x, y)][i] = 3000.0f;
 						}
 					}
 				}
