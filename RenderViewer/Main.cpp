@@ -58,11 +58,11 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadSphere(1.0f, BSDFType::RoughConductor, Color::WHITE, 128, 128, Vector3(0.0f, 3.0f, 0.0f));
-	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.7f, 0.37f, 0.3f), Vector3(1.5f, 2.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
+	pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.7f, 0.37f, 0.3f), Vector3(1.5f, 0.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/splash.obj", BSDFType::Glass, Color(1.0f, 1.0f, 1.0f), Vector3(4.95f, 0.06f, -4.95f), 9.9f * Vector3::UNIT_SCALE, Vector3(0.0f, 45.0f, 0.0f));
 	//pMesh3->LoadSphere(1.0f, BSDFType::RoughDielectric, Color::WHITE, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));
-	//pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-1.5f, 1.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
-	pMesh4->LoadPlane(1000.0f, BSDFType::Diffuse, Color(0.9f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 180.0f, 0.0f));
+	pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-1.5f, -0.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
+	pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.25f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 180.0f, 0.0f));
 	//pMesh4->LoadMesh("../../Media/OceanMesh2.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3::ZERO, Vector3(1, 10, 1), Vector3(0.0f, 180.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/OceanMesh1.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3(-13000, -5, 0), Vector3(50, 500, 50), Vector3(0.0f, 180.0f, 0.0f));
 
@@ -85,7 +85,7 @@ void OnInit(Object* pSender, EventArgs args)
 
 	//pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
-	//pScene->AddPrimitive(pMesh3);
+	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
 	pScene->SetEnvironmentMap(new EnvironmentalLight("../../Media/uffizi-large.hdr", 1.0f, 35.0f));
 	//pScene->SetEnvironmentMap(new EnvironmentalLight(Color(1.1f), Color(0.0f), 40.0f));
