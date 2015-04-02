@@ -36,6 +36,10 @@ namespace EDX
 					L += Integrator::SpecularTransmit(this, pScene, ray, diffGeom, pSampleBuf, random, memory);
 				}
 			}
+			else
+			{
+				L += pScene->GetEnvironmentMap()->Emit(-ray.mDir);
+			}
 
 			return L;
 		}
