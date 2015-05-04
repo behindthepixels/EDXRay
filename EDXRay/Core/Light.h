@@ -45,6 +45,7 @@ namespace EDX
 			virtual Color Emit(const Vector3& dir) const = 0;
 			virtual float Pdf(const Vector3& pos, const Vector3& dir) const = 0;
 			float GetSampleCount() const { return mSampleCount; }
+			virtual bool IsEnvironmentLight() const { return false; }
 			virtual bool IsDelta() const = 0;
 		};
 	}

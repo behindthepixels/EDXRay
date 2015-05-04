@@ -13,7 +13,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		class EnvironmentalLight : public Light
+		class EnvironmentLight : public Light
 		{
 		private:
 			RefPtr<Texture2D<Color>>			mpMap;
@@ -21,25 +21,25 @@ namespace EDX
 			Array2f								mLuminance;
 			float								mScale;
 			float								mRotation;
-			bool mIsEnvMap;
+			bool								mIsTexture;
 
 		public:
-			EnvironmentalLight(const Color& intens,
+			EnvironmentLight(const Color& intens,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
-				mIsEnvMap = false;
+				mIsTexture = false;
 				mScale = 1.0f;
 				mpMap = new ConstantTexture2D<Color>(intens);
 			}
 
-			EnvironmentalLight(const char* path,
+			EnvironmentLight(const char* path,
 				const float scale = 1.0f,
 				const float rotate = 0.0f,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
-				mIsEnvMap = true;
+				mIsTexture = true;
 				mScale = scale;
 				mRotation = Math::ToRadians(rotate);
 				mpMap = new ImageTexture<Color, Color>(path, 1.0f);
@@ -47,7 +47,7 @@ namespace EDX
 				CalcLuminanceDistribution();
 			}
 
-			EnvironmentalLight(const Color& turbidity,
+			EnvironmentLight(const Color& turbidity,
 				const Color& groundAlbedo,
 				const float sunElevation,
 				const float rotate = 0.0f,
@@ -56,7 +56,7 @@ namespace EDX
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
-				mIsEnvMap = true;
+				mIsTexture = true;
 				mScale = 1.0f;
 
 				float sunElevationRad = Math::ToRadians(sunElevation);
@@ -105,7 +105,7 @@ namespace EDX
 
 			Color Illuminate(const Vector3& pos, const Sample& lightSample, Vector3* pDir, VisibilityTester* pVisTest, float* pPdf) const
 			{
-				if (mIsEnvMap)
+				if (mIsTexture)
 				{
 					float u, v;
 					mpDistribution->SampleContinuous(lightSample.u, lightSample.v, &u, &v, pPdf);
@@ -151,6 +151,7 @@ namespace EDX
 				if (s > float(Math::EDX_TWO_PI))
 					s -= float(Math::EDX_TWO_PI);
 				s *= float(Math::EDX_INV_2PI);
+				s = 1.0f - s;
 				float t = Math::SphericalTheta(negDir) * float(Math::EDX_INV_PI);
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
@@ -159,7 +160,7 @@ namespace EDX
 
 			float Pdf(const Vector3& pos, const Vector3& dir) const
 			{
-				if (mIsEnvMap)
+				if (mIsTexture)
 				{
 					float theta = Math::SphericalTheta(dir);
 					float phi = Math::SphericalPhi(dir);
@@ -171,9 +172,25 @@ namespace EDX
 					return Sampling::UniformSpherePDF();
 			}
 
+			bool IsEnvironmentLight() const
+			{
+				return true;
+			}
 			bool IsDelta() const
 			{
 				return false;
+			}
+			Texture2D<Color>* GetTexture() const
+			{
+				return mpMap.Ptr();
+			}
+			bool IsTexture() const
+			{
+				return mIsTexture;
+			}
+			float GetRotation() const
+			{
+				return mRotation;
 			}
 
 		private:

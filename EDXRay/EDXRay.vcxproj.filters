@@ -111,9 +111,6 @@
     <ClInclude Include="Lights\DirectionalLight.h">
       <Filter>Source Files\Lights</Filter>
     </ClInclude>
-    <ClInclude Include="Lights\EnvironmentalLight.h">
-      <Filter>Source Files\Lights</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Filter.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
@@ -137,6 +134,9 @@
     </ClInclude>
     <ClInclude Include="BSDFs\Principled.h">
       <Filter>Source Files\BSDFs</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\EnvironmentLight.h">
+      <Filter>Source Files\Lights</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

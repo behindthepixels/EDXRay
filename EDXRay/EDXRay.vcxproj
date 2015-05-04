@@ -43,7 +43,7 @@
     <ClInclude Include="Integrators\PathTracing.h" />
     <ClInclude Include="Lights\AreaLight.h" />
     <ClInclude Include="Lights\DirectionalLight.h" />
-    <ClInclude Include="Lights\EnvironmentalLight.h" />
+    <ClInclude Include="Lights\EnvironmentLight.h" />
     <ClInclude Include="Lights\PointLight.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModel.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_CIEXYZ.h" />

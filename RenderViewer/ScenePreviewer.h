@@ -32,20 +32,54 @@ namespace EDX
 			}
 		};
 
+		const char* ScreenQuadVertShaderSource = R"(
+		    varying vec2 screenPos;
+			void main()
+			{
+				gl_Position = gl_Vertex;
+				screenPos = gl_Vertex;
+			})";
+		const char* EnvMapFragShaderSource = R"(
+			uniform sampler2D EnvTexSampler;
+			uniform mat4 ScreenToWorld;
+			uniform float rotation;
+		    varying vec2 screenPos;
+			void main()
+			{
+				vec4 worldPos = mul(vec4(screenPos, 1, 1), ScreenToWorld);
+				vec3 worldDir = normalize(worldPos.xyz);
+
+				float theta = acos(clamp(worldDir.y, -1.0f, 1.0f));
+				float p = atan(worldDir.z, worldDir.x);
+				float twoPi = 2.0f * 3.1415926f;
+				float phi = (p < 0.0f) ? p + twoPi : p;
+				phi += rotation;
+				if(phi > twoPi)
+					phi -= twoPi;
+				vec2 envTexCoord = vec2(1.0f - phi / twoPi, theta / 3.1415926f);
+				vec4 sample = texture2D(EnvTexSampler, envTexCoord);
+				sample.xyz = pow(sample.xyz, 0.454545f);
+				gl_FragColor = sample;
+			})";
+
 		class Previewer
 		{
 		private:
 			Camera mCamera;
 			vector<RefPtr<GLMesh>> mMeshes;
+			OpenGL::Texture2D mEnvMap;
 			const Scene* mpScene;
+			const EnvironmentLight* mpCachedEnvLight;
 			int mPickedPrimIdx;
 			int mPickedTriIdx;
+
+			Shader mScreenQuadVertexShader;
+			Shader mEnvMapFragmentShader;
+			Program mProgram;
 
 		public:
 			void Initialize(const Scene& scene, const RenderJobDesc& jobDesc)
 			{
-				OpenGL::InitializeOpenGLExtensions();
-
 				mpScene = &scene;
 				mCamera.Init(jobDesc.CameraParams.Pos,
 					jobDesc.CameraParams.Target,
@@ -84,10 +118,18 @@ namespace EDX
 
 					mMeshes.push_back(glMesh);
 				}
+
+				mScreenQuadVertexShader.Load(ShaderType::VertexShader, ScreenQuadVertShaderSource);
+				mEnvMapFragmentShader.Load(ShaderType::FragmentShader, EnvMapFragShaderSource);
+				mProgram.AttachShader(&mScreenQuadVertexShader);
+				mProgram.AttachShader(&mEnvMapFragmentShader);
+				mProgram.Link();
 			}
 
 			void OnRender()
 			{
+				RenderEnvMap();
+
 				glMatrixMode(GL_PROJECTION);
 				glLoadIdentity();
 				glMatrixMode(GL_MODELVIEW);
@@ -194,6 +236,53 @@ namespace EDX
 				}
 
 				glPopAttrib();
+			}
+
+			void RenderEnvMap()
+			{
+				if (auto* pMap = dynamic_cast<const EnvironmentLight*>(mpScene->GetEnvironmentMap()))
+				{
+					if (mpCachedEnvLight != pMap)
+					{
+						mpCachedEnvLight = pMap;
+						if (mpCachedEnvLight->IsTexture())
+						{
+							mEnvMap.Load(ImageFormat::RGBA, ImageFormat::RGBA, ImageDataType::Float,
+								(void*)ImageTexture<Color, Color>::GetLevelMemoryPtr(*dynamic_cast<ImageTexture<Color, Color>*>(mpCachedEnvLight->GetTexture())),
+								mpCachedEnvLight->GetTexture()->Width(),
+								mpCachedEnvLight->GetTexture()->Height());
+						}
+						else
+						{
+							Color color = mpCachedEnvLight->GetTexture()->GetValue();
+							mEnvMap.Load(ImageFormat::RGBA, ImageFormat::RGBA, ImageDataType::Float,
+								(float*)&color, 1, 1);
+						}
+					}
+				}
+				if (mpCachedEnvLight)
+				{
+					mProgram.Use();
+
+					Matrix mViewProj = Matrix::Mul(mCamera.GetProjMatrix(), mCamera.GetViewMatrix());
+					mProgram.SetUniform("ScreenToWorld", Matrix::Inverse(mViewProj), false);
+					mProgram.SetUniform("EnvTexSampler", 0);
+					mProgram.SetUniform("rotation", mpCachedEnvLight->GetRotation());
+					mEnvMap.Bind();
+					mEnvMap.SetFilter(TextureFilter::TriLinear);
+
+					glBegin(GL_QUADS);
+
+					glVertex2f(-1.0f, -1.0f);
+					glVertex2f(1.0f, -1.0f);
+					glVertex2f(1.0f, 1.0f);
+					glVertex2f(-1.0f, 1.0f);
+
+					glEnd();
+
+					mProgram.Unuse();
+					mEnvMap.UnBind();
+				}
 			}
 
 			void OnResize(int width, int height)

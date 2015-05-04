@@ -11,6 +11,7 @@ namespace EDX
 		class Film;
 		class Integrator;
 		class Light;
+		class EnvironmentLight;
 		class PointLight;
 		class AreaLight;
 		class BSDF;

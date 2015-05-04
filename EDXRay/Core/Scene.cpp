@@ -10,6 +10,7 @@ namespace EDX
 	namespace RayTracer
 	{
 		Scene::Scene()
+			: mEnvMap(nullptr)
 		{
 		}
 
@@ -36,13 +37,24 @@ namespace EDX
 
 		void Scene::AddLight(Light* pLight)
 		{
-			mLights.push_back(pLight);
-		}
+			if (pLight->IsEnvironmentLight())
+			{
+				bool foundEnvLight = false;
+				for (auto it : mLights)
+				{
+					if (it->IsEnvironmentLight())
+					{
+						foundEnvLight = true;
+						it = pLight;
+					}
+				}
+				if (!foundEnvLight)
+					mLights.push_back(pLight);
 
-		void Scene::SetEnvironmentMap(Light* pLight)
-		{
-			AddLight(pLight);
-			mEnvMap = pLight;
+				mEnvMap = pLight;
+			}
+			else
+				mLights.push_back(pLight);
 		}
 
 		void Scene::InitAccelerator()

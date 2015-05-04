@@ -138,7 +138,7 @@ namespace EDX
 				else if (!mTextured && name == "Color")
 				{
 					ret.Type = Parameter::Color;
-					Color color = mpTexture->GetValue();
+					Color color = mpTexture->Sample(Vector2::ZERO, nullptr);
 					ret.R = color.r;
 					ret.G = color.g;
 					ret.B = color.b;
