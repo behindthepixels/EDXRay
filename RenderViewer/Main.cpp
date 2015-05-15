@@ -12,7 +12,7 @@
 #include "Core/TriangleMesh.h"
 #include "Lights/PointLight.h"
 #include "Lights/DirectionalLight.h"
-#include "Lights/EnvironmentalLight.h"
+#include "Lights/EnvironmentLight.h"
 #include "Core/BSDF.h"
 #include "BSDFs/RoughConductor.h"
 #include "BSDFs/RoughDielectric.h"
@@ -87,7 +87,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->AddPrimitive(pMesh2);
 	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
-	pScene->SetEnvironmentMap(new EnvironmentalLight("../../Media/uffizi-large.hdr", 1.0f, 35.0f));
+	pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", 1.0f, 35.0f));
 	//pScene->SetEnvironmentMap(new EnvironmentalLight(Color(1.1f), Color(0.0f), 40.0f));
 	//pScene->AddLight(new DirectionalLight(Vector3(2.5f, 10.0f, 1.0f), Color(35.0f)));
 	//pScene->SetEnvironmentMap(new EnvironmentalLight(12 * Color(0.4f, 0.6f, 0.8f)));
@@ -96,6 +96,7 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->InitAccelerator();
 	gpRenderer->BakeSamples();
 
+	OpenGL::InitializeOpenGLExtensions();
 	gpPreview = new Previewer;
 	gpPreview->Initialize(*pScene, desc);
 
