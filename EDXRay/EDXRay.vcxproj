@@ -39,6 +39,7 @@
     <ClInclude Include="Core\TaskSynchronizer.h" />
     <ClInclude Include="Core\TriangleMesh.h" />
     <ClInclude Include="ForwardDecl.h" />
+    <ClInclude Include="Integrators\BidirectionalPathTracing.h" />
     <ClInclude Include="Integrators\DirectLighting.h" />
     <ClInclude Include="Integrators\PathTracing.h" />
     <ClInclude Include="Lights\AreaLight.h" />
@@ -69,6 +70,7 @@
     <ClCompile Include="Core\Sampler.cpp" />
     <ClCompile Include="Core\Scene.cpp" />
     <ClCompile Include="Core\TriangleMesh.cpp" />
+    <ClCompile Include="Integrators\BidirectionalPathTracing.cpp" />
     <ClCompile Include="Integrators\DirectLighting.cpp" />
     <ClCompile Include="Integrators\PathTracing.cpp" />
     <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp" />

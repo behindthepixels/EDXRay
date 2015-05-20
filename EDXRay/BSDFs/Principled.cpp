@@ -81,13 +81,16 @@ namespace EDX
 			}
 
 			Color albedo = GetColor(diffGeom);
-			float specTint = Math::Max(mSpecularTint, mMetallic);
-			Color specAlbedo = Math::Lerp(albedo, Color::WHITE, 1.0f - specTint);
+			Color specAlbedo = Math::Lerp(Math::Lerp(albedo, Color::WHITE, 1.0f - mSpecularTint), albedo, mMetallic);
+			Color sheenAlbedo = Math::Lerp(Color::WHITE, albedo, mSheenTint);
 
 			float OneMinusODotH = 1.0f - Math::Dot(wo, wh);
 			specAlbedo = Math::Lerp(specAlbedo, Color::WHITE, OneMinusODotH * OneMinusODotH * OneMinusODotH);
 
-			return albedo * (1.0f - mMetallic) * DiffuseTerm(wo, wi, types) + specAlbedo * SpecularTerm(wo, wi);
+			// Sheen term
+			Color sheenTerm = Fresnel_Schlick(Math::Dot(wo, wh), 0.0f) * mSheen * sheenAlbedo;
+
+			return (1.0f - mMetallic) * (albedo * DiffuseTerm(wo, wi, types) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi);
 		}
 	}
 }

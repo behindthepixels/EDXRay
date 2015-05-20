@@ -138,6 +138,9 @@
     <ClInclude Include="Lights\EnvironmentLight.h">
       <Filter>Source Files\Lights</Filter>
     </ClInclude>
+    <ClInclude Include="Integrators\BidirectionalPathTracing.h">
+      <Filter>Source Files\Integrators</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -196,6 +199,9 @@
     </ClCompile>
     <ClCompile Include="BSDFs\Principled.cpp">
       <Filter>Source Files\BSDFs</Filter>
+    </ClCompile>
+    <ClCompile Include="Integrators\BidirectionalPathTracing.cpp">
+      <Filter>Source Files\Integrators</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -13,18 +13,24 @@ namespace EDX
 			float mSpecular;
 			float mMetallic;
 			float mSpecularTint;
+			float mSheen;
+			float mSheenTint;
 
 		public:
 			Principled(const Color& reflectance = Color::WHITE,
 				float roughness = 0.3f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
-				float specTint = 0.0f)
+				float specTint = 0.0f,
+				float sheen = 0.0f,
+				float sheenTint = 0.5f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Principled, reflectance)
 				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
+				, mSheen(sheen)
+				, mSheenTint(sheenTint)
 			{
 			}
 			Principled(const RefPtr<Texture2D<Color>>& pTex,
@@ -32,24 +38,32 @@ namespace EDX
 				float roughness = 0.3f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
-				float specTint = 0.0f)
+				float specTint = 0.0f,
+				float sheen = 0.0f,
+				float sheenTint = 0.5f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Principled, pTex, isTextured)
 				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
+				, mSheen(sheen)
+				, mSheenTint(sheenTint)
 			{
 			}
 			Principled(const char* pFile,
 				float roughness = 0.3f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
-				float specTint = 0.0f)
+				float specTint = 0.0f,
+				float sheen = 0.0f,
+				float sheenTint = 0.5f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Principled, pFile)
 				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
+				, mSheen(sheen)
+				, mSheenTint(sheenTint)
 			{
 			}
 
@@ -92,14 +106,18 @@ namespace EDX
 				Vector3 wi = diffGeom.WorldToLocal(vIn);
 
 				Color albedo = GetColor(diffGeom);
-				float specTint = Math::Max(mSpecularTint, mMetallic);
-				Color specAlbedo = Math::Lerp(albedo, Color::WHITE, 1.0f - specTint);
+				Color specAlbedo = Math::Lerp(Math::Lerp(albedo, Color::WHITE, 1.0f - mSpecularTint), albedo, mMetallic);
+				Color sheenAlbedo = Math::Lerp(Color::WHITE, albedo, mSheenTint);
 
 				Vector3 wh = Math::Normalize(wo + wi);
 				float OneMinusODotH = 1.0f - Math::Dot(wo, wh);
 				specAlbedo = Math::Lerp(specAlbedo, Color::WHITE, OneMinusODotH * OneMinusODotH * OneMinusODotH);
 
-				return albedo * (1.0f - mMetallic) * DiffuseTerm(wo, wi, types) + specAlbedo * SpecularTerm(wo, wi);
+				// Sheen term
+				float F = Fresnel_Schlick(Math::Dot(wo, wh), 0.0f);
+				Color sheenTerm = F * mSheen * sheenAlbedo;
+
+				return (1.0f - mMetallic) * (albedo * DiffuseTerm(wo, wi, types) + sheenTerm) +specAlbedo * SpecularTerm(wo, wi);
 			}
 
 			float Eval(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
@@ -154,7 +172,7 @@ namespace EDX
 		public:
 			int GetParameterCount() const
 			{
-				return BSDF::GetParameterCount() + 4;
+				return BSDF::GetParameterCount() + 6;
 			}
 
 			string GetParameterName(const int idx) const
@@ -171,6 +189,10 @@ namespace EDX
 					return "Metallic";
 				else if (idx == baseParamCount + 3)
 					return "SpecularTint";
+				else if (idx == baseParamCount + 4)
+					return "Sheen";
+				else if (idx == baseParamCount + 5)
+					return "SheenTint";
 
 				return "";
 			}
@@ -217,6 +239,24 @@ namespace EDX
 
 					return ret;
 				}
+				else if (name == "Sheen")
+				{
+					ret.Type = Parameter::Float;
+					ret.Value = this->mSheen;
+					ret.Min = 0.0f;
+					ret.Max = 1.0f;
+
+					return ret;
+				}
+				else if (name == "SheenTint")
+				{
+					ret.Type = Parameter::Float;
+					ret.Value = this->mSheenTint;
+					ret.Min = 0.0f;
+					ret.Max = 1.0f;
+
+					return ret;
+				}
 
 				return ret;
 			}
@@ -233,6 +273,10 @@ namespace EDX
 					this->mMetallic = param.Value;
 				else if (name == "SpecularTint")
 					this->mSpecularTint = param.Value;
+				else if (name == "Sheen")
+					this->mSheen = param.Value;
+				else if (name == "SheenTint")
+					this->mSheenTint = param.Value;
 
 				return;
 			}
