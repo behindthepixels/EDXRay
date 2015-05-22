@@ -6,7 +6,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		class Principled : public BSDF
+		class Disney : public BSDF
 		{
 		private:
 			float mRoughness;
@@ -15,55 +15,62 @@ namespace EDX
 			float mSpecularTint;
 			float mSheen;
 			float mSheenTint;
+			float mSubsurface;
 
 		public:
-			Principled(const Color& reflectance = Color::WHITE,
+			Disney(const Color& reflectance = Color::WHITE,
 				float roughness = 0.3f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
 				float specTint = 0.0f,
 				float sheen = 0.0f,
-				float sheenTint = 0.5f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Principled, reflectance)
+				float sheenTint = 0.5f,
+				float subsurface = 0.0f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, reflectance)
 				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
 				, mSheen(sheen)
 				, mSheenTint(sheenTint)
+				, mSubsurface(subsurface)
 			{
 			}
-			Principled(const RefPtr<Texture2D<Color>>& pTex,
+			Disney(const RefPtr<Texture2D<Color>>& pTex,
 				const bool isTextured,
 				float roughness = 0.3f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
 				float specTint = 0.0f,
 				float sheen = 0.0f,
-				float sheenTint = 0.5f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Principled, pTex, isTextured)
+				float sheenTint = 0.5f,
+				float subsurface = 0.0f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pTex, isTextured)
 				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
 				, mSheen(sheen)
 				, mSheenTint(sheenTint)
+				, mSubsurface(subsurface)
 			{
 			}
-			Principled(const char* pFile,
+			Disney(const char* pFile,
 				float roughness = 0.3f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
 				float specTint = 0.0f,
 				float sheen = 0.0f,
-				float sheenTint = 0.5f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Principled, pFile)
+				float sheenTint = 0.5f,
+				float subsurface = 0.0f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pFile)
 				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
 				, mSheen(sheen)
 				, mSheenTint(sheenTint)
+				, mSubsurface(subsurface)
 			{
 			}
 
@@ -117,7 +124,7 @@ namespace EDX
 				float F = Fresnel_Schlick(Math::Dot(wo, wh), 0.0f);
 				Color sheenTerm = F * mSheen * sheenAlbedo;
 
-				return (1.0f - mMetallic) * (albedo * DiffuseTerm(wo, wi, types) + sheenTerm) +specAlbedo * SpecularTerm(wo, wi);
+				return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, types), SubsurfaceTerm(wo, wi, types), mSubsurface) + sheenTerm) +specAlbedo * SpecularTerm(wo, wi);
 			}
 
 			float Eval(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
@@ -159,6 +166,20 @@ namespace EDX
 				return F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
 			}
 
+			float SubsurfaceTerm(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
+			{
+				Vector3 wh = Math::Normalize(wo + wi);
+				float cosD = Math::AbsDot(wh, wi);
+				float F_ss90 = cosD * cosD * mRoughness;
+				float oneMinusCosL = 1.0f - BSDFCoordinate::AbsCosTheta(wi);
+				float oneMinusCosV = 1.0f - BSDFCoordinate::AbsCosTheta(wo);
+
+				float S = (1.0f + (F_ss90 - 1.0f) * oneMinusCosL * oneMinusCosL * oneMinusCosL * oneMinusCosL * oneMinusCosL) *
+					(1.0f + (F_ss90 - 1.0f) * oneMinusCosV * oneMinusCosV * oneMinusCosV * oneMinusCosV * oneMinusCosV);
+
+				return float(Math::EDX_INV_PI) * 1.25f * (S * (1.0f / (BSDFCoordinate::AbsCosTheta(wo) + BSDFCoordinate::AbsCosTheta(wi)) - 0.5f) + 0.5f);
+			}
+
 			float Fresnel_Schlick(const float cosD, const float normalReflectance) const
 			{
 				float oneMinusCosD = 1.0f - cosD;
@@ -172,7 +193,7 @@ namespace EDX
 		public:
 			int GetParameterCount() const
 			{
-				return BSDF::GetParameterCount() + 6;
+				return BSDF::GetParameterCount() + 7;
 			}
 
 			string GetParameterName(const int idx) const
@@ -193,6 +214,8 @@ namespace EDX
 					return "Sheen";
 				else if (idx == baseParamCount + 5)
 					return "SheenTint";
+				else if (idx == baseParamCount + 6)
+					return "Subsurface";
 
 				return "";
 			}
@@ -257,6 +280,15 @@ namespace EDX
 
 					return ret;
 				}
+				else if (name == "Subsurface")
+				{
+					ret.Type = Parameter::Float;
+					ret.Value = this->mSubsurface;
+					ret.Min = 0.0f;
+					ret.Max = 1.0f;
+
+					return ret;
+				}
 
 				return ret;
 			}
@@ -277,6 +309,8 @@ namespace EDX
 					this->mSheen = param.Value;
 				else if (name == "SheenTint")
 					this->mSheenTint = param.Value;
+				else if (name == "Subsurface")
+					this->mSubsurface = param.Value;
 
 				return;
 			}

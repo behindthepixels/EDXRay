@@ -31,7 +31,7 @@ namespace EDX
 			Glass,
 			RoughConductor,
 			RoughDielectric,
-			Principled
+			Disney
 		};
 
 		struct Parameter

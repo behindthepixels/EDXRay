@@ -174,7 +174,7 @@ void OnRender(Object* pSender, EventArgs args)
 				2, "Smooth Dielectric",
 				3, "Rough Conductor",
 				4, "Rough Dielectric",
-				5, "Principled",
+				5, "Disney",
 			};
 
 			const auto primId = gpPreview->GetPickedPrimId();
@@ -259,8 +259,6 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 	// Set opengl params
 	glViewport(0, 0, args.Width, args.Height);
 
-	gpPreview->OnResize(args.Width, args.Height);
-
 	if (gRendering)
 	{
 		glMatrixMode(GL_PROJECTION);
@@ -272,7 +270,10 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 		//gpRenderer->QueueRenderTasks();
 	}
 	else
+	{
+		gpPreview->OnResize(args.Width, args.Height);
 		gpRenderer->Resize(args.Width, args.Height);
+	}
 
 	EDXGui::Resize(args.Width, args.Height);
 }

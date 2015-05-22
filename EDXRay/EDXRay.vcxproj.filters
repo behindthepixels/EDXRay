@@ -132,14 +132,14 @@
     <ClInclude Include="BSDFs\RoughDielectric.h">
       <Filter>Source Files\BSDFs</Filter>
     </ClInclude>
-    <ClInclude Include="BSDFs\Principled.h">
-      <Filter>Source Files\BSDFs</Filter>
-    </ClInclude>
     <ClInclude Include="Lights\EnvironmentLight.h">
       <Filter>Source Files\Lights</Filter>
     </ClInclude>
     <ClInclude Include="Integrators\BidirectionalPathTracing.h">
       <Filter>Source Files\Integrators</Filter>
+    </ClInclude>
+    <ClInclude Include="BSDFs\Disney.h">
+      <Filter>Source Files\BSDFs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -197,11 +197,11 @@
     <ClCompile Include="BSDFs\RoughDielectric.cpp">
       <Filter>Source Files\BSDFs</Filter>
     </ClCompile>
-    <ClCompile Include="BSDFs\Principled.cpp">
-      <Filter>Source Files\BSDFs</Filter>
-    </ClCompile>
     <ClCompile Include="Integrators\BidirectionalPathTracing.cpp">
       <Filter>Source Files\Integrators</Filter>
+    </ClCompile>
+    <ClCompile Include="BSDFs\Disney.cpp">
+      <Filter>Source Files\BSDFs</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

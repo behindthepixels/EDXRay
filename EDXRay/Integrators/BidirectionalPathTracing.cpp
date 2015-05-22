@@ -14,6 +14,7 @@ namespace EDX
 	{
 		Color BidirPathTracingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory) const
 		{
+			return Color(0);
 		}
 
 		void BidirPathTracingIntegrator::RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf)

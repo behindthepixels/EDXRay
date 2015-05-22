@@ -1,7 +1,7 @@
 #include "BSDF.h"
 #include "../BSDFs/RoughConductor.h"
 #include "../BSDFs/RoughDielectric.h"
-#include "../BSDFs/Principled.h"
+#include "../BSDFs/Disney.h"
 #include "Math/EDXMath.h"
 #include "DifferentialGeom.h"
 #include "Sampling.h"
@@ -28,8 +28,8 @@ namespace EDX
 				return new RoughConductor(color, 0.08f);
 			case BSDFType::RoughDielectric:
 				return new RoughDielectric(color, 0.3f);
-			case BSDFType::Principled:
-				return new Principled(color);
+			case BSDFType::Disney:
+				return new Disney(color);
 			}
 
 			assert(0);
@@ -49,8 +49,8 @@ namespace EDX
 				return new RoughConductor(pTex, isTextured, 0.08f);
 			case BSDFType::RoughDielectric:
 				return new RoughDielectric(pTex, isTextured, 0.3f);
-			case BSDFType::Principled:
-				return new Principled(pTex, isTextured);
+			case BSDFType::Disney:
+				return new Disney(pTex, isTextured);
 			}
 
 			assert(0);
@@ -70,8 +70,8 @@ namespace EDX
 				return new RoughConductor(strTexPath, 0.08f);
 			case BSDFType::RoughDielectric:
 				return new RoughDielectric(strTexPath, 0.3f);
-			case BSDFType::Principled:
-				return new Principled(strTexPath);
+			case BSDFType::Disney:
+				return new Disney(strTexPath);
 			}
 
 			assert(0);

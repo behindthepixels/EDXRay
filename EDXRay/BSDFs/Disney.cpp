@@ -1,4 +1,4 @@
-#include "Principled.h"
+#include "Disney.h"
 #include "../Core/Sampling.h"
 #include "../Core/Sampler.h"
 
@@ -6,7 +6,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		Color Principled::SampleScattered(const Vector3& _wo, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf,
+		Color Disney::SampleScattered(const Vector3& _wo, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf,
 			ScatterType types, ScatterType* pSampledTypes) const
 		{
 			if (!MatchesTypes(types))
@@ -90,7 +90,7 @@ namespace EDX
 			// Sheen term
 			Color sheenTerm = Fresnel_Schlick(Math::Dot(wo, wh), 0.0f) * mSheen * sheenAlbedo;
 
-			return (1.0f - mMetallic) * (albedo * DiffuseTerm(wo, wi, types) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi);
+			return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, types), SubsurfaceTerm(wo, wi, types), mSubsurface) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi);
 		}
 	}
 }
