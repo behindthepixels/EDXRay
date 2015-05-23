@@ -12,12 +12,12 @@ namespace EDX
 			float mRoughness;
 
 		public:
-			RoughConductor(const Color& reflectance = Color::WHITE, float roughness = 1.0f)
+			RoughConductor(const Color& reflectance = Color::WHITE, float roughness = 0.3f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, reflectance)
 				, mRoughness(roughness)
 			{
 			}
-			RoughConductor(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured, float roughness = 1.0f)
+			RoughConductor(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured, float roughness = 0.3f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, pTex, isTextured)
 				, mRoughness(roughness)
 			{
@@ -47,7 +47,7 @@ namespace EDX
 					wh *= -1.0f;
 
 				float dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
-				float whProb = GGX_Pdf(wh, mRoughness);
+				float whProb = GGX_Pdf(wh, mRoughness * mRoughness);
 
 				return Math::Abs(whProb * dwh_dwi);
 			}
@@ -59,12 +59,12 @@ namespace EDX
 
 				Vector3 wh = Math::Normalize(wo + wi);
 
-				float D = GGX_D(wh, mRoughness);
+				float D = GGX_D(wh, mRoughness * mRoughness);
 				if (D == 0.0f)
 					return 0.0f;
 
 				float F = BSDF::FresnelConductor(Math::Dot(wo, wh), 0.4f, 1.6f);
-				float G = GGX_G(wo, wi, wh, mRoughness);
+				float G = GGX_G(wo, wi, wh, mRoughness * mRoughness);
 
 				return F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
 			}
@@ -96,7 +96,7 @@ namespace EDX
 				{
 					ret.Type = Parameter::Float;
 					ret.Value = this->mRoughness;
-					ret.Min = 0.02f;
+					ret.Min = 0.01f;
 					ret.Max = 1.0f;
 
 					return ret;

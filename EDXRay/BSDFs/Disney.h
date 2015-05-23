@@ -19,7 +19,7 @@ namespace EDX
 
 		public:
 			Disney(const Color& reflectance = Color::WHITE,
-				float roughness = 0.3f,
+				float roughness = 0.1f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
 				float specTint = 0.0f,
@@ -38,7 +38,7 @@ namespace EDX
 			}
 			Disney(const RefPtr<Texture2D<Color>>& pTex,
 				const bool isTextured,
-				float roughness = 0.3f,
+				float roughness = 0.1f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
 				float specTint = 0.0f,
@@ -56,7 +56,7 @@ namespace EDX
 			{
 			}
 			Disney(const char* pFile,
-				float roughness = 0.3f,
+				float roughness = 0.1f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
 				float specTint = 0.0f,
@@ -84,6 +84,9 @@ namespace EDX
 		private:
 			float Pdf(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
 			{
+				if (!MatchesTypes(types))
+					return 0.0f;
+
 				Vector3 wh = Math::Normalize(wo + wi);
 				if (wh == Vector3::ZERO)
 					return 0.0f;
@@ -117,14 +120,16 @@ namespace EDX
 				Color sheenAlbedo = Math::Lerp(Color::WHITE, albedo, mSheenTint);
 
 				Vector3 wh = Math::Normalize(wo + wi);
-				float OneMinusODotH = 1.0f - Math::Dot(wo, wh);
+				float ODotH = Math::Dot(wo, wh);
+				float IDotH = Math::Dot(wi, wh);
+				float OneMinusODotH = 1.0f - ODotH;
 				specAlbedo = Math::Lerp(specAlbedo, Color::WHITE, OneMinusODotH * OneMinusODotH * OneMinusODotH);
 
 				// Sheen term
-				float F = Fresnel_Schlick(Math::Dot(wo, wh), 0.0f);
+				float F = Fresnel_Schlick(ODotH, 0.0f);
 				Color sheenTerm = F * mSheen * sheenAlbedo;
 
-				return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, types), SubsurfaceTerm(wo, wi, types), mSubsurface) + sheenTerm) +specAlbedo * SpecularTerm(wo, wi);
+				return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, IDotH), SubsurfaceTerm(wo, wi, IDotH), mSubsurface) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi, wh, ODotH, nullptr);
 			}
 
 			float Eval(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
@@ -132,33 +137,32 @@ namespace EDX
 				return 0.0f;
 			}
 
-			float DiffuseTerm(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
+			float DiffuseTerm(const Vector3& wo, const Vector3& wi, const float IDotH) const
 			{
 				if (mMetallic == 1.0f)
 					return 0.0f;
 
-				Vector3 wh = Math::Normalize(wo + wi);
-				float cosD = Math::AbsDot(wh, wi);
 				float oneMinusCosL = 1.0f - BSDFCoordinate::AbsCosTheta(wi);
+				float oneMinusCosLSqr = oneMinusCosL * oneMinusCosL;
 				float oneMinusCosV = 1.0f - BSDFCoordinate::AbsCosTheta(wo);
-				float F_D90 = 0.5f + 2.0f * cosD * cosD * mRoughness;
+				float oneMinusCosVSqr = oneMinusCosV * oneMinusCosV;
+				float F_D90 = 0.5f + 2.0f * IDotH * IDotH * mRoughness;
 
-				return float(Math::EDX_INV_PI) * (1.0f + (F_D90 - 1.0f) * oneMinusCosL * oneMinusCosL * oneMinusCosL * oneMinusCosL * oneMinusCosL) *
-					(1.0f + (F_D90 - 1.0f) * oneMinusCosV * oneMinusCosV * oneMinusCosV * oneMinusCosV * oneMinusCosV);
+				return float(Math::EDX_INV_PI) * (1.0f + (F_D90 - 1.0f) * oneMinusCosLSqr * oneMinusCosLSqr * oneMinusCosL) *
+					(1.0f + (F_D90 - 1.0f) * oneMinusCosVSqr * oneMinusCosVSqr * oneMinusCosV);
 			}
 
-			float SpecularTerm(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
+			float SpecularTerm(const Vector3& wo, const Vector3& wi, const Vector3& wh, const float ODotH, const float* pFresnel = nullptr) const
 			{
 				if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
 					return 0.0f;
 
-				Vector3 wh = Math::Normalize(wo + wi);
 				float D = GGX_D(wh, mRoughness * mRoughness);
 				if (D == 0.0f)
 					return 0.0f;
 
 				float normalRef = Math::Lerp(0.0f, 0.08f, mSpecular);
-				float F = Fresnel_Schlick(Math::Dot(wo, wh), normalRef);
+				float F = pFresnel ? *pFresnel : Fresnel_Schlick(ODotH, normalRef);
 
 				float roughForG = (0.5f + 0.5f * mRoughness);
 				float G = GGX_G(wo, wi, wh, roughForG * roughForG);
@@ -166,16 +170,19 @@ namespace EDX
 				return F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
 			}
 
-			float SubsurfaceTerm(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
+			float SubsurfaceTerm(const Vector3& wo, const Vector3& wi, const float IDotH) const
 			{
-				Vector3 wh = Math::Normalize(wo + wi);
-				float cosD = Math::AbsDot(wh, wi);
-				float F_ss90 = cosD * cosD * mRoughness;
-				float oneMinusCosL = 1.0f - BSDFCoordinate::AbsCosTheta(wi);
-				float oneMinusCosV = 1.0f - BSDFCoordinate::AbsCosTheta(wo);
+				if (mSubsurface == 0.0f)
+					return 0.0f;
 
-				float S = (1.0f + (F_ss90 - 1.0f) * oneMinusCosL * oneMinusCosL * oneMinusCosL * oneMinusCosL * oneMinusCosL) *
-					(1.0f + (F_ss90 - 1.0f) * oneMinusCosV * oneMinusCosV * oneMinusCosV * oneMinusCosV * oneMinusCosV);
+				float oneMinusCosL = 1.0f - BSDFCoordinate::AbsCosTheta(wi);
+				float oneMinusCosLSqr = oneMinusCosL * oneMinusCosL;
+				float oneMinusCosV = 1.0f - BSDFCoordinate::AbsCosTheta(wo);
+				float oneMinusCosVSqr = oneMinusCosV * oneMinusCosV;
+				float F_ss90 = IDotH * IDotH * mRoughness;
+
+				float S = (1.0f + (F_ss90 - 1.0f) * oneMinusCosLSqr * oneMinusCosLSqr * oneMinusCosL) *
+					(1.0f + (F_ss90 - 1.0f) * oneMinusCosVSqr * oneMinusCosVSqr * oneMinusCosV);
 
 				return float(Math::EDX_INV_PI) * 1.25f * (S * (1.0f / (BSDFCoordinate::AbsCosTheta(wo) + BSDFCoordinate::AbsCosTheta(wi)) - 0.5f) + 0.5f);
 			}
@@ -183,8 +190,9 @@ namespace EDX
 			float Fresnel_Schlick(const float cosD, const float normalReflectance) const
 			{
 				float oneMinusCosD = 1.0f - cosD;
-				float fresnel =  normalReflectance +
-					(1.0f - normalReflectance) * oneMinusCosD * oneMinusCosD * oneMinusCosD * oneMinusCosD * oneMinusCosD;
+				float oneMinusCosDSqr = oneMinusCosD * oneMinusCosD;
+				float fresnel = normalReflectance +
+					(1.0f - normalReflectance) * oneMinusCosDSqr * oneMinusCosDSqr * oneMinusCosD;
 				float fresnelConductor = BSDF::FresnelConductor(cosD, 0.4f, 1.6f);
 
 				return Math::Lerp(fresnel, fresnelConductor, mMetallic);

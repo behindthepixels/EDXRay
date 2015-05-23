@@ -95,7 +95,7 @@ namespace EDX
 					dwh_dwi = (etat * etat * Math::Abs(IDotH)) / (sqrtDenom * sqrtDenom);
 				}
 
-				float whProb = GGX_Pdf(wh, mRoughness);
+				float whProb = GGX_Pdf(wh, mRoughness * mRoughness);
 				if (sampleReflect && sampleRefract)
 				{
 					float F = BSDF::FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
@@ -152,12 +152,12 @@ namespace EDX
 					wh = -Math::Normalize(etai * wo + etat * wi);
 				}
 
-				float D = GGX_D(wh, mRoughness);
+				float D = GGX_D(wh, mRoughness * mRoughness);
 				if (D == 0.0f)
 					return 0.0f;
 
 				float F = BSDF::FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
-				float G = GGX_G(wo, wi, wh, mRoughness);
+				float G = GGX_G(wo, wi, wh, mRoughness * mRoughness);
 
 				if (reflect)
 				{
@@ -209,7 +209,7 @@ namespace EDX
 				{
 					ret.Type = Parameter::Float;
 					ret.Value = this->mRoughness;
-					ret.Min = 1e-4f;
+					ret.Min = 0.01f;
 					ret.Max = 1.0f;
 
 					return ret;

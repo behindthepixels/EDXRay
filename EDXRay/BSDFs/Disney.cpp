@@ -18,12 +18,13 @@ namespace EDX
 			const Vector3 wo = diffGeom.WorldToLocal(_wo);
 
 			float microfacetPdf;
-			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness * mRoughness);
+			Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness * mRoughness);
 			if (microfacetPdf == 0.0f)
 				return 0.0f;
 
 			float normalRef = Math::Lerp(0.0f, 0.08f, mSpecular);
-			float F = Fresnel_Schlick(Math::Dot(wo, wh), normalRef);
+			float ODotH = Math::Dot(wo, wh);
+			float F = Fresnel_Schlick(ODotH, normalRef);
 			float prob = F;
 
 			Vector3 wi;
@@ -67,6 +68,9 @@ namespace EDX
 
 				if (pSampledTypes != nullptr)
 					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE);
+
+				wh = Math::Normalize(wo + wi);
+				ODotH = Math::Dot(wo, wh);
 			}
 
 			if (Math::Dot(_wo, diffGeom.mGeomNormal) * Math::Dot(*pvIn, diffGeom.mGeomNormal) > 0.0f)
@@ -80,6 +84,7 @@ namespace EDX
 				return Color::BLACK;
 			}
 
+			float IDotH = Math::Dot(wi, wh);
 			Color albedo = GetColor(diffGeom);
 			Color specAlbedo = Math::Lerp(Math::Lerp(albedo, Color::WHITE, 1.0f - mSpecularTint), albedo, mMetallic);
 			Color sheenAlbedo = Math::Lerp(Color::WHITE, albedo, mSheenTint);
@@ -88,9 +93,9 @@ namespace EDX
 			specAlbedo = Math::Lerp(specAlbedo, Color::WHITE, OneMinusODotH * OneMinusODotH * OneMinusODotH);
 
 			// Sheen term
-			Color sheenTerm = Fresnel_Schlick(Math::Dot(wo, wh), 0.0f) * mSheen * sheenAlbedo;
+			Color sheenTerm = Fresnel_Schlick(ODotH, 0.0f) * mSheen * sheenAlbedo;
 
-			return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, types), SubsurfaceTerm(wo, wi, types), mSubsurface) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi);
+			return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, IDotH), SubsurfaceTerm(wo, wi, IDotH), mSubsurface) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi, wh, ODotH, &F);
 		}
 	}
 }

@@ -25,9 +25,9 @@ namespace EDX
 			case BSDFType::Glass:
 				return new Glass(color);
 			case BSDFType::RoughConductor:
-				return new RoughConductor(color, 0.08f);
+				return new RoughConductor(color, 0.3f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(color, 0.3f);
+				return new RoughDielectric(color, 0.5f);
 			case BSDFType::Disney:
 				return new Disney(color);
 			}
@@ -46,9 +46,9 @@ namespace EDX
 			case BSDFType::Glass:
 				return new Glass(pTex, isTextured);
 			case BSDFType::RoughConductor:
-				return new RoughConductor(pTex, isTextured, 0.08f);
+				return new RoughConductor(pTex, isTextured, 0.3f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(pTex, isTextured, 0.3f);
+				return new RoughDielectric(pTex, isTextured, 0.5f);
 			case BSDFType::Disney:
 				return new Disney(pTex, isTextured);
 			}
@@ -67,9 +67,9 @@ namespace EDX
 			case BSDFType::Glass:
 				return new Glass(strTexPath);
 			case BSDFType::RoughConductor:
-				return new RoughConductor(strTexPath, 0.08f);
+				return new RoughConductor(strTexPath, 0.3f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(strTexPath, 0.3f);
+				return new RoughDielectric(strTexPath, 0.5f);
 			case BSDFType::Disney:
 				return new Disney(strTexPath);
 			}

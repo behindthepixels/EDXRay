@@ -17,7 +17,7 @@ namespace EDX
 			Vector3 wo = diffGeom.WorldToLocal(_wo), wi;
 
 			float microfacetPdf;
-			Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness);
+			Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness * mRoughness);
 
 			if (microfacetPdf == 0.0f)
 				return 0.0f;
@@ -28,8 +28,7 @@ namespace EDX
 
 			*pvIn = diffGeom.LocalToWorld(wi);
 
-
-			float dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
+			float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 			*pPdf = microfacetPdf * dwh_dwi;
 
 			if (Math::Dot(_wo, diffGeom.mGeomNormal) * Math::Dot(*pvIn, diffGeom.mGeomNormal) > 0.0f)
@@ -46,7 +45,14 @@ namespace EDX
 			if (pSampledTypes != nullptr)
 				*pSampledTypes = mScatterType;
 
-			return GetColor(diffGeom) * Eval(wo, wi, types);
+			float D = GGX_D(wh, mRoughness * mRoughness);
+			if (D == 0.0f)
+				return 0.0f;
+
+			float F = BSDF::FresnelConductor(Math::Dot(wo, wh), 0.4f, 1.6f);
+			float G = GGX_G(wo, wi, wh, mRoughness * mRoughness);
+
+			return GetColor(diffGeom) * F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
 		}
 	}
 }

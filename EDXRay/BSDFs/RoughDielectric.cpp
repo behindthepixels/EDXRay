@@ -21,7 +21,7 @@ namespace EDX
 			const Vector3 wo = diffGeom.WorldToLocal(_wo);
 
 			float microfacetPdf;
-			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness);
+			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness * mRoughness);
 			if (microfacetPdf == 0.0f)
 				return 0.0f;
 
