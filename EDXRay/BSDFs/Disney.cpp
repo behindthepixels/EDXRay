@@ -6,8 +6,13 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		Color Disney::SampleScattered(const Vector3& _wo, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf,
-			ScatterType types, ScatterType* pSampledTypes) const
+		Color Disney::SampleScattered(const Vector3& _wo,
+			const Sample& sample,
+			const DifferentialGeom& diffGeom,
+			Vector3* pvIn,
+			float* pPdf,
+			ScatterType types,
+			ScatterType* pSampledTypes) const
 		{
 			if (!MatchesTypes(types))
 			{

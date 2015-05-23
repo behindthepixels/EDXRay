@@ -77,9 +77,10 @@ namespace EDX
 			Color SampleScattered(const Vector3& _wo,
 				const Sample& sample,
 				const DifferentialGeom& diffGeom,
-				Vector3* pvIn, float* pPdf,
+				Vector3* pvIn,
+				float* pPdf,
 				ScatterType types = BSDF_ALL,
-				ScatterType* pSampledTypes = NULL) const;
+				ScatterType* pSampledTypes = nullptr) const;
 
 		private:
 			float Pdf(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
@@ -152,7 +153,11 @@ namespace EDX
 					(1.0f + (F_D90 - 1.0f) * oneMinusCosVSqr * oneMinusCosVSqr * oneMinusCosV);
 			}
 
-			float SpecularTerm(const Vector3& wo, const Vector3& wi, const Vector3& wh, const float ODotH, const float* pFresnel = nullptr) const
+			float SpecularTerm(const Vector3& wo,
+				const Vector3& wi,
+				const Vector3& wh,
+				const float ODotH,
+				const float* pFresnel = nullptr) const
 			{
 				if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
 					return 0.0f;
