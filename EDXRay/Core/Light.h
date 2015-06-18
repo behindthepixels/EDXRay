@@ -41,12 +41,28 @@ namespace EDX
 			}
 
 			virtual ~Light() {}
-			virtual Color Illuminate(const Vector3& pos, const Sample& lightSample, Vector3* pDir, VisibilityTester* pVisTest, float* pPdf) const = 0;
-			virtual Color Emit(const Vector3& dir) const = 0;
+			virtual Color Illuminate(const Vector3& pos,
+				const Sample& lightSample,
+				Vector3* pDir,
+				VisibilityTester* pVisTest,
+				float* pPdf,
+				float* pCosAtLight = nullptr,
+				float* pEmitPdfW = nullptr) const = 0;
+			virtual Color Sample(const Sample& lightSample0,
+				const Sample& lightSample1,
+				Ray* pRay,
+				Vector3* pNormal,
+				float* pPdf,
+				float* pDirectPdf = nullptr) const = 0;
+			virtual Color Emit(const Vector3& dir,
+				const Vector3& normal = Vector3::ZERO,
+				float* pPdf = nullptr,
+				float* pDirectPdf = nullptr) const = 0;
 			virtual float Pdf(const Vector3& pos, const Vector3& dir) const = 0;
-			float GetSampleCount() const { return mSampleCount; }
 			virtual bool IsEnvironmentLight() const { return false; }
 			virtual bool IsDelta() const = 0;
+			virtual bool IsFinite() const = 0;
+			float GetSampleCount() const { return mSampleCount; }
 		};
 	}
 }

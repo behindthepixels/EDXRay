@@ -44,6 +44,18 @@ namespace EDX
 			void GenerateRay(const CameraSample& sample, Ray* pRay) const;
 			void GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const;
 
+			float GetLensRadius() const
+			{
+				return mLensRadius;
+			}
+			float GetFocusDistance() const
+			{
+				return mFocalPlaneDist;
+			}
+			float GetImagePlaneDistance() const
+			{
+				return mImagePlaneDist;
+			}
 			const CameraParameters GetCameraParams() const
 			{
 				CameraParameters ret;

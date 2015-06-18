@@ -144,6 +144,10 @@ namespace EDX
 
 			bool Intersect(const Ray& ray, Intersection* pIsect) const;
 			bool Occluded(const Ray& ray) const;
+			BoundingBox WorldBounds() const
+			{
+				return mBounds;
+			}
 
 		private:
 

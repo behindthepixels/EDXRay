@@ -105,7 +105,11 @@ namespace EDX
 				return mShadingFrame.LocalToWorld(vec);
 			}
 
-			Color Emit(const Vector3& dir) const;
+			const Light* GetAreaLight() const
+			{
+				return (Light*)mpAreaLight;
+			}
+			Color Emit(const Vector3& dir) const; // Deprecated
 			void ComputeDifferentials(const RayDifferential& ray) const;
 		};
 

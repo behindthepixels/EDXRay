@@ -65,11 +65,11 @@ namespace EDX
 			}
 
 			Sample(RandomGen& random);
-			Sample(const SampleOffsets& offsets, const SampleBuffer* pSampleBuf)
+			Sample(const SampleOffsets& offsets, const SampleBuffer* pSampleBuf, const int innerIdx = 0)
 			{
-				w = pSampleBuf->p1D[offsets.offset1d];
-				u = pSampleBuf->p2D[offsets.offset2d].u;
-				v = pSampleBuf->p2D[offsets.offset2d].v;
+				w = pSampleBuf->p1D[offsets.offset1d + innerIdx];
+				u = pSampleBuf->p2D[offsets.offset2d + innerIdx].u;
+				v = pSampleBuf->p2D[offsets.offset2d + innerIdx].v;
 			}
 		};
 

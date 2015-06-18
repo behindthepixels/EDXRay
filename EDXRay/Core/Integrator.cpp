@@ -61,13 +61,14 @@ namespace EDX
 				{
 					float misWeight = Sampling::PowerHeuristic(1, bsdfPdf, 1, lightPdf);
 
-					DifferentialGeom isect;
+					DifferentialGeom diffGeom;
 					Ray rayLight = Ray(position, lightDir);
 					Color Li;
-					if (pScene->Intersect(rayLight, &isect))
+					if (pScene->Intersect(rayLight, &diffGeom))
 					{
-						if (pLight == (Light*)isect.mpAreaLight)
-							Li = isect.Emit(-lightDir);
+						pScene->PostIntersect(rayLight, &diffGeom);
+						if (pLight == (Light*)diffGeom.mpAreaLight)
+							Li = diffGeom.Emit(-lightDir);
 					}
 					else if (pScene->GetEnvironmentMap() == pLight)
 					{

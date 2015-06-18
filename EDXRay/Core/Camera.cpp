@@ -22,6 +22,9 @@ namespace EDX
 
 			mLensRadius = lensR;
 			mFocalPlaneDist = focalDist;
+
+			float tanHalfAngle = Math::Tan(Math::ToRadians(mFOV * 0.5f));
+			mImagePlaneDist = mFilmResY * 0.5f / tanHalfAngle;
 		}
 
 		void Camera::Resize(int width, int height)
@@ -30,6 +33,9 @@ namespace EDX
 
 			mDxCam = Matrix::TransformPoint(Vector3::UNIT_X, mRasterToCamera) - Matrix::TransformPoint(Vector3::ZERO, mRasterToCamera);
 			mDyCam = Matrix::TransformPoint(Vector3::UNIT_Y, mRasterToCamera) - Matrix::TransformPoint(Vector3::ZERO, mRasterToCamera);
+
+			float tanHalfAngle = Math::Tan(Math::ToRadians(mFOV * 0.5f));
+			mImagePlaneDist = mFilmResY * 0.5f / tanHalfAngle;
 		}
 
 		void Camera::GenerateRay(const CameraSample& sample, Ray* pRay) const

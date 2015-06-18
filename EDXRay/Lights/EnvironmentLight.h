@@ -21,24 +21,29 @@ namespace EDX
 			Array2f								mLuminance;
 			float								mScale;
 			float								mRotation;
+			const Scene*						mpScene;
 			bool								mIsTexture;
 
 		public:
 			EnvironmentLight(const Color& intens,
+				const Scene* scene,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
+				mpScene = scene;
 				mIsTexture = false;
 				mScale = 1.0f;
 				mpMap = new ConstantTexture2D<Color>(intens);
 			}
 
 			EnvironmentLight(const char* path,
+				const Scene* scene,
 				const float scale = 1.0f,
 				const float rotate = 0.0f,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
+				mpScene = scene;
 				mIsTexture = true;
 				mScale = scale;
 				mRotation = Math::ToRadians(rotate);
@@ -50,12 +55,14 @@ namespace EDX
 			EnvironmentLight(const Color& turbidity,
 				const Color& groundAlbedo,
 				const float sunElevation,
+				const Scene* scene,
 				const float rotate = 0.0f,
 				const int resX = 1200,
 				const int resY = 600,
 				const uint sampCount = 1)
 				: Light(sampCount)
 			{
+				mpScene = scene;
 				mIsTexture = true;
 				mScale = 1.0f;
 
@@ -103,7 +110,13 @@ namespace EDX
 				CalcLuminanceDistribution();
 			}
 
-			Color Illuminate(const Vector3& pos, const Sample& lightSample, Vector3* pDir, VisibilityTester* pVisTest, float* pPdf) const
+			Color Illuminate(const Vector3& pos,
+				const RayTracer::Sample& lightSample,
+				Vector3* pDir,
+				VisibilityTester* pVisTest,
+				float* pPdf,
+				float* pCosAtLight = nullptr,
+				float* pEmitPdfW = nullptr) const override
 			{
 				if (mIsTexture)
 				{
@@ -128,22 +141,80 @@ namespace EDX
 					*pPdf = Sampling::UniformSpherePDF();
 				}
 
-				pVisTest->SetRay(pos, *pDir);
+				if (pCosAtLight)
+					*pCosAtLight = 1.f;
 
-				//if (pfCosAtLight)
-				//{
-				//	*pfCosAtLight = 1.0f;
-				//}
-				//if (pfEmitPDFW)
-				//{
-				//	Vector3 vSphCenter;
-				//	*pfEmitPDFW = Sampling::UniformSpherePDF() * mfInvSceneBoundArea;
-				//}
+				if (pEmitPdfW)
+				{
+					Vector3 center;
+					float radius;
+					mpScene->WorldBounds().BoundingSphere(&center, &radius);
+					*pEmitPdfW = *pPdf * Sampling::ConcentricDiscPdf() / (radius * radius);
+				}
+
+				pVisTest->SetRay(pos, *pDir);
 
 				return Emit(-*pDir);
 			}
 
-			Color Emit(const Vector3& dir) const
+			Color Sample(const RayTracer::Sample& lightSample1,
+				const RayTracer::Sample& lightSample2,
+				Ray* pRay,
+				Vector3* pNormal,
+				float* pPdf,
+				float* pDirectPdf = nullptr) const override
+			{
+				float u, v, mapPdf, sinTheta;
+
+				if (mIsTexture)
+				{
+					mpDistribution->SampleContinuous(lightSample1.u, lightSample1.v, &u, &v, &mapPdf);
+					if (mapPdf == 0.0f)
+						return Color::BLACK;
+
+					float phi = u * float(Math::EDX_TWO_PI);
+					float theta = v * float(Math::EDX_PI);
+					sinTheta = Math::Sin(theta);
+					*pNormal = -Math::SphericalDirection(sinTheta,
+						Math::Cos(theta),
+						phi);
+				}
+				else
+				{
+					u = lightSample1.u; v = lightSample1.v;
+					*pNormal = -Sampling::UniformSampleSphere(lightSample1.u, lightSample1.v);
+					mapPdf = Sampling::UniformSpherePDF();
+
+					float theta = v * float(Math::EDX_PI);
+					sinTheta = Math::Sin(theta);
+				}
+
+				Vector3 center;
+				float radius;
+				mpScene->WorldBounds().BoundingSphere(&center, &radius);
+
+				Vector3 v1, v2;
+				Math::CoordinateSystem(-*pNormal, &v1, &v2);
+				float f1, f2;
+				Sampling::ConcentricSampleDisk(lightSample2.u, lightSample2.v, &f1, &f2);
+
+				Vector3 origin = center + radius * (f1 * v1 + f2 * v2);
+				*pRay = Ray(origin + radius * -*pNormal, *pNormal);
+
+				float pdfW = sinTheta != 0.0f ? mapPdf / (float(Math::EDX_TWO_PI) * float(Math::EDX_PI) * sinTheta) : 0.0f;
+				float pdfA = Sampling::ConcentricDiscPdf() / (radius * radius);
+				*pPdf = pdfW * pdfA;
+				if (pDirectPdf)
+					*pDirectPdf = pdfW;
+
+				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
+				return mpMap->Sample(Vector2(u, v), diff, TextureFilter::TriLinear) * mScale;
+			}
+
+			Color Emit(const Vector3& dir,
+				const Vector3& normal = Vector3::ZERO,
+				float* pPdf = nullptr,
+				float* pDirectPdf = nullptr) const override
 			{
 				Vector3 negDir = -dir;
 				float s = Math::SphericalPhi(negDir);
@@ -152,13 +223,33 @@ namespace EDX
 					s -= float(Math::EDX_TWO_PI);
 				s *= float(Math::EDX_INV_2PI);
 				s = 1.0f - s;
-				float t = Math::SphericalTheta(negDir) * float(Math::EDX_INV_PI);
+				float theta = Math::SphericalTheta(negDir);
+				float t = theta * float(Math::EDX_INV_PI);
+
+				float directPdf = 0.0f;
+				if (pDirectPdf || pPdf)
+				{
+					float mapPdf = mpDistribution->Pdf(s, t);
+					float sinTheta = Math::Sin(theta);
+					float pdfW = sinTheta != 0.0f ? mapPdf / (float(Math::EDX_TWO_PI) * float(Math::EDX_PI) * sinTheta) : 0.0f;
+					if (pDirectPdf)
+						*pDirectPdf = pdfW;
+
+					if (pPdf)
+					{
+						Vector3 center;
+						float radius;
+						mpScene->WorldBounds().BoundingSphere(&center, &radius);
+						float pdfA = Sampling::ConcentricDiscPdf() / (radius * radius);
+						*pPdf = pdfW * pdfA;
+					}
+				}
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
 				return mpMap->Sample(Vector2(s, t), diff, TextureFilter::TriLinear) * mScale;
 			}
 
-			float Pdf(const Vector3& pos, const Vector3& dir) const
+			float Pdf(const Vector3& pos, const Vector3& dir) const override
 			{
 				if (mIsTexture)
 				{
@@ -172,11 +263,15 @@ namespace EDX
 					return Sampling::UniformSpherePDF();
 			}
 
-			bool IsEnvironmentLight() const
+			bool IsEnvironmentLight() const override
 			{
 				return true;
 			}
-			bool IsDelta() const
+			bool IsDelta() const override
+			{
+				return false;
+			}
+			bool IsFinite() const override
 			{
 				return false;
 			}

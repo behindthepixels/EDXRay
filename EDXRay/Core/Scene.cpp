@@ -30,6 +30,11 @@ namespace EDX
 			mPrimitives[pDiffGeom->mPrimId]->PostIntersect(ray, pDiffGeom);
 		}
 
+		BoundingBox Scene::WorldBounds() const
+		{
+			return mAccel->WorldBounds();
+		}
+
 		void Scene::AddPrimitive(Primitive* pPrim)
 		{
 			mPrimitives.push_back(pPrim);

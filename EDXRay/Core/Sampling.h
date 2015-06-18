@@ -184,6 +184,10 @@ namespace EDX
 			{
 				return Math::EDX_INV_2PI;
 			}
+			inline float ConcentricDiscPdf()
+			{
+				return Math::EDX_INV_PI;
+			}
 			inline float CosineHemispherePDF(float cos)
 			{
 				return Math::Max(0.0f, cos) * float(Math::EDX_INV_PI);

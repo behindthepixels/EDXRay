@@ -9,7 +9,7 @@ namespace EDX
 	{
 		Color DifferentialGeom::Emit(const Vector3& vOut) const
 		{
-			return mpAreaLight ? mpAreaLight->L(mGeomNormal, vOut) : Color::BLACK;
+			return mpAreaLight ? mpAreaLight->Emit(vOut, mGeomNormal) : Color::BLACK;
 		}
 
 		void DifferentialGeom::ComputeDifferentials(const RayDifferential& ray) const

@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "../Integrators/DirectLighting.h"
 #include "../Integrators/PathTracing.h"
+#include "../Integrators/BidirectionalPathTracing.h"
 #include "Sampler.h"
 #include "../Sampler/RandomSampler.h"
 #include "Film.h"
@@ -36,11 +37,11 @@ namespace EDX
 				desc.CameraParams.FocusPlaneDist);
 
 			// Initialize scene
-			mpScene = new Scene;
-			mpIntegrator = new PathTracingIntegrator(8);
-
 			mpFilm = new FilmRHF;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new GaussianFilter);
+
+			mpScene = new Scene;
+			mpIntegrator = new BidirPathTracingIntegrator(8, mpCamera.Ptr(), mpFilm.Ptr());
 
 			mpSampler = new RandomSampler;
 
@@ -112,8 +113,9 @@ namespace EDX
 					mpFilm->IncreSampleCount();
 					mpFilm->ScaleToPixel();
 					mTaskSync.ResetTasks();
-					memory.FreeAll();
 				}
+
+				memory.FreeAll();
 
 				if (mTaskSync.Aborted())
 					break;

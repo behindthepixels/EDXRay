@@ -38,6 +38,7 @@ namespace EDX
 			virtual void Resize(int width, int height);
 			virtual void Clear();
 			void Release();
+			int GetPixelCount() const { return mPixelBuffer.LinearSize(); }
 
 			virtual void AddSample(float x, float y, const Color& sample);
 			void ScaleToPixel();
