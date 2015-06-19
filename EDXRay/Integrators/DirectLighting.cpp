@@ -57,8 +57,6 @@ namespace EDX
 				mpLightSampleOffsets[i] = SampleOffsets(pScene->GetLights()[i]->GetSampleCount(), pSampleBuf);
 				mpBSDFSampleOffsets[i] = SampleOffsets(pScene->GetLights()[i]->GetSampleCount(), pSampleBuf);
 			}
-
-			pSampleBuf->Validate();
 		}
 
 		DirectLightingIntegrator::~DirectLightingIntegrator()

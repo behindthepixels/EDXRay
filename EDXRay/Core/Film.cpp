@@ -70,6 +70,19 @@ namespace EDX
 			}
 		}
 
+		void Film::Splat(float x, float y, const Color& sample)
+		{
+			int X = Math::RoundToInt(x);
+			int Y = Math::RoundToInt(y);
+			X = Math::Clamp(X, 0, mWidth - 1);
+			Y = Math::Clamp(Y, 0, mHeight - 1);
+
+			int rowAdd = mHeight - 1 - Y;
+			int colAdd = X;
+			Pixel& pixel = mAccumulateBuffer[Vector2i(colAdd, rowAdd)];
+			pixel.splat += sample;
+		}
+
 		void Film::ScaleToPixel()
 		{
 			parallel_for(0, mHeight, [this](int y)
@@ -80,7 +93,7 @@ namespace EDX
 					pixel.color.r = Math::Max(0.0f, pixel.color.r);
 					pixel.color.g = Math::Max(0.0f, pixel.color.g);
 					pixel.color.b = Math::Max(0.0f, pixel.color.b);
-					mPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight, INV_GAMMA);
+					mPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight + pixel.splat / float(mSampleCount), INV_GAMMA);
 				}
 			});
 		}

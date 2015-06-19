@@ -47,7 +47,7 @@ namespace EDX
 			MemoryArena& memory) const
 		{
 			// Generate the light path
-			PathVertex* pLightPath = memory.Alloc<PathVertex>(MAX_PATH_LENGTH);
+			PathVertex* pLightPath = memory.Alloc<PathVertex>(mMaxDepth);
 			int lightPathLength = GenerateLightPath(pScene, pSampleBuf, pLightPath, random);
 
 			// Initialize the camera PathState
@@ -56,7 +56,7 @@ namespace EDX
 
 			// Trace camera path, and connect it with the light path
 			Color Ret = Color::BLACK;
-			for (; cameraPathState.PathLength <= MAX_PATH_LENGTH; cameraPathState.PathLength++)
+			for (; cameraPathState.PathLength <= mMaxDepth; cameraPathState.PathLength++)
 			{
 				RayDifferential pathRay = RayDifferential(cameraPathState.Origin, cameraPathState.Direction);
 				DifferentialGeom diffGeomLocal;
@@ -98,7 +98,7 @@ namespace EDX
 						random);
 				}
 
-				if (cameraPathState.PathLength + 1 > MAX_PATH_LENGTH)
+				if (cameraPathState.PathLength + 1 > mMaxDepth)
 				{
 					break;
 				}
@@ -120,7 +120,7 @@ namespace EDX
 					{
 						const PathVertex& lightVertex = pLightPath[i];
 
-						if (lightVertex.PathLength + 1 + cameraPathState.PathLength > MAX_PATH_LENGTH)
+						if (lightVertex.PathLength + 1 + cameraPathState.PathLength > mMaxDepth)
 						{
 							break;
 						}
@@ -151,10 +151,10 @@ namespace EDX
 			mLightIdSampleOffset = pSampleBuf->Request1DArray(1);
 			mLightEmitSampleOffsets = SampleOffsets(2, pSampleBuf);
 
-			mLightConnectIdSampleOffset = pSampleBuf->Request1DArray(MAX_PATH_LENGTH);
-			mLightPathSampleOffsets = SampleOffsets(MAX_PATH_LENGTH, pSampleBuf);
-			mLightConnectSampleOffsets = SampleOffsets(MAX_PATH_LENGTH, pSampleBuf);
-			mCameraPathSampleOffsets = SampleOffsets(MAX_PATH_LENGTH, pSampleBuf);
+			mLightConnectIdSampleOffset = pSampleBuf->Request1DArray(mMaxDepth);
+			mLightPathSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
+			mLightConnectSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
+			mCameraPathSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
 		}
 
 		BidirPathTracingIntegrator::~BidirPathTracingIntegrator()
@@ -208,7 +208,7 @@ namespace EDX
 
 			// Trace light path
 			int pathIdx = 0;
-			for (; lightPathState.PathLength <= MAX_PATH_LENGTH; lightPathState.PathLength++)
+			for (; lightPathState.PathLength <= mMaxDepth; lightPathState.PathLength++)
 			{
 				Ray pathRay = Ray(lightPathState.Origin, lightPathState.Direction);
 				DifferentialGeom diffGeom;
@@ -248,7 +248,7 @@ namespace EDX
 				}
 
 				// Terminate if path is too long
-				if (lightPathState.PathLength + 2 > MAX_PATH_LENGTH)
+				if (lightPathState.PathLength + 2 > mMaxDepth)
 				{
 					break;
 				}
@@ -347,12 +347,9 @@ namespace EDX
 				if (!pScene->Occluded(rayToCam))
 				{
 					if (mConnectToCamera)
-					{
-						mpFilm->AddSample(int(ptImage.x), int(ptImage.y), contrib);
-						return Color::BLACK;
-					}
-					else
-						return contrib;
+						mpFilm->Splat(ptImage.x, ptImage.y, contrib);
+
+					return contrib;
 				}
 			}
 

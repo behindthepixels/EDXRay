@@ -16,8 +16,6 @@ namespace EDX
 			struct PathVertex;
 
 		private:
-			static const int MAX_PATH_LENGTH = 10;
-
 			const Camera* mpCamera;
 			Film* mpFilm;
 			uint mMaxDepth;

@@ -37,7 +37,7 @@ namespace EDX
 				desc.CameraParams.FocusPlaneDist);
 
 			// Initialize scene
-			mpFilm = new FilmRHF;
+			mpFilm = new Film;
 			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new GaussianFilter);
 
 			mpScene = new Scene;
@@ -88,6 +88,7 @@ namespace EDX
 						Color L = mpIntegrator->Li(ray, mpScene.Ptr(), pSampleBuf, random, memory);
 
 						mpFilm->AddSample(pSampleBuf->imageX, pSampleBuf->imageY, L);
+						memory.FreeAll();
 					}
 				}
 			}
@@ -114,8 +115,6 @@ namespace EDX
 					mpFilm->ScaleToPixel();
 					mTaskSync.ResetTasks();
 				}
-
-				memory.FreeAll();
 
 				if (mTaskSync.Aborted())
 					break;

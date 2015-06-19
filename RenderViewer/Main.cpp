@@ -44,8 +44,8 @@ void OnInit(Object* pSender, EventArgs args)
 	desc.ImageHeight = Application::GetMainWindow()->GetWindowHeight();
 	desc.SamplesPerPixel = 4096;
 	desc.CameraParams.FieldOfView = 45;
-	desc.CameraParams.Pos = Vector3(0, 3, 5);
-	desc.CameraParams.Target = Vector3(0, 3, 0);
+	desc.CameraParams.Pos = Vector3(0, 5, 15);
+	desc.CameraParams.Target = Vector3(0, 5, 0);
 	gpRenderer->Initialize(desc);
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
@@ -57,7 +57,7 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	pMesh->LoadSphere(1.0f, BSDFType::Glass, Color::WHITE, 32, 16, Vector3(0.0f, 3.0f, 0.0f));
+	pMesh->LoadSphere(1.5f, BSDFType::Diffuse, Color::WHITE, 32, 16, Vector3(0.0f, 3.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.7f, 0.37f, 0.3f), Vector3(1.5f, 0.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/splash.obj", BSDFType::Glass, Color(1.0f, 1.0f, 1.0f), Vector3(4.95f, 0.06f, -4.95f), 9.9f * Vector3::UNIT_SCALE, Vector3(0.0f, 45.0f, 0.0f));
 	//pMesh3->LoadSphere(1.0f, BSDFType::RoughDielectric, Color::WHITE, 128, 128, Vector3(-2.5f, 3.0f, 0.0f));

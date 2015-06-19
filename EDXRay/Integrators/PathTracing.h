@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "../Core/Integrator.h"
+#include "../Core/Sampler.h"
 
 
 namespace EDX
@@ -12,9 +13,9 @@ namespace EDX
 		{
 		private:
 			uint mMaxDepth;
-			SampleOffsets* mpLightSampleOffsets;
-			SampleOffsets* mpBSDFSampleOffsets;
-			SampleOffsets* mpScatterOffsets;
+			SampleOffsets mpLightSampleOffsets;
+			SampleOffsets mpBSDFSampleOffsets;
+			SampleOffsets mpScatterOffsets;
 
 		public:
 			PathTracingIntegrator(int depth)

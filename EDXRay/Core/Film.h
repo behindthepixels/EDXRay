@@ -17,6 +17,7 @@ namespace EDX
 			struct Pixel
 			{
 				Color color;
+				Color splat;
 				float weight;
 			};
 
@@ -41,6 +42,7 @@ namespace EDX
 			int GetPixelCount() const { return mPixelBuffer.LinearSize(); }
 
 			virtual void AddSample(float x, float y, const Color& sample);
+			virtual void Splat(float x, float y, const Color& sample);
 			void ScaleToPixel();
 			inline void IncreSampleCount() { mSampleCount++; }
 

@@ -36,8 +36,8 @@ namespace EDX
 					const BSDF* pBSDF = diffGeom.mpBSDF;
 					if (!pBSDF->IsSpecular())
 					{
-						Sample lightSample = Sample(mpLightSampleOffsets[bounce], pSampleBuf);
-						Sample bsdfSample = Sample(mpBSDFSampleOffsets[bounce], pSampleBuf);
+						Sample lightSample = Sample(mpLightSampleOffsets, pSampleBuf, bounce);
+						Sample bsdfSample = Sample(mpBSDFSampleOffsets, pSampleBuf, bounce);
 						auto lightIdx = Math::Min(lightSample.w * pScene->GetLights().size(), pScene->GetLights().size() - 1);
 						L += pathThroughput * Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, lightSample, bsdfSample);
 					}
@@ -48,7 +48,7 @@ namespace EDX
 					Vector3 vIn;
 					float pdf;
 					ScatterType bsdfFlags;
-					Sample scatterSample = Sample(mpScatterOffsets[bounce], pSampleBuf);
+					Sample scatterSample = Sample(mpScatterOffsets, pSampleBuf, bounce);
 					Color f = pBSDF->SampleScattered(vOut, scatterSample, diffGeom, &vIn, &pdf, BSDF_ALL, &bsdfFlags);
 					if (f.IsBlack() || pdf == 0.0f)
 						break;
@@ -85,25 +85,13 @@ namespace EDX
 		{
 			assert(pSampleBuf);
 
-			mpLightSampleOffsets = new SampleOffsets[mMaxDepth];
-			mpBSDFSampleOffsets = new SampleOffsets[mMaxDepth];
-			mpScatterOffsets = new SampleOffsets[mMaxDepth];
-
-			for (auto i = 0; i < mMaxDepth; i++)
-			{
-				mpLightSampleOffsets[i] = SampleOffsets(1, pSampleBuf);
-				mpBSDFSampleOffsets[i] = SampleOffsets(1, pSampleBuf);
-				mpScatterOffsets[i] = SampleOffsets(1, pSampleBuf);
-			}
-
-			pSampleBuf->Validate();
+			mpLightSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
+			mpBSDFSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
+			mpScatterOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
 		}
 
 		PathTracingIntegrator::~PathTracingIntegrator()
 		{
-			SafeDeleteArray(mpLightSampleOffsets);
-			SafeDeleteArray(mpBSDFSampleOffsets);
-			SafeDeleteArray(mpScatterOffsets);
 		}
 	}
 }
