@@ -72,8 +72,8 @@ namespace EDX
 
 		void Film::Splat(float x, float y, const Color& sample)
 		{
-			int X = Math::RoundToInt(x);
-			int Y = Math::RoundToInt(y);
+			int X = Math::FloorToInt(x);
+			int Y = Math::FloorToInt(y);
 			X = Math::Clamp(X, 0, mWidth - 1);
 			Y = Math::Clamp(Y, 0, mHeight - 1);
 

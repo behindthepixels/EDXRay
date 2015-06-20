@@ -23,10 +23,13 @@ namespace EDX
 		public:
 			DirectionalLight(const Vector3& dir,
 				const Color& intens,
+				const Scene* pScene,
 				const uint sampCount = 1)
 				: Light(sampCount)
 				, mDirection(Math::Normalize(dir))
+				, mDirFrame(-mDirection)
 				, mIntensity(intens)
+				, mpScene(pScene)
 			{
 			}
 

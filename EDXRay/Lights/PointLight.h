@@ -35,7 +35,7 @@ namespace EDX
 				float* pEmitPdfW = nullptr) const override
 			{
 				*pDir = Math::Normalize(mPosition - pos);
-				*pPdf = 1.0f;
+				*pPdf = Math::DistanceSquared(mPosition, pos);
 				pVisTest->SetSegment(pos, mPosition);
 
 				if (pCosAtLight != NULL)
@@ -47,7 +47,7 @@ namespace EDX
 					*pEmitPdfW = Sampling::UniformSpherePDF();
 				}
 
-				return mIntensity / Math::DistanceSquared(mPosition, pos);
+				return mIntensity;
 			}
 
 			Color Sample(const RayTracer::Sample& lightSample1,
@@ -60,7 +60,7 @@ namespace EDX
 				Vector3 dir = Sampling::UniformSampleSphere(lightSample1.u, lightSample1.v);
 				*pRay = Ray(mPosition, dir);
 				*pNormal = Vector3(dir);
-				*pPdf = Sampling::UniformHemispherePDF();
+				*pPdf = Sampling::UniformSpherePDF();
 				if (pDirectPdf)
 					*pDirectPdf = 1.0f;
 

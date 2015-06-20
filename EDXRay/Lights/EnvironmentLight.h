@@ -218,9 +218,6 @@ namespace EDX
 			{
 				Vector3 negDir = -dir;
 				float s = Math::SphericalPhi(negDir);
-				s += mRotation;
-				if (s > float(Math::EDX_TWO_PI))
-					s -= float(Math::EDX_TWO_PI);
 				s *= float(Math::EDX_INV_2PI);
 				s = 1.0f - s;
 				float theta = Math::SphericalTheta(negDir);
@@ -229,19 +226,37 @@ namespace EDX
 				float directPdf = 0.0f;
 				if (pDirectPdf || pPdf)
 				{
-					float mapPdf = mpDistribution->Pdf(s, t);
-					float sinTheta = Math::Sin(theta);
-					float pdfW = sinTheta != 0.0f ? mapPdf / (float(Math::EDX_TWO_PI) * float(Math::EDX_PI) * sinTheta) : 0.0f;
-					if (pDirectPdf)
-						*pDirectPdf = pdfW;
-
-					if (pPdf)
+					if (mIsTexture)
 					{
-						Vector3 center;
-						float radius;
-						mpScene->WorldBounds().BoundingSphere(&center, &radius);
-						float pdfA = Sampling::ConcentricDiscPdf() / (radius * radius);
-						*pPdf = pdfW * pdfA;
+						float mapPdf = mpDistribution->Pdf(s, t);
+						float sinTheta = Math::Sin(theta);
+						float pdfW = sinTheta != 0.0f ? mapPdf / (float(Math::EDX_TWO_PI) * float(Math::EDX_PI) * sinTheta) : 0.0f;
+						if (pDirectPdf)
+							*pDirectPdf = pdfW;
+
+						if (pPdf)
+						{
+							Vector3 center;
+							float radius;
+							mpScene->WorldBounds().BoundingSphere(&center, &radius);
+							float pdfA = Sampling::ConcentricDiscPdf() / (radius * radius);
+							*pPdf = pdfW * pdfA;
+						}
+					}
+					else
+					{
+						float pdfW = Sampling::UniformSpherePDF();
+						if (pDirectPdf)
+							*pDirectPdf = pdfW;
+
+						if (pPdf)
+						{
+							Vector3 center;
+							float radius;
+							mpScene->WorldBounds().BoundingSphere(&center, &radius);
+							float pdfA = Sampling::ConcentricDiscPdf() / (radius * radius);
+							*pPdf = pdfW * pdfA;
+						}
 					}
 				}
 
@@ -301,9 +316,6 @@ namespace EDX
 					for (auto x = 0; x < width; x++)
 					{
 						float u = (x + 0.5f) / float(width);
-						u += mRotation * float(Math::EDX_INV_2PI);
-						if (u >= 1.0f)
-							u -= 1.0f;
 						Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
 						mLuminance[Vector2i(x, y)] = mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear).Luminance() * sinTheta;
 					}

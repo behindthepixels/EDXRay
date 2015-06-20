@@ -456,7 +456,7 @@ namespace EDX
 			Vector3 vOut = -pathRay.mDir;
 			float directPdfA;
 			float emitPdfW;
-			Color emittedRadiance = pLight->Emit(diffGeom.mNormal, vOut, &emitPdfW, &directPdfA);
+			Color emittedRadiance = pLight->Emit(vOut, diffGeom.mNormal, &emitPdfW, &directPdfA);
 
 			if (emittedRadiance.IsBlack())
 			{
