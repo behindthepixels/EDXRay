@@ -95,7 +95,7 @@ namespace EDX
 						{
 							float r = arhosek_tristim_skymodel_radiance(skyModelState[i], theta, gamma, i);
 							assert(Math::NumericValid(r));
-							skyRadiance[Vector2i(x, y)][i] = r * 0.011f;
+							skyRadiance[Vector2i(x, y)][i] = r * 0.025f;
 							if (gamma < 0.02)
 								skyRadiance[Vector2i(x, y)][i] = 3000.0f;
 						}
@@ -118,14 +118,15 @@ namespace EDX
 				float* pCosAtLight = nullptr,
 				float* pEmitPdfW = nullptr) const override
 			{
+				float u, v;
 				if (mIsTexture)
 				{
-					float u, v;
 					mpDistribution->SampleContinuous(lightSample.u, lightSample.v, &u, &v, pPdf);
 					if (*pPdf == 0.0f)
 						return Color::BLACK;
 
 					float phi = u * float(Math::EDX_TWO_PI);
+					phi = ApplyRotation(phi);
 					float theta = v * float(Math::EDX_PI);
 					float sinTheta = Math::Sin(theta);
 					*pPdf = sinTheta != 0.0f ? *pPdf / (2.0f * float(Math::EDX_PI) * float(Math::EDX_PI) * sinTheta) : 0.0f;
@@ -136,6 +137,8 @@ namespace EDX
 				}
 				else
 				{
+					u = lightSample.u;
+					v = lightSample.v;
 					Vector3 dir = Sampling::UniformSampleSphere(lightSample.u, lightSample.v);
 					*pDir = Vector3(dir.x, dir.z, -dir.y);
 					*pPdf = Sampling::UniformSpherePDF();
@@ -154,7 +157,8 @@ namespace EDX
 
 				pVisTest->SetRay(pos, *pDir);
 
-				return Emit(-*pDir);
+				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
+				return mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear) * mScale;
 			}
 
 			Color Sample(const RayTracer::Sample& lightSample1,
@@ -173,6 +177,7 @@ namespace EDX
 						return Color::BLACK;
 
 					float phi = u * float(Math::EDX_TWO_PI);
+					phi = ApplyRotation(phi);
 					float theta = v * float(Math::EDX_PI);
 					sinTheta = Math::Sin(theta);
 					*pNormal = -Math::SphericalDirection(sinTheta,
@@ -181,7 +186,8 @@ namespace EDX
 				}
 				else
 				{
-					u = lightSample1.u; v = lightSample1.v;
+					u = lightSample1.u;
+					v = lightSample1.v;
 					*pNormal = -Sampling::UniformSampleSphere(lightSample1.u, lightSample1.v);
 					mapPdf = Sampling::UniformSpherePDF();
 
@@ -206,9 +212,9 @@ namespace EDX
 				*pPdf = pdfW * pdfA;
 				if (pDirectPdf)
 					*pDirectPdf = pdfW;
-
+				
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
-				return mpMap->Sample(Vector2(u, v), diff, TextureFilter::TriLinear) * mScale;
+				return mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear) * mScale;
 			}
 
 			Color Emit(const Vector3& dir,
@@ -217,9 +223,9 @@ namespace EDX
 				float* pDirectPdf = nullptr) const override
 			{
 				Vector3 negDir = -dir;
-				float s = Math::SphericalPhi(negDir);
-				s *= float(Math::EDX_INV_2PI);
-				s = 1.0f - s;
+				float phi = Math::SphericalPhi(negDir);
+				phi = ApplyRotation(phi);
+				float s = phi * float(Math::EDX_INV_2PI);
 				float theta = Math::SphericalTheta(negDir);
 				float t = theta * float(Math::EDX_INV_PI);
 
@@ -261,7 +267,7 @@ namespace EDX
 				}
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
-				return mpMap->Sample(Vector2(s, t), diff, TextureFilter::TriLinear) * mScale;
+				return mpMap->Sample(Vector2(s, t), diff, TextureFilter::Linear) * mScale;
 			}
 
 			float Pdf(const Vector3& pos, const Vector3& dir) const override
@@ -270,6 +276,7 @@ namespace EDX
 				{
 					float theta = Math::SphericalTheta(dir);
 					float phi = Math::SphericalPhi(dir);
+					phi = ApplyRotation(phi);
 					float sinTheta = Math::Sin(theta);
 					return mpDistribution->Pdf(phi * float(Math::EDX_INV_2PI), theta * float(Math::EDX_INV_PI)) /
 						(2.0f * float(Math::EDX_PI) * float(Math::EDX_PI) * sinTheta);
@@ -322,6 +329,18 @@ namespace EDX
 				}
 
 				mpDistribution = new Sampling::Distribution2D(mLuminance.Data(), width, height);
+			}
+
+			inline float ApplyRotation(const float phi) const
+			{
+				float ret = phi;
+				ret -= mRotation;
+				if (ret < 0.0f)
+					ret += float(Math::EDX_TWO_PI);
+				else if (ret > float(Math::EDX_TWO_PI))
+					ret -= float(Math::EDX_TWO_PI);
+
+				return ret;
 			}
 		};
 
