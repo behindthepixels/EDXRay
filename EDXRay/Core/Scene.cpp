@@ -11,6 +11,7 @@ namespace EDX
 	{
 		Scene::Scene()
 			: mEnvMap(nullptr)
+			, mDirty(true)
 		{
 		}
 
@@ -38,6 +39,7 @@ namespace EDX
 		void Scene::AddPrimitive(Primitive* pPrim)
 		{
 			mPrimitives.push_back(pPrim);
+			mDirty = true;
 		}
 
 		void Scene::AddLight(Light* pLight)
@@ -45,7 +47,7 @@ namespace EDX
 			if (pLight->IsEnvironmentLight())
 			{
 				bool foundEnvLight = false;
-				for (auto it : mLights)
+				for (auto& it : mLights)
 				{
 					if (it->IsEnvironmentLight())
 					{
@@ -64,8 +66,13 @@ namespace EDX
 
 		void Scene::InitAccelerator()
 		{
-			mAccel = new BVH2();
-			mAccel->Construct(mPrimitives);
+			if (mDirty)
+			{
+				mAccel = new BVH2();
+				mAccel->Construct(mPrimitives);
+
+				mDirty = false;
+			}
 		}
 	}
 }

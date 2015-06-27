@@ -70,7 +70,7 @@ namespace EDX
 						if (pLight == (Light*)diffGeom.mpAreaLight)
 							Li = diffGeom.Emit(-lightDir);
 					}
-					else if (pScene->GetEnvironmentMap() == pLight)
+					else if ((Light*)pScene->GetEnvironmentMap() == pLight)
 					{
 						Li = pLight->Emit(-lightDir);
 					}

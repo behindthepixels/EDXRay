@@ -37,18 +37,67 @@ namespace EDX
 				desc.CameraParams.FocusPlaneDist);
 
 			// Initialize scene
-			mpFilm = new Film;
-			mpFilm->Init(desc.ImageWidth, desc.ImageHeight, new GaussianFilter);
-
 			mpScene = new Scene;
-			mpIntegrator = new BidirPathTracingIntegrator(8, mpCamera.Ptr(), mpFilm.Ptr());
-
-			mpSampler = new RandomSampler;
 
 			mTaskSync.Init(desc.ImageWidth, desc.ImageHeight);
 
 			mTaskSync.SetAbort(false);
 			ThreadScheduler::Instance()->InitAndLaunchThreads();
+		}
+
+		void Renderer::InitComponent()
+		{
+			Filter* pFilter;
+			switch (mJobDesc.FilterType)
+			{
+			case EFilterType::Box:
+				pFilter = new BoxFilter;
+				break;
+			case EFilterType::Gaussian:
+				pFilter = new GaussianFilter;
+				break;
+			case EFilterType::MitchellNetravali:
+				pFilter = new MitchellNetravaliFilter;
+				break;
+			}
+
+			mpFilm = mJobDesc.UseRHF ? new FilmRHF : new Film;
+			mpFilm->Init(mJobDesc.ImageWidth, mJobDesc.ImageHeight, new GaussianFilter);
+
+			switch (mJobDesc.SamplerType)
+			{
+			case ESamplerType::Random:
+				mpSampler = new RandomSampler;
+				break;
+			case ESamplerType::Sobol:
+				mpSampler = new RandomSampler;
+				break;
+			case ESamplerType::Metropolis:
+				mpSampler = new RandomSampler;
+				break;
+			}
+
+			switch (mJobDesc.IntegratorType)
+			{
+			case EIntegratorType::DirectLighting:
+				mpIntegrator = new DirectLightingIntegrator(mJobDesc.MaxPathLength);
+				break;
+			case EIntegratorType::PathTracing:
+				mpIntegrator = new PathTracingIntegrator(mJobDesc.MaxPathLength);
+				break;
+			case EIntegratorType::BidirectionalPathTracing:
+				mpIntegrator = new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Ptr(), mpFilm.Ptr());
+				break;
+			case EIntegratorType::MultiplexedMLT:
+				mpIntegrator = new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Ptr(), mpFilm.Ptr());
+				break;
+			case EIntegratorType::StochasticPPM:
+				mpIntegrator = new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Ptr(), mpFilm.Ptr());
+				break;
+			}
+
+			BakeSamples();
+			mpScene->InitAccelerator();
 		}
 
 		Renderer::~Renderer()
@@ -62,7 +111,7 @@ namespace EDX
 			mJobDesc.ImageHeight = height;
 
 			mpCamera->Resize(width, height);
-			mpFilm->Resize(width, height);
+			//mpFilm->Resize(width, height);
 			mTaskSync.Init(width, height);
 		}
 

@@ -78,6 +78,9 @@ namespace EDX
 			Program mProgram;
 
 		public:
+			bool mSetFocusDistance;
+
+		public:
 			void Initialize(const Scene& scene, const RenderJobDesc& jobDesc)
 			{
 				mpScene = &scene;
@@ -89,6 +92,7 @@ namespace EDX
 					jobDesc.CameraParams.FieldOfView,
 					0.01f);
 				mPickedPrimIdx = -1;
+				mSetFocusDistance = false;
 
 				auto& prims = mpScene->GetPrimitives();
 				for (auto& it : prims)
@@ -306,8 +310,13 @@ namespace EDX
 				Intersection isect;
 				if (mpScene->Intersect(ray, &isect))
 				{
-					mPickedPrimIdx = isect.mPrimId;
-					mPickedTriIdx = isect.mTriId;
+					if (!mSetFocusDistance)
+					{
+						mPickedPrimIdx = isect.mPrimId;
+						mPickedTriIdx = isect.mTriId;
+					}
+					else
+						mCamera.mFocalPlaneDist = isect.mDist;
 				}
 				else
 				{

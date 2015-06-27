@@ -95,7 +95,6 @@ void OnInit(Object* pSender, EventArgs args)
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 7.9f, 0.0f), Color(50.0f)));
 
 	pScene->InitAccelerator();
-	gpRenderer->BakeSamples();
 
 	OpenGL::InitializeOpenGLExtensions();
 	gpPreview = new Previewer;
@@ -109,17 +108,18 @@ void OnRender(Object* pSender, EventArgs args)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	auto jobDesc = gpRenderer->GetJobDesc();
 	if (gRendering)
 	{
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(0, gpRenderer->GetJobDesc().ImageWidth, 0, gpRenderer->GetJobDesc().ImageHeight, -1, 1);
+		glOrtho(0, jobDesc->ImageWidth, 0, jobDesc->ImageHeight, -1, 1);
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 
 		glRasterPos3f(0.0f, 0.0f, 0.0f);
-		glDrawPixels(gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight, GL_RGBA, GL_FLOAT, (float*)gpRenderer->GetFilm()->GetPixelBuffer());
+		glDrawPixels(jobDesc->ImageWidth, jobDesc->ImageHeight, GL_RGBA, GL_FLOAT, (float*)gpRenderer->GetFilm()->GetPixelBuffer());
 	}
 	else
 		gpPreview->OnRender();
@@ -127,14 +127,15 @@ void OnRender(Object* pSender, EventArgs args)
 	EDXGui::BeginFrame();
 	EDXGui::BeginDialog(LayoutStrategy::DockRight);
 	{
-		EDXGui::Text("Image Res: %i, %i", gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight);
-		EDXGui::Text("Samples per Pixel: %i", gpRenderer->GetFilm()->GetSampleCount());
+		EDXGui::Text("Image Res: %i, %i", jobDesc->ImageWidth, jobDesc->ImageHeight);
+		EDXGui::Text("Samples per Pixel: %i", gpRenderer->GetFilm() ? gpRenderer->GetFilm()->GetSampleCount() : 0);
 		EDXGui::Text("(%.2f, %.2f, %.2f)", gCursorColor.r, gCursorColor.g, gCursorColor.b);
 		if (EDXGui::Button(!gRendering ? "Render" : "Stop Rendering"))
 		{
 			gRendering = !gRendering;
 			if (gRendering)
 			{
+				gpRenderer->InitComponent();
 				gpRenderer->SetCameraParams(gpPreview->GetCamera().GetCameraParams());
 				gpRenderer->QueueRenderTasks();
 			}
@@ -149,10 +150,78 @@ void OnRender(Object* pSender, EventArgs args)
 			char directory[MAX_PATH];
 			sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
 			sprintf_s(name, "%sEDXRay_%i.bmp", directory, time(0));
-			Bitmap::SaveBitmapFile(name, (float*)gpRenderer->GetFilm()->GetPixelBuffer(), gpRenderer->GetJobDesc().ImageWidth, gpRenderer->GetJobDesc().ImageHeight);
+			Bitmap::SaveBitmapFile(name, (float*)gpRenderer->GetFilm()->GetPixelBuffer(), jobDesc->ImageWidth, jobDesc->ImageHeight);
 		}
-		static bool showRHF = false;
-		if (EDXGui::CollapsingHeader("RHF Denoise", showRHF))
+
+		static bool showRenderSettings = true;
+		if (EDXGui::CollapsingHeader("Render Settings", showRenderSettings))
+		{
+			ComboBoxItem integratoriItems[] = {
+					{ 0, "Direct Lighting" },
+					{ 1, "Path Tracing" },
+					{ 2, "BD Path Tracing" },
+					{ 3, "Multiplexed MLT" },
+					{ 4, "Stochastic PPM" }
+			};
+			EDXGui::ComboBox("Integrator", integratoriItems, 5, (int&)jobDesc->IntegratorType);
+
+			static int sampler = 0;
+			ComboBoxItem samplerItems[] = {
+					{ 0, "Random" },
+					{ 1, "Sobol" },
+					{ 2, "Metroplis" }
+			};
+			EDXGui::ComboBox("Sampler", samplerItems, 3, (int&)jobDesc->SamplerType);
+
+			static int filter = 0;
+			ComboBoxItem filteriItems[] = {
+					{ 0, "Box" },
+					{ 1, "Gaussion" },
+					{ 2, "Mitchell Netravali" }
+			};
+			EDXGui::ComboBox("Filter", filteriItems, 3, (int&)jobDesc->FilterType);
+
+			EDXGui::InputDigit((int&)jobDesc->SamplesPerPixel, "Max Samples");
+			EDXGui::CheckBox("Adaptive Sampling", jobDesc->AdaptiveSample);
+			EDXGui::CheckBox("Use RHF", jobDesc->UseRHF);
+
+			EDXGui::CloseHeaderSection();
+		}
+
+		static bool showCameraSettings = true;
+		if (EDXGui::CollapsingHeader("Camera Settings", showCameraSettings))
+		{
+			EDXGui::Slider<float>("Lens Radius", &gpPreview->GetCamera().mLensRadius, 0.0f, 1.0f);
+			EDXGui::CheckBox("Set Focus Distance", gpPreview->mSetFocusDistance);
+
+			EDXGui::CloseHeaderSection();
+		}
+
+		static bool showSceneSettings = true;
+		if (EDXGui::CollapsingHeader("Scene", showSceneSettings))
+		{
+			if (EDXGui::Button("Environment Light"))
+			{
+				char filePath[MAX_PATH];
+				char directory[MAX_PATH];
+				sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
+				if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
+				{
+					gpRenderer->GetScene()->AddLight(new EnvironmentLight(filePath, gpRenderer->GetScene().Ptr(), 1.0f));
+				}
+			}
+
+			static float envLightRotation = 0.0f;
+			if (EDXGui::Slider<float>("Env Light Rotation", &envLightRotation, -float(Math::EDX_PI), float(Math::EDX_PI)))
+			{
+				dynamic_cast<const EnvironmentLight*>(gpRenderer->GetScene()->GetEnvironmentMap())->SetRotation(envLightRotation);
+			}
+
+			EDXGui::CloseHeaderSection();
+		}
+
+		static bool showRHF = true;
+		if (jobDesc->UseRHF && EDXGui::CollapsingHeader("RHF Denoise", showRHF))
 		{
 			if (EDXGui::Button("Denoise"))
 			{
@@ -286,7 +355,11 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 
 	if (args.Action == MouseAction::Move)
 	{
-		gCursorColor = gpRenderer->GetFilm()->GetPixelBuffer()[args.x + (gpRenderer->GetJobDesc().ImageHeight - args.y - 1) * gpRenderer->GetJobDesc().ImageWidth];
+		auto jobDesc = gpRenderer->GetJobDesc();
+		gCursorColor = gpRenderer->GetFilm() ?
+			gpRenderer->GetFilm()->GetPixelBuffer()[args.x + (jobDesc->ImageHeight - args.y - 1) * jobDesc->ImageWidth] :
+			Color::BLACK;
+
 	}
 
 	if (!gRendering)

@@ -20,7 +20,7 @@ namespace EDX
 
 		class Camera : public EDX::Camera
 		{
-		private:
+		public:
 			float mLensRadius, mFocalPlaneDist;
 			float mImagePlaneDist;
 

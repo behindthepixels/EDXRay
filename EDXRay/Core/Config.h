@@ -11,9 +11,10 @@ namespace EDX
 		enum class EIntegratorType
 		{
 			DirectLighting,
-			AmbientOcclusion,
 			PathTracing,
-			BidirectionalPathTracing
+			BidirectionalPathTracing,
+			MultiplexedMLT,
+			StochasticPPM
 		};
 
 		enum class ESamplerType
@@ -23,13 +24,24 @@ namespace EDX
 			Metropolis
 		};
 
+		enum class EFilterType
+		{
+			Box,
+			Gaussian,
+			MitchellNetravali
+		};
+
 		struct RenderJobDesc
 		{
 			CameraParameters	CameraParams;
 			EIntegratorType		IntegratorType;
 			ESamplerType		SamplerType;
+			EFilterType			FilterType;
+			bool				AdaptiveSample;
+			bool				UseRHF;
 			uint				ImageWidth, ImageHeight;
 			uint				SamplesPerPixel;
+			uint				MaxPathLength;
 			vector<string>		ModelPaths;
 
 			RenderJobDesc()
@@ -46,9 +58,13 @@ namespace EDX
 				CameraParams.FocusPlaneDist = 0.0f;
 				CameraParams.LensRadius = 0.0f;
 
-				IntegratorType = EIntegratorType::DirectLighting;
+				IntegratorType = EIntegratorType::BidirectionalPathTracing;
 				SamplerType = ESamplerType::Random;
-				SamplesPerPixel = 64;
+				FilterType = EFilterType::Gaussian;
+				AdaptiveSample = false;
+				UseRHF = false;
+				SamplesPerPixel = 4096;
+				MaxPathLength = 8;
 			}
 		};
 	}

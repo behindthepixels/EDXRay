@@ -19,10 +19,10 @@ namespace EDX
 			RefPtr<Texture2D<Color>>			mpMap;
 			RefPtr<Sampling::Distribution2D>	mpDistribution;
 			Array2f								mLuminance;
-			float								mScale;
-			float								mRotation;
 			const Scene*						mpScene;
 			bool								mIsTexture;
+			float								mScale;
+			mutable float						mRotation;
 
 		public:
 			EnvironmentLight(const Color& intens,
@@ -308,6 +308,10 @@ namespace EDX
 			float GetRotation() const
 			{
 				return mRotation;
+			}
+			void SetRotation(const float rot) const
+			{
+				mRotation = rot;
 			}
 
 		private:

@@ -32,8 +32,10 @@ namespace EDX
 			{
 			}
 			~Renderer();
-			
+
 			void Initialize(const RenderJobDesc& desc);
+			void InitComponent();
+
 			void Resize(int width, int height);
 
 			void RenderFrame(SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory);
@@ -45,7 +47,7 @@ namespace EDX
 			void StopRenderTasks();
 
 			Film* GetFilm();
-			const RenderJobDesc GetJobDesc() const { return mJobDesc; }
+			RenderJobDesc* GetJobDesc() { return &mJobDesc; }
 			RefPtr<Scene> GetScene() { return mpScene; }
 			void SetCameraParams(const CameraParameters& params);
 		};
