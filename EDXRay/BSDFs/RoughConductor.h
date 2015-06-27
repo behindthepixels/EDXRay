@@ -38,7 +38,7 @@ namespace EDX
 		private:
 			float Pdf(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
 			{
-				if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
+				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 					return 0.0f;
 
 				Vector3 wh = Math::Normalize(wo + wi);
@@ -54,7 +54,7 @@ namespace EDX
 
 			float Eval(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
 			{
-				if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
+				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 					return 0.0f;
 
 				Vector3 wh = Math::Normalize(wo + wi);

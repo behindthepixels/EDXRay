@@ -43,7 +43,7 @@ void OnInit(Object* pSender, EventArgs args)
 	desc.ImageWidth = Application::GetMainWindow()->GetWindowWidth();
 	desc.ImageHeight = Application::GetMainWindow()->GetWindowHeight();
 	desc.SamplesPerPixel = 4096;
-	desc.CameraParams.FieldOfView = 60;
+	desc.CameraParams.FieldOfView = 40;
 	desc.CameraParams.Pos = Vector3(0, 5, 15);
 	desc.CameraParams.Target = Vector3(0, 5, 0);
 	gpRenderer->Initialize(desc);
@@ -60,9 +60,11 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadSphere(1.5f, BSDFType::Diffuse, Color::WHITE, 32, 16, Vector3(0.0f, 3.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.7f, 0.37f, 0.3f), Vector3(1.5f, 0.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/splash.obj", BSDFType::Glass, Color(1.0f, 1.0f, 1.0f), Vector3(4.95f, 0.06f, -4.95f), 9.9f * Vector3::UNIT_SCALE, Vector3(0.0f, 45.0f, 0.0f));
-	pMesh3->LoadSphere(2.0f, BSDFType::Diffuse, Color::WHITE, 128, 64, Vector3(0.0f, 2.0f, 0.0f));
+	//pMesh3->LoadSphere(2.0f, BSDFType::Diffuse, Color::WHITE, 128, 64, Vector3(0.0f, 2.0f, 0.0f));
 	//pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-1.5f, -0.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
-	//pMesh4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.25f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 180.0f, 0.0f));
+	pMesh3->LoadMesh("../../Media/teapot.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-2.3f, 0.0f, 1.2f), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -150.0f, 0.0f));
+	pMesh2->LoadMesh("../../Media/teapot.obj", BSDFType::RoughDielectric, Color(1.0f, 1.0f, 1.0f), Vector3(0.7f, 0.0f, -2.3f), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -15.0f, 0.0f));
+	pMesh4->LoadSphere(1.33f, BSDFType::Glass, Color::WHITE, 256, 128, Vector3(2.02f, 1.33f, 2.02f));
 	//pMesh4->LoadMesh("../../Media/OceanMesh2.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3::ZERO, Vector3(1, 10, 1), Vector3(0.0f, 180.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/OceanMesh1.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3(-13000, -5, 0), Vector3(50, 500, 50), Vector3(0.0f, 180.0f, 0.0f));
 
@@ -71,7 +73,7 @@ void OnInit(Object* pSender, EventArgs args)
 	Primitive* pPlane3 = new Primitive;
 	Primitive* pPlane4 = new Primitive;
 	Primitive* pPlane5 = new Primitive;
-	pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
+	pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
 	pPlane2->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 10.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(180.0f, 0.0f, 0.0f));
 	pPlane3->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.6f, 0.6f), Vector3(5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
 	pPlane4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.6f, 0.6f, 0.9f), Vector3(-5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
@@ -84,11 +86,11 @@ void OnInit(Object* pSender, EventArgs args)
 	//pScene->AddPrimitive(pPlane5);
 
 	//pScene->AddPrimitive(pMesh);
-	//pScene->AddPrimitive(pMesh2);
+	pScene->AddPrimitive(pMesh2);
 	pScene->AddPrimitive(pMesh3);
-	//pScene->AddPrimitive(pMesh4);
-	//pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
-	pScene->AddLight(new EnvironmentLight(Color(3.0f), Color(0.2f), 40.0f, pScene, -60.0f));
+	pScene->AddPrimitive(pMesh4);
+	pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
+	//pScene->AddLight(new EnvironmentLight(Color(3.0f), Color(0.2f), 40.0f, pScene, -60.0f));
 	//pScene->AddLight(new DirectionalLight(Vector3(0.0f, 10.0f, 10.0f), Color(3.0f), pScene));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 7.9f, 0.0f), Color(50.0f)));
 
@@ -320,7 +322,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdS
 	mainWindow->SetMouseHandler(MouseEvent(OnMouseEvent));
 	mainWindow->SetkeyboardHandler(KeyboardEvent(OnKeyboardEvent));
 
-	mainWindow->Create(L"EDXRay", 1024, 640);
+	mainWindow->Create(L"EDXRay", 1280, 800);
 
 	Application::Run(mainWindow);
 

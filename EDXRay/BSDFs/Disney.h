@@ -85,7 +85,7 @@ namespace EDX
 		private:
 			float Pdf(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
 			{
-				if (!MatchesTypes(types))
+				if (!MatchesTypes(types) || BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 					return 0.0f;
 
 				Vector3 wh = Math::Normalize(wo + wi);
@@ -115,6 +115,9 @@ namespace EDX
 
 				Vector3 wo = diffGeom.WorldToLocal(vOut);
 				Vector3 wi = diffGeom.WorldToLocal(vIn);
+
+				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
+					return Color::BLACK;
 
 				Color albedo = GetColor(diffGeom);
 				Color specAlbedo = Math::Lerp(Math::Lerp(albedo, Color::WHITE, 1.0f - mSpecularTint), albedo, mMetallic);

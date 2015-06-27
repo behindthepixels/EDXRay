@@ -23,7 +23,7 @@ namespace EDX
 				return 0.0f;
 
 			wi = Math::Reflect(-wo, wh);
-			if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
+			if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 				return Color::BLACK;
 
 			*pvIn = diffGeom.LocalToWorld(wi);

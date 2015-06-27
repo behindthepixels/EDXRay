@@ -47,7 +47,7 @@ namespace EDX
 
 			if (mLensRadius > 0.0f)
 			{
-				float fFocalHit = mFocalPlaneDist / -pRay->mDir.z;
+				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
 
 				float fU, fV;
@@ -73,7 +73,7 @@ namespace EDX
 
 			if (mLensRadius > 0.0f)
 			{
-				float fFocalHit = mFocalPlaneDist / -pRay->mDir.z;
+				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
 
 				float u, v;

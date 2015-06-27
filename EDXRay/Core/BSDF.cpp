@@ -232,12 +232,15 @@ namespace EDX
 		// -----------------------------------------------------------------------------------------------------------------------
 		float LambertianDiffuse::Eval(const Vector3& wo, const Vector3& wi, ScatterType types) const
 		{
+			if (BSDFCoordinate::CosTheta(wo) <= 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
+				return 0.0f;
+
 			return float(Math::EDX_INV_PI);
 		}
 
 		float LambertianDiffuse::Pdf(const Vector3& wo, const Vector3& wi, ScatterType types /* = BSDF_ALL */) const
 		{
-			if (!BSDFCoordinate::SameHemisphere(wo, wi))
+			if (BSDFCoordinate::CosTheta(wo) <= 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 				return 0.0f;
 
 			return BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI);
@@ -254,6 +257,8 @@ namespace EDX
 
 			Vector3 vWo = diffGeom.WorldToLocal(vOut), vWi;
 			vWi = Sampling::CosineSampleHemisphere(sample.u, sample.v);
+			if (BSDFCoordinate::CosTheta(vWo) <= 0.0f || !BSDFCoordinate::SameHemisphere(vWo, vWi))
+				return 0.0f;
 
 			if (vWo.z < 0.0f)
 				vWi.z *= -1.0f;
@@ -272,6 +277,7 @@ namespace EDX
 			}
 
 			*pPdf = Pdf(vWo, vWi, types);
+
 			if (pSampledTypes != NULL)
 			{
 				*pSampledTypes = mScatterType;

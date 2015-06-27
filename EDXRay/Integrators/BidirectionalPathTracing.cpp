@@ -294,7 +294,7 @@ namespace EDX
 					Ray ray;
 					ray.mOrg = Vector3(U, V, 0.0f);
 					ray.mDir = Matrix::TransformPoint(diffGeom.mPosition, mpCamera->GetViewMatrix()) - ray.mOrg;
-					Vector3 focalHit = ray.CalcPoint(mpCamera->GetFocusDistance() / -ray.mDir.z);
+					Vector3 focalHit = ray.CalcPoint(mpCamera->GetFocusDistance() / ray.mDir.z);
 
 					ptImage = mpCamera->CameraToRaster(focalHit);
 					dirToCamera = Matrix::TransformPoint(ray.mOrg, mpCamera->GetViewInvMatrix()) - diffGeom.mPosition;

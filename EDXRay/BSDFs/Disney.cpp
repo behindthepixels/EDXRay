@@ -36,7 +36,7 @@ namespace EDX
 			if (sample.w <= prob) // Sample reflection
 			{
 				wi = Math::Reflect(-wo, wh);
-				if (BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo) <= 0.0f)
+				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 				{
 					*pPdf = 0.0f;
 					return Color::BLACK;
@@ -55,7 +55,7 @@ namespace EDX
 			else
 			{
 				wi = Sampling::CosineSampleHemisphere(sample.u, sample.v);
-				if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
+				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 				{
 					*pPdf = 0.0f;
 					return Color::BLACK;
