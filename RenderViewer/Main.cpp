@@ -39,17 +39,8 @@ void OnInit(Object* pSender, EventArgs args)
 
 	gpRenderer = new Renderer;
 
-	RenderJobDesc desc;
-	desc.ImageWidth = Application::GetMainWindow()->GetWindowWidth();
-	desc.ImageHeight = Application::GetMainWindow()->GetWindowHeight();
-	desc.SamplesPerPixel = 4096;
-	desc.CameraParams.FieldOfView = 40;
-	desc.CameraParams.Pos = Vector3(0, 5, 15);
-	desc.CameraParams.Target = Vector3(0, 5, 0);
-	gpRenderer->Initialize(desc);
-
 	Scene* pScene = gpRenderer->GetScene().Ptr();
-	Primitive* pMesh = new Primitive;
+	//Primitive* pMesh = new Primitive;
 	Primitive* pMesh2 = new Primitive;
 	Primitive* pMesh3 = new Primitive;
 	Primitive* pMesh4 = new Primitive;
@@ -62,22 +53,24 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh2->LoadMesh("../../Media/splash.obj", BSDFType::Glass, Color(1.0f, 1.0f, 1.0f), Vector3(4.95f, 0.06f, -4.95f), 9.9f * Vector3::UNIT_SCALE, Vector3(0.0f, 45.0f, 0.0f));
 	//pMesh3->LoadSphere(2.0f, BSDFType::Diffuse, Color::WHITE, 128, 64, Vector3(0.0f, 2.0f, 0.0f));
 	//pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-1.5f, -0.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
-	pMesh3->LoadMesh("../../Media/teapot.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-2.3f, 0.0f, 1.2f), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -150.0f, 0.0f));
-	pMesh2->LoadMesh("../../Media/teapot.obj", BSDFType::RoughDielectric, Color(1.0f, 1.0f, 1.0f), Vector3(0.7f, 0.0f, -2.3f), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -15.0f, 0.0f));
-	pMesh4->LoadSphere(1.33f, BSDFType::Glass, Color::WHITE, 256, 128, Vector3(2.02f, 1.33f, 2.02f));
+
+	float offset = 0.4f;
+	pMesh3->LoadMesh("../../Media/teapot.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-2.3f + offset, 0.0f, 1.2f - offset), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -150.0f, 0.0f));
+	pMesh2->LoadMesh("../../Media/teapot.obj", BSDFType::Mirror, Color(0.9f, 0.9f, 0.9f), Vector3(0.7f - offset, 0.0f, -2.3f + offset), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -15.0f, 0.0f));
+	pMesh4->LoadSphere(1.33f, BSDFType::Glass, Color::WHITE, 256, 128, Vector3(2.02f - offset, 1.33f, 2.02f - offset));
 	//pMesh4->LoadMesh("../../Media/OceanMesh2.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3::ZERO, Vector3(1, 10, 1), Vector3(0.0f, 180.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/OceanMesh1.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3(-13000, -5, 0), Vector3(50, 500, 50), Vector3(0.0f, 180.0f, 0.0f));
 
 	Primitive* pPlane1 = new Primitive;
-	Primitive* pPlane2 = new Primitive;
-	Primitive* pPlane3 = new Primitive;
-	Primitive* pPlane4 = new Primitive;
-	Primitive* pPlane5 = new Primitive;
+	//Primitive* pPlane2 = new Primitive;
+	//Primitive* pPlane3 = new Primitive;
+	//Primitive* pPlane4 = new Primitive;
+	//Primitive* pPlane5 = new Primitive;
 	pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
-	pPlane2->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 10.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(180.0f, 0.0f, 0.0f));
-	pPlane3->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.6f, 0.6f), Vector3(5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
-	pPlane4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.6f, 0.6f, 0.9f), Vector3(-5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
-	pPlane5->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 5.0f, -5.0f), Vector3::UNIT_SCALE, Vector3(90.0f, 0.0f, 0.0f));
+	//pPlane2->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 10.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(180.0f, 0.0f, 0.0f));
+	//pPlane3->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.6f, 0.6f), Vector3(5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
+	//pPlane4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.6f, 0.6f, 0.9f), Vector3(-5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
+	//pPlane5->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 5.0f, -5.0f), Vector3::UNIT_SCALE, Vector3(90.0f, 0.0f, 0.0f));
 
 	pScene->AddPrimitive(pPlane1);
 	//pScene->AddPrimitive(pPlane2);
@@ -97,6 +90,14 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->InitAccelerator();
 
 	OpenGL::InitializeOpenGLExtensions();
+
+	RenderJobDesc desc;
+	desc.ImageWidth = Application::GetMainWindow()->GetWindowWidth();
+	desc.ImageHeight = Application::GetMainWindow()->GetWindowHeight();
+	desc.SamplesPerPixel = 4096;
+	desc.CameraParams.FieldOfView = 40;
+	desc.CameraParams.Pos = Vector3(0, 5, 15);
+	desc.CameraParams.Target = Vector3(0, 5, 0);
 	gpPreview = new Previewer;
 	gpPreview->Initialize(*pScene, desc);
 
@@ -191,27 +192,45 @@ void OnRender(Object* pSender, EventArgs args)
 		static bool showCameraSettings = true;
 		if (EDXGui::CollapsingHeader("Camera Settings", showCameraSettings))
 		{
-			EDXGui::Slider<float>("Lens Radius", &gpPreview->GetCamera().mLensRadius, 0.0f, 1.0f);
+			EDXGui::Slider<float>("Lens Radius", &gpPreview->GetCamera().mLensRadius, 0.0f, 0.5f);
 			EDXGui::CheckBox("Set Focus Distance", gpPreview->mSetFocusDistance);
 
 			EDXGui::CloseHeaderSection();
 		}
 
 		static bool showSceneSettings = true;
+		static bool useSkyLight = false;
+		static float turbidity = 3.0f;
+		static Color groundAlbedo = Color(0.2f);
+		static float envLightRotation = 0.0f;
 		if (EDXGui::CollapsingHeader("Scene", showSceneSettings))
 		{
 			if (EDXGui::Button("Environment Light"))
 			{
-				char filePath[MAX_PATH];
-				char directory[MAX_PATH];
-				sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
-				if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
+				if (!useSkyLight)
 				{
-					gpRenderer->GetScene()->AddLight(new EnvironmentLight(filePath, gpRenderer->GetScene().Ptr(), 1.0f));
+					char filePath[MAX_PATH];
+					char directory[MAX_PATH];
+					sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
+					if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
+					{
+						gpRenderer->GetScene()->AddLight(new EnvironmentLight(filePath, gpRenderer->GetScene().Ptr(), 1.0f, envLightRotation));
+					}
+				}
+				else
+				{
+					gpRenderer->GetScene()->AddLight(new EnvironmentLight(Color(turbidity), groundAlbedo, 40.0f,
+						gpRenderer->GetScene().Ptr(), envLightRotation));
 				}
 			}
 
-			static float envLightRotation = 0.0f;
+			EDXGui::CheckBox("Use Sky Light", useSkyLight);
+			if (useSkyLight)
+			{
+				EDXGui::Slider<float>("Turbidity", &turbidity, 1.0f, 10.0f);
+				EDXGui::ColorSlider(&groundAlbedo);
+			}
+
 			if (EDXGui::Slider<float>("Env Light Rotation", &envLightRotation, -float(Math::EDX_PI), float(Math::EDX_PI)))
 			{
 				dynamic_cast<const EnvironmentLight*>(gpRenderer->GetScene()->GetEnvironmentMap())->SetRotation(envLightRotation);

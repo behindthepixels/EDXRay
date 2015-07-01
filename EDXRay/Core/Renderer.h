@@ -28,12 +28,10 @@ namespace EDX
 			vector<RefPtr<RenderTask>> mTasks;
 
 		public:
-			Renderer()
-			{
-			}
+			Renderer();
 			~Renderer();
 
-			void Initialize(const RenderJobDesc& desc);
+			void Initialize();
 			void InitComponent();
 
 			void Resize(int width, int height);

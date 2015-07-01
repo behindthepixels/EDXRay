@@ -16,37 +16,32 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		void Renderer::Initialize(const RenderJobDesc& desc)
+		Renderer::Renderer()
 		{
-			mJobDesc = desc;
-
-			// Initalize camera
-			if (!mpCamera)
-			{
-				mpCamera = new Camera();
-			}
-			mpCamera->Init(desc.CameraParams.Pos,
-				desc.CameraParams.Target,
-				desc.CameraParams.Up,
-				desc.ImageWidth,
-				desc.ImageHeight,
-				desc.CameraParams.FieldOfView,
-				desc.CameraParams.NearClip,
-				desc.CameraParams.FarClip,
-				desc.CameraParams.LensRadius,
-				desc.CameraParams.FocusPlaneDist);
-
 			// Initialize scene
+			mpCamera = new Camera();
 			mpScene = new Scene;
-
-			mTaskSync.Init(desc.ImageWidth, desc.ImageHeight);
-
-			mTaskSync.SetAbort(false);
 			ThreadScheduler::Instance()->InitAndLaunchThreads();
+		}
+
+		Renderer::~Renderer()
+		{
+			ThreadScheduler::DeleteInstance();
 		}
 
 		void Renderer::InitComponent()
 		{
+			mpCamera->Init(mJobDesc.CameraParams.Pos,
+				mJobDesc.CameraParams.Target,
+				mJobDesc.CameraParams.Up,
+				mJobDesc.ImageWidth,
+				mJobDesc.ImageHeight,
+				mJobDesc.CameraParams.FieldOfView,
+				mJobDesc.CameraParams.NearClip,
+				mJobDesc.CameraParams.FarClip,
+				mJobDesc.CameraParams.LensRadius,
+				mJobDesc.CameraParams.FocusPlaneDist);
+
 			Filter* pFilter;
 			switch (mJobDesc.FilterType)
 			{
@@ -97,12 +92,10 @@ namespace EDX
 			}
 
 			BakeSamples();
-			mpScene->InitAccelerator();
-		}
+			//mpScene->InitAccelerator();
 
-		Renderer::~Renderer()
-		{
-			ThreadScheduler::DeleteInstance();
+			mTaskSync.Init(mJobDesc.ImageWidth, mJobDesc.ImageHeight);
+			mTaskSync.SetAbort(false);
 		}
 
 		void Renderer::Resize(int width, int height)
@@ -110,8 +103,10 @@ namespace EDX
 			mJobDesc.ImageWidth = width;
 			mJobDesc.ImageHeight = height;
 
-			mpCamera->Resize(width, height);
-			//mpFilm->Resize(width, height);
+			if (mpCamera)
+				mpCamera->Resize(width, height);
+			if (mpFilm)
+				mpFilm->Resize(width, height);
 			mTaskSync.Init(width, height);
 		}
 
