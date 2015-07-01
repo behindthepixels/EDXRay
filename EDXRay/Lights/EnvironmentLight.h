@@ -21,7 +21,7 @@ namespace EDX
 			Array2f								mLuminance;
 			const Scene*						mpScene;
 			bool								mIsTexture;
-			float								mScale;
+			mutable float						mScale;
 			mutable float						mRotation;
 
 		public:
@@ -312,6 +312,10 @@ namespace EDX
 			void SetRotation(const float rot) const
 			{
 				mRotation = rot;
+			}
+			void SetScaling(const float scl) const
+			{
+				mScale = scl;
 			}
 
 		private:

@@ -203,6 +203,7 @@ void OnRender(Object* pSender, EventArgs args)
 		static float turbidity = 3.0f;
 		static Color groundAlbedo = Color(0.2f);
 		static float envLightRotation = 0.0f;
+		static float envLightScale = 1.0f;
 		if (EDXGui::CollapsingHeader("Scene", showSceneSettings))
 		{
 			if (EDXGui::Button("Environment Light"))
@@ -234,6 +235,10 @@ void OnRender(Object* pSender, EventArgs args)
 			if (EDXGui::Slider<float>("Env Light Rotation", &envLightRotation, -float(Math::EDX_PI), float(Math::EDX_PI)))
 			{
 				dynamic_cast<const EnvironmentLight*>(gpRenderer->GetScene()->GetEnvironmentMap())->SetRotation(envLightRotation);
+			}
+			if (EDXGui::Slider<float>("Env Light Scaling", &envLightScale, 0.0f, 5.0f))
+			{
+				dynamic_cast<const EnvironmentLight*>(gpRenderer->GetScene()->GetEnvironmentMap())->SetScaling(envLightScale);
 			}
 
 			EDXGui::CloseHeaderSection();
