@@ -79,6 +79,7 @@ namespace EDX
 
 		public:
 			bool mSetFocusDistance;
+			bool mLockCameraMovement;
 
 		public:
 			void Initialize(const Scene& scene, const RenderJobDesc& jobDesc)
@@ -93,6 +94,7 @@ namespace EDX
 					0.01f);
 				mPickedPrimIdx = -1;
 				mSetFocusDistance = false;
+				mLockCameraMovement = false;
 
 				auto& prims = mpScene->GetPrimitives();
 				for (auto& it : prims)
@@ -327,10 +329,17 @@ namespace EDX
 
 			void HandleMouseMsg(const MouseEventArgs& args)
 			{
-				mCamera.HandleMouseMsg(args);
-				
+				if (!mLockCameraMovement)
+					mCamera.HandleMouseMsg(args);
+
 				if (args.Action == MouseAction::LButtonDown && (GetAsyncKeyState(VK_CONTROL) & (1 << 15)))
 					Pick(args.x, args.y);
+			}
+
+			void HandleKeyboardMsg(const KeyboardEventArgs& args)
+			{
+				if (!mLockCameraMovement)
+					mCamera.HandleKeyboardMsg(args);
 			}
 
 			Camera& GetCamera()

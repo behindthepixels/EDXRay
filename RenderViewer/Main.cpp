@@ -40,7 +40,7 @@ void OnInit(Object* pSender, EventArgs args)
 	gpRenderer = new Renderer;
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
-	//Primitive* pMesh = new Primitive;
+	Primitive* pMesh = new Primitive;
 	Primitive* pMesh2 = new Primitive;
 	Primitive* pMesh3 = new Primitive;
 	Primitive* pMesh4 = new Primitive;
@@ -55,33 +55,35 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh3->LoadMesh("../../Media/bunny.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-1.5f, -0.5f, 0.0f), 0.16f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
 
 	float offset = 0.4f;
-	pMesh3->LoadMesh("../../Media/teapot.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-2.3f + offset, 0.0f, 1.2f - offset), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -150.0f, 0.0f));
-	pMesh2->LoadMesh("../../Media/teapot.obj", BSDFType::Mirror, Color(0.9f, 0.9f, 0.9f), Vector3(0.7f - offset, 0.0f, -2.3f + offset), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -15.0f, 0.0f));
-	pMesh4->LoadSphere(1.33f, BSDFType::Glass, Color::WHITE, 256, 128, Vector3(2.02f - offset, 1.33f, 2.02f - offset));
+	pMesh->LoadMesh("../../Media/backdrop.obj", BSDFType::Diffuse, Color(0.35f), Vector3(20, 0, -25), 2.2f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	pMesh2->LoadMesh("../../Media/EDXMaterialPreviewScenesEnvMap.obj", Vector3(0, 0, 0), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh3->LoadMesh("../../Media/teapot.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-2.3f + offset, 0.0f, 1.2f - offset), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -150.0f, 0.0f));
+	//pMesh2->LoadMesh("../../Media/teapot.obj", BSDFType::Mirror, Color(0.9f, 0.9f, 0.9f), Vector3(0.7f - offset, 0.0f, -2.3f + offset), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -15.0f, 0.0f));
+	//pMesh4->LoadSphere(1.33f, BSDFType::Glass, Color::WHITE, 256, 128, Vector3(2.02f - offset, 1.33f, 2.02f - offset));
 	//pMesh4->LoadMesh("../../Media/OceanMesh2.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3::ZERO, Vector3(1, 10, 1), Vector3(0.0f, 180.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/OceanMesh1.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3(-13000, -5, 0), Vector3(50, 500, 50), Vector3(0.0f, 180.0f, 0.0f));
 
-	Primitive* pPlane1 = new Primitive;
+	//Primitive* pPlane1 = new Primitive;
 	//Primitive* pPlane2 = new Primitive;
 	//Primitive* pPlane3 = new Primitive;
 	//Primitive* pPlane4 = new Primitive;
 	//Primitive* pPlane5 = new Primitive;
-	pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
+	//pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
 	//pPlane2->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 10.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(180.0f, 0.0f, 0.0f));
 	//pPlane3->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.6f, 0.6f), Vector3(5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
 	//pPlane4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.6f, 0.6f, 0.9f), Vector3(-5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
 	//pPlane5->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 5.0f, -5.0f), Vector3::UNIT_SCALE, Vector3(90.0f, 0.0f, 0.0f));
 
-	pScene->AddPrimitive(pPlane1);
+	//pScene->AddPrimitive(pPlane1);
 	//pScene->AddPrimitive(pPlane2);
 	//pScene->AddPrimitive(pPlane3);
 	//pScene->AddPrimitive(pPlane4);
 	//pScene->AddPrimitive(pPlane5);
 
-	//pScene->AddPrimitive(pMesh);
+	pScene->AddPrimitive(pMesh);
 	pScene->AddPrimitive(pMesh2);
-	pScene->AddPrimitive(pMesh3);
-	pScene->AddPrimitive(pMesh4);
+	//pScene->AddPrimitive(pMesh3);
+	//pScene->AddPrimitive(pMesh4);
 	pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
 	//pScene->AddLight(new EnvironmentLight(Color(3.0f), Color(0.2f), 40.0f, pScene, -60.0f));
 	//pScene->AddLight(new DirectionalLight(Vector3(0.0f, 10.0f, 10.0f), Color(3.0f), pScene));
@@ -96,8 +98,9 @@ void OnInit(Object* pSender, EventArgs args)
 	desc.ImageHeight = Application::GetMainWindow()->GetWindowHeight();
 	desc.SamplesPerPixel = 4096;
 	desc.CameraParams.FieldOfView = 40;
-	desc.CameraParams.Pos = Vector3(0, 5, 15);
-	desc.CameraParams.Target = Vector3(0, 5, 0);
+	desc.CameraParams.Pos = Vector3(-6.17641401f, 14.5548525f, 16.4850121f);
+	desc.CameraParams.Target = Vector3(-5.86896896f, 14.0666752f, 15.6682129f);
+	desc.CameraParams.LensRadius = 0.5f;
 	gpPreview = new Previewer;
 	gpPreview->Initialize(*pScene, desc);
 
@@ -182,6 +185,7 @@ void OnRender(Object* pSender, EventArgs args)
 			};
 			EDXGui::ComboBox("Filter", filteriItems, 3, (int&)jobDesc->FilterType);
 
+			EDXGui::InputDigit((int&)jobDesc->MaxPathLength, "Max Length");
 			EDXGui::InputDigit((int&)jobDesc->SamplesPerPixel, "Max Samples");
 			EDXGui::CheckBox("Adaptive Sampling", jobDesc->AdaptiveSample);
 			EDXGui::CheckBox("Use RHF", jobDesc->UseRHF);
@@ -194,6 +198,7 @@ void OnRender(Object* pSender, EventArgs args)
 		{
 			EDXGui::Slider<float>("Lens Radius", &gpPreview->GetCamera().mLensRadius, 0.0f, 0.5f);
 			EDXGui::CheckBox("Set Focus Distance", gpPreview->mSetFocusDistance);
+			EDXGui::CheckBox("Lock Camera", gpPreview->mLockCameraMovement);
 
 			EDXGui::CloseHeaderSection();
 		}
@@ -396,7 +401,7 @@ void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 		return;
 
 	if (!gRendering)
-		gpPreview->GetCamera().HandleKeyboardMsg(args);
+		gpPreview->HandleKeyboardMsg(args);
 }
 
 void OnRelease(Object* pSender, EventArgs args)
