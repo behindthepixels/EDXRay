@@ -18,7 +18,6 @@ namespace EDX
 			if (pScene->Intersect(ray, &diffGeom))
 			{
 				pScene->PostIntersect(ray, &diffGeom);
-				diffGeom.ComputeDifferentials(ray);
 
 				auto numLights = pScene->GetLights().size();
 

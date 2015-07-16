@@ -63,12 +63,8 @@ namespace EDX
 			Vector3 e2 = vt3 - vt1;
 			pDiffGeom->mGeomNormal = Math::Normalize(Math::Cross(e2, e1));
 
-			pDiffGeom->mShadingFrame = Frame(pDiffGeom->mNormal);
-
-			if (mTextured)
+			if (pDiffGeom->mpBSDF->GetTexture() || pDiffGeom->mpBSDF->GetNormalMap())
 			{
-				pDiffGeom->mTextured = true;
-
 				const Vector2& texcoord1 = GetTexCoordAt(vId1);
 				const Vector2& texcoord2 = GetTexCoordAt(vId2);
 				const Vector2& texcoord3 = GetTexCoordAt(vId3);
@@ -82,28 +78,45 @@ namespace EDX
 				Vector3 dn1 = normal1 - normal2;
 				Vector3 dn2 = normal3 - normal1;
 
-				Vector3 dpdu, dpdv;
-				Vector3 dndu, dndv;
-				if (det == 0.0f)
+				if (det != 0.0f)
 				{
-					Math::CoordinateSystem(pDiffGeom->mNormal, &dpdu, &dpdv);
-					dndu = dndv = Vector3::ZERO;
+					float invDet = 1.f / det;
+					pDiffGeom->mDpdu = (d2.v * e1 - d1.v * e2) * invDet;
+					pDiffGeom->mDpdv = (-d2.u * e1 + d1.u * e2) * invDet;
+					pDiffGeom->mDndu = (d2.v * dn1 - d1.v * dn2) * invDet;
+					pDiffGeom->mDndv = (-d2.u * dn1 + d1.u * dn2) * invDet;
 				}
 				else
 				{
-					float invDet = 1.f / det;
-					dpdu = (d2.v * e1 - d1.v * e2) * invDet;
-					dpdv = (-d2.u * e1 + d1.u * e2) * invDet;
-					dndu = (d2.v * dn1 - d1.v * dn2) * invDet;
-					dndv = (-d2.u * dn1 + d1.u * dn2) * invDet;
+					Math::CoordinateSystem(pDiffGeom->mNormal, &pDiffGeom->mDpdu, &pDiffGeom->mDpdv);
+					pDiffGeom->mDndu = pDiffGeom->mDndv = Vector3::ZERO;
 				}
-				pDiffGeom->mDpdu = dpdu;
-				pDiffGeom->mDpdv = dpdv;
-				pDiffGeom->mDndu = dndu;
-				pDiffGeom->mDndv = dndv;
+
+				pDiffGeom->ComputeDifferentials(ray);
+
+				auto pNormalMap = pDiffGeom->mpBSDF->GetNormalMap().Ptr();
+				if (det != 0.0f && pNormalMap)
+				{
+					pDiffGeom->mShadingFrame = Frame(Math::Normalize(pDiffGeom->mDpdu),
+						Math::Normalize(pDiffGeom->mDpdv),
+						pDiffGeom->mNormal);
+
+					Vector2 differential[2] = {
+						(pDiffGeom->mDudx, pDiffGeom->mDvdx),
+						(pDiffGeom->mDudy, pDiffGeom->mDvdy)
+					};
+					Color normalMapSample = pNormalMap->Sample(pDiffGeom->mTexcoord, differential, TextureFilter::TriLinear);
+
+					Vector3 tangentNormal = 2.0f * (Vector3(normalMapSample.r, normalMapSample.g, normalMapSample.b) - Vector3(0.5f));
+					Vector3 worldNormal = Math::Normalize(pDiffGeom->mShadingFrame.LocalToWorld(tangentNormal));
+					pDiffGeom->mNormal = worldNormal;
+					pDiffGeom->mShadingFrame = Frame(worldNormal);
+				}
+				else
+					pDiffGeom->mShadingFrame = Frame(pDiffGeom->mNormal);
 			}
 			else
-				pDiffGeom->mTextured = false;
+				pDiffGeom->mShadingFrame = Frame(pDiffGeom->mNormal);
 		}
 
 		const Vector3& TriangleMesh::GetPositionAt(uint idx) const

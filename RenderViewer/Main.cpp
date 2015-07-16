@@ -325,7 +325,7 @@ void OnRender(Object* pSender, EventArgs args)
 					}
 					break;
 				}
-				case Parameter::Texture:
+				case Parameter::TextureMap:
 					if (EDXGui::Button("Texture"))
 					{
 						char filePath[MAX_PATH];
@@ -343,6 +343,19 @@ void OnRender(Object* pSender, EventArgs args)
 						param.R = 0.6f; param.G = 0.6f; param.B = 0.6f;
 						pBsdf->SetParameter("Color", param);
 						previewMesh->SetTexture(triId, nullptr);
+					}
+					break;
+				case Parameter::NormalMap:
+					if (EDXGui::Button("Normal Map"))
+					{
+						char filePath[MAX_PATH];
+						char directory[MAX_PATH];
+						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
+						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
+						{
+							strcpy_s(param.TexPath, MAX_PATH, filePath);
+							pBsdf->SetParameter("NormalMap", param);
+						}
 					}
 					break;
 				}

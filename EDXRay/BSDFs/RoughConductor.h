@@ -17,8 +17,8 @@ namespace EDX
 				, mRoughness(roughness)
 			{
 			}
-			RoughConductor(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured, float roughness = 0.3f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, pTex, isTextured)
+			RoughConductor(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured, float roughness = 0.3f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, pTex, pNormal, isTextured)
 				, mRoughness(roughness)
 			{
 			}

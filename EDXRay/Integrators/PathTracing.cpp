@@ -26,9 +26,6 @@ namespace EDX
 				{
 					pScene->PostIntersect(pathRay, &diffGeom);
 
-					// Compute ray differentials
-					diffGeom.ComputeDifferentials(pathRay);
-
 					if (specBounce)
 						L += pathThroughput * diffGeom.Emit(-pathRay.mDir);
 

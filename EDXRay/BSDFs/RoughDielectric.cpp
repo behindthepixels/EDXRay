@@ -20,9 +20,15 @@ namespace EDX
 			bool sampleBoth = sampleReflect == sampleRefract;
 			const Vector3 wo = diffGeom.WorldToLocal(_wo);
 
+			float enlargeFactor = (1.2f - 0.2f * Math::Sqrt((BSDFCoordinate::AbsCosTheta(wo))));
+
 			float microfacetPdf;
-			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness * mRoughness);
+			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness * mRoughness * enlargeFactor);
 			if (microfacetPdf == 0.0f)
+				return 0.0f;
+
+			float D = GGX_D(wh, mRoughness * mRoughness);
+			if (D == 0.0f)
 				return 0.0f;
 
 			float F = FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
@@ -44,11 +50,13 @@ namespace EDX
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				*pPdf *= dwh_dwi;
 
+				float G = GGX_G(wo, wi, wh, mRoughness * mRoughness);
+
 				if (pSampledTypes != nullptr)
 					*pSampledTypes = ReflectScatter;
 
 
-				return GetColor(diffGeom) * Eval(wo, wi, types);
+				return GetColor(diffGeom) * F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
@@ -75,7 +83,15 @@ namespace EDX
 				if (pSampledTypes != nullptr)
 					*pSampledTypes = RefractScatter;
 
-				return GetColor(diffGeom) * Eval(wo, wi, types);
+				float G = GGX_G(wo, wi, wh, mRoughness * mRoughness);
+
+				float value = ((1 - F) * D * G * etat * etat * ODotH * IDotH) /
+					(sqrtDenom * sqrtDenom * BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi));
+
+				// TODO: Fix solid angle compression when tracing radiance
+				float factor = 1.0f;
+
+				return GetColor(diffGeom) * Math::Abs(value * factor * factor);
 			}
 
 			return Color::BLACK;

@@ -37,6 +37,7 @@ namespace EDX
 			{
 			}
 			Disney(const RefPtr<Texture2D<Color>>& pTex,
+				const RefPtr<Texture2D<Color>>& pNormal,
 				const bool isTextured,
 				float roughness = 0.1f,
 				float specular = 0.5f,
@@ -45,7 +46,7 @@ namespace EDX
 				float sheen = 0.0f,
 				float sheenTint = 0.5f,
 				float subsurface = 0.0f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pTex, isTextured)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pTex, pNormal, isTextured)
 				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)

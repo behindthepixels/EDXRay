@@ -23,8 +23,8 @@ namespace EDX
 				, mRoughness(roughness)
 			{
 			}
-			RoughDielectric(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured, float roughness = 0.06f, float etai = 1.0f, float etat = 1.5f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_GLOSSY), BSDFType::RoughDielectric, pTex, isTextured)
+			RoughDielectric(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured, float roughness = 0.06f, float etai = 1.0f, float etat = 1.5f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_GLOSSY), BSDFType::RoughDielectric, pTex, pNormal, isTextured)
 				, mEtai(etai)
 				, mEtat(etat)
 				, mRoughness(roughness)
@@ -74,8 +74,8 @@ namespace EDX
 						return 0.0f;
 
 					wh = Math::Normalize(wo + wi);
-					if (!entering)
-						wh *= -1.0f;
+					//if (!entering)
+					//	wh *= -1.0f;
 
 					dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				}
@@ -95,7 +95,11 @@ namespace EDX
 					dwh_dwi = (etat * etat * Math::Abs(IDotH)) / (sqrtDenom * sqrtDenom);
 				}
 
-				float whProb = GGX_Pdf(wh, mRoughness * mRoughness);
+				wh *= BSDFCoordinate::CosTheta(wh) > 0.0f ? 1.0f : -1.0f;
+
+				float enlargeFactor = (1.2f - 0.2f * Math::Sqrt((BSDFCoordinate::AbsCosTheta(wo))));
+
+				float whProb = GGX_Pdf(wh, mRoughness * mRoughness * enlargeFactor);
 				if (sampleReflect && sampleRefract)
 				{
 					float F = BSDF::FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);

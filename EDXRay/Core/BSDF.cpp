@@ -35,22 +35,22 @@ namespace EDX
 			assert(0);
 			return NULL;
 		}
-		BSDF* BSDF::CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const bool isTextured)
+		BSDF* BSDF::CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured)
 		{
 			switch (type)
 			{
 			case BSDFType::Diffuse:
-				return new LambertianDiffuse(pTex, isTextured);
+				return new LambertianDiffuse(pTex, pNormal, isTextured);
 			case BSDFType::Mirror:
-				return new Mirror(pTex, isTextured);
+				return new Mirror(pTex, pNormal, isTextured);
 			case BSDFType::Glass:
-				return new Glass(pTex, isTextured);
+				return new Glass(pTex, pNormal, isTextured);
 			case BSDFType::RoughConductor:
-				return new RoughConductor(pTex, isTextured, 0.3f);
+				return new RoughConductor(pTex, pNormal, isTextured, 0.3f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(pTex, isTextured, 0.5f);
+				return new RoughDielectric(pTex, pNormal, isTextured, 0.5f);
 			case BSDFType::Disney:
-				return new Disney(pTex, isTextured);
+				return new Disney(pTex, pNormal, isTextured);
 			}
 
 			assert(0);
@@ -83,10 +83,11 @@ namespace EDX
 		{
 			mpTexture = new ConstantTexture2D<Color>(color);
 		}
-		BSDF::BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const bool isTextured)
+		BSDF::BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured)
 			: mScatterType(t), mBSDFType(t2), mTextured(isTextured)
 		{
 			mpTexture = pTex;
+			mpNormalMap = pNormal;
 		}
 		BSDF::BSDF(ScatterType t, BSDFType t2, const char* pFile)
 			: mScatterType(t), mBSDFType(t2), mTextured(true)

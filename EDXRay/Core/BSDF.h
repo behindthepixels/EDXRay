@@ -40,7 +40,8 @@ namespace EDX
 			{
 				Float,
 				Color,
-				Texture,
+				TextureMap,
+				NormalMap,
 				None
 			} Type;
 
@@ -68,10 +69,11 @@ namespace EDX
 			const BSDFType mBSDFType;
 			bool mTextured;
 			RefPtr<Texture2D<Color>> mpTexture;
+			RefPtr<Texture2D<Color>> mpNormalMap;
 
 		public:
 			BSDF(ScatterType t, BSDFType t2, const Color& color);
-			BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const bool isTextured);
+			BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured);
 			BSDF(ScatterType t, BSDFType t2, const char* pFile);
 			virtual ~BSDF() {}
 
@@ -89,12 +91,13 @@ namespace EDX
 					(diffGeom.mDudx, diffGeom.mDvdx),
 					(diffGeom.mDudy, diffGeom.mDvdy)
 				};
-				return mpTexture->Sample(diffGeom.mTexcoord, differential, TextureFilter::Linear);
+				return mpTexture->Sample(diffGeom.mTexcoord, differential, TextureFilter::TriLinear);
 			}
 
 			const ScatterType GetScatterType() const { return mScatterType; }
 			const BSDFType GetBSDFType() const { return mBSDFType; }
 			const RefPtr<Texture2D<Color>>& GetTexture() const { return mpTexture; }
+			const RefPtr<Texture2D<Color>>& GetNormalMap() const { return mpNormalMap; }
 			bool IsTextured() const { return mTextured; }
 
 		protected:
@@ -104,25 +107,25 @@ namespace EDX
 		public:
 			virtual int GetParameterCount() const
 			{
-				return mTextured ? 1 : 1;
+				return 2;
 			}
 
 			virtual string GetParameterName(const int idx) const
 			{
-				assert(idx < 1);
-				if (mTextured)
+				assert(idx < 2);
+				switch (idx)
 				{
-					if (idx == 0)
+				case 0:
+				{
+					if (mTextured)
 						return "TextureMap";
 					else
-						return "";
-				}
-				else
-				{
-					if (idx == 0)
 						return "Color";
-					else
-						return "";
+				}
+				case 1:
+					return "NormalMap";
+				default:
+					return "";
 				}
 			}
 
@@ -132,7 +135,7 @@ namespace EDX
 
 				if (mTextured && name == "TextureMap")
 				{
-					ret.Type = Parameter::Texture;
+					ret.Type = Parameter::TextureMap;
 					return ret;
 				}
 				else if (!mTextured && name == "Color")
@@ -143,6 +146,11 @@ namespace EDX
 					ret.G = color.g;
 					ret.B = color.b;
 
+					return ret;
+				}
+				else if (name == "NormalMap")
+				{
+					ret.Type = Parameter::NormalMap;
 					return ret;
 				}
 				else
@@ -170,13 +178,18 @@ namespace EDX
 					else
 						mpTexture->SetValue(Color(param.R, param.G, param.B));
 				}
+				else if (name == "NormalMap")
+				{
+					mpNormalMap = new ImageTexture<Color, Color4b>(param.TexPath, 1.0f);
+					return;
+				}
 
 				return;
 			}
 
 		public:
 			static BSDF* CreateBSDF(const BSDFType type, const Color& color);
-			static BSDF* CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const bool isTextured);
+			static BSDF* CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured);
 			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
 
 		protected:
@@ -196,8 +209,8 @@ namespace EDX
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, cColor)
 			{
 			}
-			LambertianDiffuse(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, pTex, isTextured)
+			LambertianDiffuse(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, pTex, pNormal, isTextured)
 			{
 			}
 			LambertianDiffuse(const char* pFile)
@@ -220,8 +233,8 @@ namespace EDX
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, cColor)
 			{
 			}
-			Mirror(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, pTex, isTextured)
+			Mirror(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, pTex, pNormal, isTextured)
 			{
 			}
 			Mirror(const char* strTexPath)
@@ -251,8 +264,8 @@ namespace EDX
 				, mEtat(etat)
 			{
 			}
-			Glass(const RefPtr<Texture2D<Color>>& pTex, const bool isTextured, float etai = 1.0f, float etat = 1.5f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, pTex, isTextured)
+			Glass(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured, float etai = 1.0f, float etat = 1.5f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, pTex, pNormal, isTextured)
 				, mEtai(etai)
 				, mEtat(etat)
 			{
