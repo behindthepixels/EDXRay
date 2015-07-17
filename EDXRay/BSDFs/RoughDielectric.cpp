@@ -22,12 +22,15 @@ namespace EDX
 
 			float enlargeFactor = (1.2f - 0.2f * Math::Sqrt((BSDFCoordinate::AbsCosTheta(wo))));
 
+			float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+			float sampleRough = roughness * roughness;
+
 			float microfacetPdf;
-			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, mRoughness * mRoughness * enlargeFactor);
+			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, sampleRough * enlargeFactor);
 			if (microfacetPdf == 0.0f)
 				return 0.0f;
 
-			float D = GGX_D(wh, mRoughness * mRoughness);
+			float D = GGX_D(wh, sampleRough);
 			if (D == 0.0f)
 				return 0.0f;
 
@@ -50,13 +53,13 @@ namespace EDX
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				*pPdf *= dwh_dwi;
 
-				float G = GGX_G(wo, wi, wh, mRoughness * mRoughness);
+				float G = GGX_G(wo, wi, wh, sampleRough);
 
 				if (pSampledTypes != nullptr)
 					*pSampledTypes = ReflectScatter;
 
 
-				return GetColor(diffGeom) * F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
+				return GetValue(mpTexture.Ptr(), diffGeom) * F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
@@ -83,7 +86,7 @@ namespace EDX
 				if (pSampledTypes != nullptr)
 					*pSampledTypes = RefractScatter;
 
-				float G = GGX_G(wo, wi, wh, mRoughness * mRoughness);
+				float G = GGX_G(wo, wi, wh, sampleRough);
 
 				float value = ((1 - F) * D * G * etat * etat * ODotH * IDotH) /
 					(sqrtDenom * sqrtDenom * BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi));
@@ -91,7 +94,7 @@ namespace EDX
 				// TODO: Fix solid angle compression when tracing radiance
 				float factor = 1.0f;
 
-				return GetColor(diffGeom) * Math::Abs(value * factor * factor);
+				return GetValue(mpTexture.Ptr(), diffGeom) * Math::Abs(value * factor * factor);
 			}
 
 			return Color::BLACK;

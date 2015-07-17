@@ -35,22 +35,22 @@ namespace EDX
 			assert(0);
 			return NULL;
 		}
-		BSDF* BSDF::CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured)
+		BSDF* BSDF::CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal)
 		{
 			switch (type)
 			{
 			case BSDFType::Diffuse:
-				return new LambertianDiffuse(pTex, pNormal, isTextured);
+				return new LambertianDiffuse(pTex, pNormal);
 			case BSDFType::Mirror:
-				return new Mirror(pTex, pNormal, isTextured);
+				return new Mirror(pTex, pNormal);
 			case BSDFType::Glass:
-				return new Glass(pTex, pNormal, isTextured);
+				return new Glass(pTex, pNormal);
 			case BSDFType::RoughConductor:
-				return new RoughConductor(pTex, pNormal, isTextured, 0.3f);
+				return new RoughConductor(pTex, pNormal, 0.3f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(pTex, pNormal, isTextured, 0.5f);
+				return new RoughDielectric(pTex, pNormal, 0.5f);
 			case BSDFType::Disney:
-				return new Disney(pTex, pNormal, isTextured);
+				return new Disney(pTex, pNormal);
 			}
 
 			assert(0);
@@ -79,18 +79,18 @@ namespace EDX
 		}
 
 		BSDF::BSDF(ScatterType t, BSDFType t2, const Color& color)
-			: mScatterType(t), mBSDFType(t2), mTextured(false)
+			: mScatterType(t), mBSDFType(t2)
 		{
 			mpTexture = new ConstantTexture2D<Color>(color);
 		}
-		BSDF::BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, const bool isTextured)
-			: mScatterType(t), mBSDFType(t2), mTextured(isTextured)
+		BSDF::BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal)
+			: mScatterType(t), mBSDFType(t2)
 		{
 			mpTexture = pTex;
 			mpNormalMap = pNormal;
 		}
 		BSDF::BSDF(ScatterType t, BSDFType t2, const char* pFile)
-			: mScatterType(t), mBSDFType(t2), mTextured(true)
+			: mScatterType(t), mBSDFType(t2)
 		{
 			mpTexture = new ImageTexture<Color, Color4b>(pFile);
 		}
@@ -111,7 +111,7 @@ namespace EDX
 			Vector3 vWo = diffGeom.WorldToLocal(vOut);
 			Vector3 vWi = diffGeom.WorldToLocal(vIn);
 
-			return GetColor(diffGeom) * Eval(vWo, vWi, types);
+			return GetValue(mpTexture.Ptr(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
 		}
 
 		float BSDF::Pdf(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
@@ -129,7 +129,7 @@ namespace EDX
 			Vector3 vWo = diffGeom.WorldToLocal(vOut);
 			Vector3 vWi = diffGeom.WorldToLocal(vIn);
 
-			return Pdf(vWo, vWi, types);
+			return PdfInner(vWo, vWi, diffGeom, types);
 		}
 
 		float BSDF::FresnelDielectric(float cosi, float etai, float etat)
@@ -231,7 +231,7 @@ namespace EDX
 		// -----------------------------------------------------------------------------------------------------------------------
 		// Lambertian BRDF Implementation
 		// -----------------------------------------------------------------------------------------------------------------------
-		float LambertianDiffuse::Eval(const Vector3& wo, const Vector3& wi, ScatterType types) const
+		float LambertianDiffuse::EvalInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types) const
 		{
 			if (BSDFCoordinate::CosTheta(wo) <= 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 				return 0.0f;
@@ -239,7 +239,7 @@ namespace EDX
 			return float(Math::EDX_INV_PI);
 		}
 
-		float LambertianDiffuse::Pdf(const Vector3& wo, const Vector3& wi, ScatterType types /* = BSDF_ALL */) const
+		float LambertianDiffuse::PdfInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
 		{
 			if (BSDFCoordinate::CosTheta(wo) <= 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 				return 0.0f;
@@ -277,14 +277,14 @@ namespace EDX
 				return Color::BLACK;
 			}
 
-			*pPdf = Pdf(vWo, vWi, types);
+			*pPdf = PdfInner(vWo, vWi, diffGeom, types);
 
 			if (pSampledTypes != NULL)
 			{
 				*pSampledTypes = mScatterType;
 			}
 
-			return GetColor(diffGeom) * Eval(vWo, vWi, types);
+			return GetValue(mpTexture.Ptr(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
 		}
 
 		// -----------------------------------------------------------------------------------------------------------------------
@@ -295,7 +295,7 @@ namespace EDX
 			return Color::BLACK;
 		}
 
-		float Mirror::Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types) const
+		float Mirror::EvalInner(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types) const
 		{
 			return 0.0f;
 		}
@@ -305,7 +305,7 @@ namespace EDX
 			return 0.0f;
 		}
 
-		float Mirror::Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types /* = BSDF_ALL */) const
+		float Mirror::PdfInner(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
 		{
 			return 0.0f;
 		}
@@ -328,7 +328,7 @@ namespace EDX
 				*pSampledTypes = mScatterType;
 			}
 
-			return GetColor(diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
+			return GetValue(mpTexture.Ptr(), diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
 		}
 
 		// -----------------------------------------------------------------------------------------------------------------------
@@ -339,7 +339,7 @@ namespace EDX
 			return Color::BLACK;
 		}
 
-		float Glass::Eval(const Vector3& vOut, const Vector3& vIn, ScatterType types) const
+		float Glass::EvalInner(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types) const
 		{
 			return 0.0f;
 		}
@@ -349,7 +349,7 @@ namespace EDX
 			return 0.0f;
 		}
 
-		float Glass::Pdf(const Vector3& vIn, const Vector3& vOut, ScatterType types /* = BSDF_ALL */) const
+		float Glass::PdfInner(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
 		{
 			return 0.0f;
 		}
@@ -383,7 +383,7 @@ namespace EDX
 					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_SPECULAR);
 				}
 
-				return fresnel * GetColor(diffGeom).Luminance() / BSDFCoordinate::AbsCosTheta(vWi);
+				return fresnel * GetValue(mpTexture.Ptr(), diffGeom).Luminance() / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
@@ -413,7 +413,7 @@ namespace EDX
 					*pSampledTypes = ScatterType(BSDF_TRANSMISSION | BSDF_SPECULAR);
 				}
 
-				return (1.0f - fresnel) * GetColor(diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
+				return (1.0f - fresnel) * GetValue(mpTexture.Ptr(), diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 
 			return Color::BLACK;

@@ -9,7 +9,7 @@ namespace EDX
 		class Disney : public BSDF
 		{
 		private:
-			float mRoughness;
+			RefPtr<Texture2D<float>> mRoughness;
 			float mSpecular;
 			float mMetallic;
 			float mSpecularTint;
@@ -27,7 +27,6 @@ namespace EDX
 				float sheenTint = 0.5f,
 				float subsurface = 0.0f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, reflectance)
-				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
@@ -35,10 +34,10 @@ namespace EDX
 				, mSheenTint(sheenTint)
 				, mSubsurface(subsurface)
 			{
+				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 			Disney(const RefPtr<Texture2D<Color>>& pTex,
 				const RefPtr<Texture2D<Color>>& pNormal,
-				const bool isTextured,
 				float roughness = 0.1f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
@@ -46,8 +45,7 @@ namespace EDX
 				float sheen = 0.0f,
 				float sheenTint = 0.5f,
 				float subsurface = 0.0f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pTex, pNormal, isTextured)
-				, mRoughness(roughness)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pTex, pNormal)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
@@ -55,6 +53,7 @@ namespace EDX
 				, mSheenTint(sheenTint)
 				, mSubsurface(subsurface)
 			{
+				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 			Disney(const char* pFile,
 				float roughness = 0.1f,
@@ -65,7 +64,6 @@ namespace EDX
 				float sheenTint = 0.5f,
 				float subsurface = 0.0f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pFile)
-				, mRoughness(roughness)
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
@@ -73,6 +71,7 @@ namespace EDX
 				, mSheenTint(sheenTint)
 				, mSubsurface(subsurface)
 			{
+				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 
 			Color SampleScattered(const Vector3& _wo,
@@ -84,7 +83,7 @@ namespace EDX
 				ScatterType* pSampledTypes = nullptr) const;
 
 		private:
-			float Pdf(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
+			float PdfInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const
 			{
 				if (!MatchesTypes(types) || BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 					return 0.0f;
@@ -93,7 +92,9 @@ namespace EDX
 				if (wh == Vector3::ZERO)
 					return 0.0f;
 
-				float microfacetPdf = GGX_Pdf(wh, mRoughness * mRoughness);
+				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+
+				float microfacetPdf = GGX_Pdf(wh, roughness * roughness);
 				float pdf = microfacetPdf;
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				pdf *= dwh_dwi;
@@ -120,7 +121,8 @@ namespace EDX
 				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
 					return Color::BLACK;
 
-				Color albedo = GetColor(diffGeom);
+				Color albedo = GetValue(mpTexture.Ptr(), diffGeom);
+				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 				Color specAlbedo = Math::Lerp(Math::Lerp(albedo, Color::WHITE, 1.0f - mSpecularTint), albedo, mMetallic);
 				Color sheenAlbedo = Math::Lerp(Color::WHITE, albedo, mSheenTint);
 
@@ -134,15 +136,15 @@ namespace EDX
 				float F = Fresnel_Schlick(ODotH, 0.0f);
 				Color sheenTerm = F * mSheen * sheenAlbedo;
 
-				return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, IDotH), SubsurfaceTerm(wo, wi, IDotH), mSubsurface) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi, wh, ODotH, nullptr);
+				return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, IDotH, roughness), SubsurfaceTerm(wo, wi, IDotH, roughness), mSubsurface) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi, wh, ODotH, roughness, nullptr);
 			}
 
-			float Eval(const Vector3& wo, const Vector3& wi, ScatterType types = BSDF_ALL) const
+			float EvalInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const
 			{
 				return 0.0f;
 			}
 
-			float DiffuseTerm(const Vector3& wo, const Vector3& wi, const float IDotH) const
+			float DiffuseTerm(const Vector3& wo, const Vector3& wi, const float IDotH, const float roughness) const
 			{
 				if (mMetallic == 1.0f)
 					return 0.0f;
@@ -151,7 +153,7 @@ namespace EDX
 				float oneMinusCosLSqr = oneMinusCosL * oneMinusCosL;
 				float oneMinusCosV = 1.0f - BSDFCoordinate::AbsCosTheta(wo);
 				float oneMinusCosVSqr = oneMinusCosV * oneMinusCosV;
-				float F_D90 = 0.5f + 2.0f * IDotH * IDotH * mRoughness;
+				float F_D90 = 0.5f + 2.0f * IDotH * IDotH * roughness;
 
 				return float(Math::EDX_INV_PI) * (1.0f + (F_D90 - 1.0f) * oneMinusCosLSqr * oneMinusCosLSqr * oneMinusCosL) *
 					(1.0f + (F_D90 - 1.0f) * oneMinusCosVSqr * oneMinusCosVSqr * oneMinusCosV);
@@ -161,25 +163,26 @@ namespace EDX
 				const Vector3& wi,
 				const Vector3& wh,
 				const float ODotH,
+				const float roughness,
 				const float* pFresnel = nullptr) const
 			{
 				if (BSDFCoordinate::CosTheta(wo) * BSDFCoordinate::CosTheta(wi) <= 0.0f)
 					return 0.0f;
 
-				float D = GGX_D(wh, mRoughness * mRoughness);
+				float D = GGX_D(wh, roughness * roughness);
 				if (D == 0.0f)
 					return 0.0f;
 
 				float normalRef = Math::Lerp(0.0f, 0.08f, mSpecular);
 				float F = pFresnel ? *pFresnel : Fresnel_Schlick(ODotH, normalRef);
 
-				float roughForG = (0.5f + 0.5f * mRoughness);
+				float roughForG = (0.5f + 0.5f * roughness);
 				float G = GGX_G(wo, wi, wh, roughForG * roughForG);
 
 				return F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
 			}
 
-			float SubsurfaceTerm(const Vector3& wo, const Vector3& wi, const float IDotH) const
+			float SubsurfaceTerm(const Vector3& wo, const Vector3& wi, const float IDotH, const float roughness) const
 			{
 				if (mSubsurface == 0.0f)
 					return 0.0f;
@@ -188,7 +191,7 @@ namespace EDX
 				float oneMinusCosLSqr = oneMinusCosL * oneMinusCosL;
 				float oneMinusCosV = 1.0f - BSDFCoordinate::AbsCosTheta(wo);
 				float oneMinusCosVSqr = oneMinusCosV * oneMinusCosV;
-				float F_ss90 = IDotH * IDotH * mRoughness;
+				float F_ss90 = IDotH * IDotH * roughness;
 
 				float S = (1.0f + (F_ss90 - 1.0f) * oneMinusCosLSqr * oneMinusCosLSqr * oneMinusCosL) *
 					(1.0f + (F_ss90 - 1.0f) * oneMinusCosVSqr * oneMinusCosVSqr * oneMinusCosV);
@@ -246,7 +249,7 @@ namespace EDX
 				if (name == "Roughness")
 				{
 					ret.Type = Parameter::Float;
-					ret.Value = this->mRoughness;
+					ret.Value = this->mRoughness->GetValue();
 					ret.Min = 0.02f;
 					ret.Max = 1.0f;
 
@@ -315,7 +318,17 @@ namespace EDX
 				BSDF::SetParameter(name, param);
 
 				if (name == "Roughness")
-					this->mRoughness = param.Value;
+				{
+					if (param.Type == Parameter::Float)
+					{
+						if (this->mRoughness->IsConstant())
+							this->mRoughness->SetValue(param.Value);
+						else
+							this->mRoughness = new ConstantTexture2D<float>(param.Value);
+					}
+					else if (param.Type == Parameter::TextureMap)
+						this->mRoughness = new ImageTexture<float, float>(param.TexPath, 1.0f);
+				}
 				else if (name == "Specular")
 					this->mSpecular = param.Value;
 				else if (name == "Metallic")

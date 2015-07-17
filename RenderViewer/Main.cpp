@@ -296,9 +296,24 @@ void OnRender(Object* pSender, EventArgs args)
 				switch (param.Type)
 				{
 				case Parameter::Float:
+				{
 					EDXGui::Slider(name.c_str(), &param.Value, param.Min, param.Max);
 					pBsdf->SetParameter(name, param);
+					if (name == "Roughness" && EDXGui::Button("Roughness Map"))
+					{
+						char filePath[MAX_PATH];
+						char directory[MAX_PATH];
+						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
+						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
+						{
+							strcpy_s(param.TexPath, MAX_PATH, filePath);
+							param.Type = Parameter::TextureMap;
+							pBsdf->SetParameter("Roughness", param);
+						}
+					}
+
 					break;
+				}
 				case Parameter::Color:
 				{
 					if (EDXGui::Button("Texture"))
