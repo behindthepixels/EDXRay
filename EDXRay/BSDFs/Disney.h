@@ -85,14 +85,14 @@ namespace EDX
 		private:
 			float PdfInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const
 			{
-				if (!MatchesTypes(types) || BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
+				if (!MatchesTypes(types))
 					return 0.0f;
-
 				Vector3 wh = Math::Normalize(wo + wi);
 				if (wh == Vector3::ZERO)
 					return 0.0f;
 
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 
 				float microfacetPdf = GGX_Pdf(wh, roughness * roughness);
 				float pdf = microfacetPdf;
@@ -118,11 +118,9 @@ namespace EDX
 				Vector3 wo = diffGeom.WorldToLocal(vOut);
 				Vector3 wi = diffGeom.WorldToLocal(vIn);
 
-				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
-					return Color::BLACK;
-
 				Color albedo = GetValue(mpTexture.Ptr(), diffGeom);
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 				Color specAlbedo = Math::Lerp(Math::Lerp(albedo, Color::WHITE, 1.0f - mSpecularTint), albedo, mMetallic);
 				Color sheenAlbedo = Math::Lerp(Color::WHITE, albedo, mSheenTint);
 

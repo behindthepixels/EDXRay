@@ -100,6 +100,7 @@ namespace EDX
 				float enlargeFactor = (1.2f - 0.2f * Math::Sqrt((BSDFCoordinate::AbsCosTheta(wo))));
 
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 				float whProb = GGX_Pdf(wh, roughness * roughness * enlargeFactor);
 				if (sampleReflect && sampleRefract)
 				{
@@ -158,6 +159,7 @@ namespace EDX
 				}
 
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 				float sampleRough = roughness * roughness;
 
 				float D = GGX_D(wh, sampleRough);

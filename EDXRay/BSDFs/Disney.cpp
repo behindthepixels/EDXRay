@@ -24,6 +24,7 @@ namespace EDX
 
 			float microfacetPdf;
 			float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+			roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 			Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, roughness * roughness);
 			if (microfacetPdf == 0.0f)
 				return 0.0f;
@@ -37,11 +38,6 @@ namespace EDX
 			if (sample.w <= prob) // Sample reflection
 			{
 				wi = Math::Reflect(-wo, wh);
-				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
-				{
-					*pPdf = 0.0f;
-					return Color::BLACK;
-				}
 
 				*pvIn = diffGeom.LocalToWorld(wi);
 
@@ -56,11 +52,6 @@ namespace EDX
 			else
 			{
 				wi = Sampling::CosineSampleHemisphere(sample.u, sample.v);
-				if (BSDFCoordinate::CosTheta(wo) < 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
-				{
-					*pPdf = 0.0f;
-					return Color::BLACK;
-				}
 
 				if (wo.z < 0.0f)
 					wi.z *= -1.0f;

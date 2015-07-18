@@ -23,6 +23,7 @@ namespace EDX
 			float enlargeFactor = (1.2f - 0.2f * Math::Sqrt((BSDFCoordinate::AbsCosTheta(wo))));
 
 			float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+			roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 			float sampleRough = roughness * roughness;
 
 			float microfacetPdf;

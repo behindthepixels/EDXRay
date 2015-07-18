@@ -47,6 +47,7 @@ namespace EDX
 					wh *= -1.0f;
 
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 
 				float dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
 				float whProb = GGX_Pdf(wh, roughness * roughness);
@@ -62,6 +63,7 @@ namespace EDX
 				Vector3 wh = Math::Normalize(wo + wi);
 
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 				float sampleRough = roughness * roughness;
 				float D = GGX_D(wh, sampleRough);
 				if (D == 0.0f)

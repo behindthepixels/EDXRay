@@ -297,8 +297,8 @@ void OnRender(Object* pSender, EventArgs args)
 				{
 				case Parameter::Float:
 				{
-					EDXGui::Slider(name.c_str(), &param.Value, param.Min, param.Max);
-					pBsdf->SetParameter(name, param);
+					if (EDXGui::Slider(name.c_str(), &param.Value, param.Min, param.Max))
+						pBsdf->SetParameter(name, param);
 					if (name == "Roughness" && EDXGui::Button("Roughness Map"))
 					{
 						char filePath[MAX_PATH];
