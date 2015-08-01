@@ -16,6 +16,8 @@ namespace EDX
 			float mSheen;
 			float mSheenTint;
 			float mSubsurface;
+			float mClearCoat;
+			float mClearCoatGloss;
 
 		public:
 			Disney(const Color& reflectance = Color::WHITE,
@@ -25,7 +27,9 @@ namespace EDX
 				float specTint = 0.0f,
 				float sheen = 0.0f,
 				float sheenTint = 0.5f,
-				float subsurface = 0.0f)
+				float subsurface = 0.0f,
+				float clearCoat = 0.0f,
+				float clearCoatGloss = 0.0f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, reflectance)
 				, mSpecular(specular)
 				, mMetallic(matellic)
@@ -33,6 +37,8 @@ namespace EDX
 				, mSheen(sheen)
 				, mSheenTint(sheenTint)
 				, mSubsurface(subsurface)
+				, mClearCoat(clearCoat)
+				, mClearCoatGloss(clearCoatGloss)
 			{
 				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
@@ -44,7 +50,9 @@ namespace EDX
 				float specTint = 0.0f,
 				float sheen = 0.0f,
 				float sheenTint = 0.5f,
-				float subsurface = 0.0f)
+				float subsurface = 0.0f,
+				float clearCoat = 0.0f,
+				float clearCoatGloss = 0.0f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pTex, pNormal)
 				, mSpecular(specular)
 				, mMetallic(matellic)
@@ -52,6 +60,8 @@ namespace EDX
 				, mSheen(sheen)
 				, mSheenTint(sheenTint)
 				, mSubsurface(subsurface)
+				, mClearCoat(clearCoat)
+				, mClearCoatGloss(clearCoatGloss)
 			{
 				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
@@ -62,7 +72,9 @@ namespace EDX
 				float specTint = 0.0f,
 				float sheen = 0.0f,
 				float sheenTint = 0.5f,
-				float subsurface = 0.0f)
+				float subsurface = 0.0f,
+				float clearCoat = 0.0f,
+				float clearCoatGloss = 0.0f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pFile)
 				, mSpecular(specular)
 				, mMetallic(matellic)
@@ -70,6 +82,8 @@ namespace EDX
 				, mSheen(sheen)
 				, mSheenTint(sheenTint)
 				, mSubsurface(subsurface)
+				, mClearCoat(clearCoat)
+				, mClearCoatGloss(clearCoatGloss)
 			{
 				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
@@ -85,8 +99,6 @@ namespace EDX
 		private:
 			float PdfInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const
 			{
-				if (!MatchesTypes(types))
-					return 0.0f;
 				Vector3 wh = Math::Normalize(wo + wi);
 				if (wh == Vector3::ZERO)
 					return 0.0f;
@@ -95,10 +107,20 @@ namespace EDX
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 
 				float microfacetPdf = GGX_Pdf(wh, roughness * roughness);
-				float pdf = microfacetPdf;
+				float pdf = 0.0f;
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
-				pdf *= dwh_dwi;
+				float specPdf = microfacetPdf * dwh_dwi;
+
+				pdf += specPdf;
 				pdf += BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI);
+
+				if (mClearCoat > 0.0f)
+				{
+					float coatRough = Math::Lerp(0.005f, 0.10f, mClearCoatGloss);
+					float coatHalfPdf = GGX_Pdf(wh, coatRough);
+					float coatPdf = coatHalfPdf * dwh_dwi;
+					pdf += coatPdf;
+				}
 
 				return pdf;
 			}
@@ -134,7 +156,11 @@ namespace EDX
 				float F = Fresnel_Schlick(ODotH, 0.0f);
 				Color sheenTerm = F * mSheen * sheenAlbedo;
 
-				return (1.0f - mMetallic) * (albedo * Math::Lerp(DiffuseTerm(wo, wi, IDotH, roughness), SubsurfaceTerm(wo, wi, IDotH, roughness), mSubsurface) + sheenTerm) + specAlbedo * SpecularTerm(wo, wi, wh, ODotH, roughness, nullptr);
+				return (1.0f - mMetallic)
+					* (albedo * Math::Lerp(DiffuseTerm(wo, wi, IDotH, roughness), SubsurfaceTerm(wo, wi, IDotH, roughness), mSubsurface)
+					+ sheenTerm)
+					+ specAlbedo * SpecularTerm(wo, wi, wh, ODotH, roughness, nullptr)
+					+ Color(ClearCoatTerm(wo, wi, wh, IDotH, mClearCoatGloss));
 			}
 
 			float EvalInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const
@@ -197,6 +223,25 @@ namespace EDX
 				return float(Math::EDX_INV_PI) * 1.25f * (S * (1.0f / (BSDFCoordinate::AbsCosTheta(wo) + BSDFCoordinate::AbsCosTheta(wi)) - 0.5f) + 0.5f);
 			}
 
+			float ClearCoatTerm(const Vector3& wo, const Vector3& wi, const Vector3& wh, const float IDotH, const float roughness) const
+			{
+				if (mClearCoat == 0.0f)
+					return 0.0f;
+
+				float rough = Math::Lerp(0.005f, 0.1f, roughness);
+
+				float D = GGX_D(wh, rough);
+				if (D == 0.0f)
+					return 0.0f;
+
+				float oneMinusCosD = 1.0f - IDotH;
+				float oneMinusCosDSqr = oneMinusCosD * oneMinusCosD;
+				float F = Fresnel_Schlick_Coat(IDotH);
+				float G = GGX_G(wo, wi, wh, 0.25f);
+
+				return mClearCoat * D * F * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
+			}
+
 			float Fresnel_Schlick(const float cosD, const float normalReflectance) const
 			{
 				float oneMinusCosD = 1.0f - cosD;
@@ -208,10 +253,20 @@ namespace EDX
 				return Math::Lerp(fresnel, fresnelConductor, mMetallic);
 			}
 
+			float Fresnel_Schlick_Coat(const float cosD) const
+			{
+				float oneMinusCosD = 1.0f - cosD;
+				float oneMinusCosDSqr = oneMinusCosD * oneMinusCosD;
+				float fresnel = 0.04f +
+					(1.0f - 0.04f) * oneMinusCosDSqr * oneMinusCosDSqr * oneMinusCosD;
+
+				return fresnel;
+			}
+
 		public:
 			int GetParameterCount() const
 			{
-				return BSDF::GetParameterCount() + 7;
+				return BSDF::GetParameterCount() + 9;
 			}
 
 			string GetParameterName(const int idx) const
@@ -234,6 +289,10 @@ namespace EDX
 					return "SheenTint";
 				else if (idx == baseParamCount + 6)
 					return "Subsurface";
+				else if (idx == baseParamCount + 7)
+					return "ClearCoat";
+				else if (idx == baseParamCount + 8)
+					return "ClearCoatGloss";
 
 				return "";
 			}
@@ -307,6 +366,24 @@ namespace EDX
 
 					return ret;
 				}
+				else if (name == "ClearCoat")
+				{
+					ret.Type = Parameter::Float;
+					ret.Value = this->mClearCoat;
+					ret.Min = 0.0f;
+					ret.Max = 1.0f;
+
+					return ret;
+				}
+				else if (name == "ClearCoatGloss")
+				{
+					ret.Type = Parameter::Float;
+					ret.Value = this->mClearCoatGloss;
+					ret.Min = 0.0f;
+					ret.Max = 1.0f;
+
+					return ret;
+				}
 
 				return ret;
 			}
@@ -339,6 +416,10 @@ namespace EDX
 					this->mSheenTint = param.Value;
 				else if (name == "Subsurface")
 					this->mSubsurface = param.Value;
+				else if (name == "ClearCoat")
+					this->mClearCoat = param.Value;
+				else if (name == "ClearCoatGloss")
+					this->mClearCoatGloss = param.Value;
 
 				return;
 			}
