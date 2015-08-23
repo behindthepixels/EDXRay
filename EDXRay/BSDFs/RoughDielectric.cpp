@@ -81,6 +81,12 @@ namespace EDX
 
 				const float ODotH = Math::Dot(wo, wh), IDotH = Math::Dot(wi, wh);
 				float sqrtDenom = etai * ODotH + etat * IDotH;
+				if (sqrtDenom == 0.0f)
+				{
+					*pPdf = 0.0f;
+					return Color::BLACK;
+				}
+
 				float dwh_dwi = (etat * etat * Math::Abs(IDotH)) / (sqrtDenom * sqrtDenom);
 				*pPdf *= dwh_dwi;
 
