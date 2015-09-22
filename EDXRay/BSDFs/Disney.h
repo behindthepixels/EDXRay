@@ -106,7 +106,7 @@ namespace EDX
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 
-				float microfacetPdf = GGX_Pdf(wh, roughness * roughness);
+				float microfacetPdf = GGX_Pdf_VisibleNormal(wo, wh, roughness * roughness);
 				float pdf = 0.0f;
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				float specPdf = microfacetPdf * dwh_dwi;
@@ -117,7 +117,7 @@ namespace EDX
 				if (mClearCoat > 0.0f)
 				{
 					float coatRough = Math::Lerp(0.005f, 0.10f, mClearCoatGloss);
-					float coatHalfPdf = GGX_Pdf(wh, coatRough);
+					float coatHalfPdf = GGX_Pdf_VisibleNormal(wo, wh, coatRough);
 					float coatPdf = coatHalfPdf * dwh_dwi;
 					pdf += coatPdf;
 				}

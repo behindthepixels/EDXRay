@@ -187,15 +187,15 @@ namespace EDX
 
 		Vector3 BSDF::GGX_SampleNormal(float u1, float u2, float* pPdf, float alpha)
 		{
-			float roughnessSqr = alpha * alpha;
-			float tanThetaMSqr = roughnessSqr * u1 / (1.0f - u1 + 1e-10f);
+			float alphaSqr = alpha * alpha;
+			float tanThetaMSqr = alphaSqr * u1 / (1.0f - u1 + 1e-10f);
 			float cosThetaH = 1.0f / std::sqrt(1 + tanThetaMSqr);
 
 			float cosThetaH2 = cosThetaH * cosThetaH,
 				cosThetaH3 = cosThetaH2 * cosThetaH,
-				temp = roughnessSqr + tanThetaMSqr;
+				temp = alphaSqr + tanThetaMSqr;
 
-			*pPdf = float(Math::EDX_INV_PI) * roughnessSqr / (cosThetaH3 * temp * temp);
+			*pPdf = float(Math::EDX_INV_PI) * alphaSqr / (cosThetaH3 * temp * temp);
 
 			float sinThetaH = Math::Sqrt(Math::Max(0.0f, 1.0f - cosThetaH2));
 			float phiH = u2 * float(Math::EDX_TWO_PI);
@@ -204,29 +204,139 @@ namespace EDX
 			return Vector3(dir.x, dir.z, dir.y);
 		}
 
+		float BSDF::SmithG(const Vector3& v, const Vector3& wh, float alpha)
+		{
+			const float tanTheta = Math::Abs(BSDFCoordinate::TanTheta(v));
+
+			if (tanTheta == 0.0f)
+				return 1.0f;
+
+			if (Math::Dot(v, wh) * BSDFCoordinate::CosTheta(v) <= 0)
+				return 0.0f;
+
+			const float root = alpha * tanTheta;
+			return 2.0f / (1.0f + std::sqrt(1.0f + root*root));
+		}
+
 		float BSDF::GGX_G(const Vector3& wo, const Vector3& wi, const Vector3& wh, float alpha)
 		{
-			auto SmithG1 = [&](const Vector3& v, const Vector3& wh)
-			{
-				const float tanTheta = Math::Abs(BSDFCoordinate::TanTheta(v));
-
-				if (tanTheta == 0.0f)
-					return 1.0f;
-
-				if (Math::Dot(v, wh) * BSDFCoordinate::CosTheta(v) <= 0)
-					return 0.0f;
-
-				const float root = alpha * tanTheta;
-				return 2.0f / (1.0f + std::sqrt(1.0f + root*root));
-			};
-
-			return SmithG1(wo, wh) * SmithG1(wi, wh);
+			return SmithG(wo, wh, alpha) * SmithG(wi, wh, alpha);
 		}
 
 		float BSDF::GGX_Pdf(const Vector3& wh, float alpha)
 		{
 			return GGX_D(wh, alpha) * BSDFCoordinate::CosTheta(wh);
 		}
+
+		Vector2 BSDF::ImportanceSampleGGX_VisibleNormal_Unit(float thetaI, float u1, float u2)
+		{
+			Vector2 Slope;
+
+			// Special case (normal incidence)
+			if (thetaI < 1e-4f)
+			{
+				float SinPhi, CosPhi;
+				float R = Math::Sqrt(Math::Max(u1 / (1 - u1), 0.0f));
+				Math::SinCos(2 * float(Math::EDX_PI) * u2, SinPhi, CosPhi);
+				return Vector2(R * CosPhi, R * SinPhi);
+			}
+
+			// Precomputations
+			float TanThetaI = tan(thetaI);
+			float a = 1 / TanThetaI;
+			float G1 = 2.0f / (1.0f + sqrt(max(1.0f + 1.0f / (a*a), 0.0f)));
+
+			// Simulate X component
+			float A = 2.0f * u1 / G1 - 1.0f;
+			if (Math::Abs(A) == 1)
+				A -= (A >= 0.0f ? 1.0f : -1.0f) * 1e-4f;
+
+			float Temp = 1.0f / (A*A - 1.0f);
+			float B = TanThetaI;
+			float D = sqrt(max(B*B*Temp*Temp - (A*A - B*B) * Temp, 0.0f));
+			float Slope_x_1 = B * Temp - D;
+			float Slope_x_2 = B * Temp + D;
+			Slope.x = (A < 0.0f || Slope_x_2 > 1.0f / TanThetaI) ? Slope_x_1 : Slope_x_2;
+
+			// Simulate Y component
+			float S;
+			if (u2 > 0.5f)
+			{
+				S = 1.0f;
+				u2 = 2.0f * (u2 - 0.5f);
+			}
+			else
+			{
+				S = -1.0f;
+				u2 = 2.0f * (0.5f - u2);
+			}
+
+			// Improved fit
+			float z =
+				(u2 * (u2 * (u2 * (-0.365728915865723) + 0.790235037209296) -
+				0.424965825137544) + 0.000152998850436920) /
+				(u2 * (u2 * (u2 * (u2 * 0.169507819808272 - 0.397203533833404) -
+				0.232500544458471) + 1) - 0.539825872510702);
+
+			Slope.y = S * z * sqrt(1.0f + Slope.x * Slope.x);
+
+			return Slope;
+		}
+
+		float BSDF::GGX_Pdf_VisibleNormal(const Vector3& wi, const Vector3& H, float Alpha)
+		{
+			float D = GGX_D(H, Alpha);
+
+			return SmithG(wi, H, Alpha) * Math::AbsDot(wi, H) * D / (BSDFCoordinate::AbsCosTheta(wi) + 1e-4f);
+		}
+
+
+		Vector3 BSDF::GGX_SampleVisibleNormal(const Vector3& _wi, float u1, float u2, float* pPdf, float Alpha)
+		{
+			// Stretch wi
+			Vector3 wi = Math::Normalize(Vector3(
+				Alpha * _wi.x,
+				Alpha * _wi.y,
+				_wi.z
+				));
+
+			// Get polar coordinates
+			float Theta = 0, Phi = 0;
+			if (wi.z < (float) 0.99999)
+			{
+				Theta = Math::Acos(wi.z);
+				Phi = Math::Atan2(wi.y, wi.x);
+			}
+			float SinPhi, CosPhi;
+			Math::SinCos(Phi, SinPhi, CosPhi);
+
+			// Simulate P22_{wi}(Slope.x, Slope.y, 1, 1)
+			Vector2 Slope = ImportanceSampleGGX_VisibleNormal_Unit(Theta, u1, u2);
+
+			// Step 3: rotate
+			Slope = Vector2(
+				CosPhi * Slope.x - SinPhi * Slope.y,
+				SinPhi * Slope.x + CosPhi * Slope.y);
+
+			// Unstretch
+			Slope.x *= Alpha;
+			Slope.y *= Alpha;
+
+			// Compute normal
+			float Normalization = (float)1 / Math::Sqrt(Slope.x*Slope.x
+				+ Slope.y*Slope.y + (float) 1.0);
+
+			Vector3 H = Vector3(
+				-Slope.x * Normalization,
+				-Slope.y * Normalization,
+				Normalization
+				);
+
+			*pPdf = GGX_Pdf_VisibleNormal(_wi, H, Alpha);
+
+			return H;
+		}
+
 
 		// -----------------------------------------------------------------------------------------------------------------------
 		// Lambertian BRDF Implementation

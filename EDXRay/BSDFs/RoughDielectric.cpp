@@ -27,7 +27,7 @@ namespace EDX
 			float sampleRough = roughness * roughness;
 
 			float microfacetPdf;
-			const Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, sampleRough * enlargeFactor);
+			const Vector3 wh = GGX_SampleVisibleNormal(Math::Sign(BSDFCoordinate::CosTheta(wo)) * wo, sample.u, sample.v, &microfacetPdf, sampleRough * enlargeFactor);
 			if (microfacetPdf == 0.0f)
 				return 0.0f;
 

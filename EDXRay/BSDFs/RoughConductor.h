@@ -50,7 +50,7 @@ namespace EDX
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 
 				float dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
-				float whProb = GGX_Pdf(wh, roughness * roughness);
+				float whProb = GGX_Pdf_VisibleNormal(wo, wh, roughness * roughness);
 
 				return Math::Abs(whProb * dwh_dwi);
 			}

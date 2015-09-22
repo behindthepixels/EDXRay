@@ -32,7 +32,7 @@ namespace EDX
 			{
 				float coatRough = Math::Lerp(0.005f, 0.1f, mClearCoatGloss);
 				float coatPdf = 0.0f;
-				wh_Coat = GGX_SampleNormal(rand() / float(RAND_MAX), rand() / float(RAND_MAX), &coatPdf, coatRough);
+				wh_Coat = GGX_SampleVisibleNormal(wo, rand() / float(RAND_MAX), rand() / float(RAND_MAX), &coatPdf, coatRough);
 				if (coatPdf > 0.0f)
 				{
 					probCoat = mClearCoat * Fresnel_Schlick_Coat(Math::AbsDot(wo, wh_Coat));
@@ -63,12 +63,12 @@ namespace EDX
 			Vector3 wh;
 			if (!sampleCoat)
 			{
-				wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, roughness * roughness);
+				wh = GGX_SampleVisibleNormal(wo, sample.u, sample.v, &microfacetPdf, roughness * roughness);
 			}
 			else
 			{
 				wh = wh_Coat;
-				microfacetPdf = GGX_Pdf(wh, roughness * roughness);
+				microfacetPdf = GGX_Pdf_VisibleNormal(wo, wh, roughness * roughness);
 			}
 
 			if (wh == Vector3::ZERO || microfacetPdf == 0.0f)

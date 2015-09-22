@@ -197,8 +197,13 @@ namespace EDX
 
 			static float	GGX_D(const Vector3& wh, float alpha);
 			static Vector3	GGX_SampleNormal(float u1, float u2, float* pPdf, float alpha);
+			static float	SmithG(const Vector3& v, const Vector3& wh, float alpha);
 			static float	GGX_G(const Vector3& wo, const Vector3& wi, const Vector3& wh, float alpha);
 			static float	GGX_Pdf(const Vector3& wh, float alpha);
+
+			static Vector2	ImportanceSampleGGX_VisibleNormal_Unit(float thetaI, float u1, float u2);
+			static Vector3	GGX_SampleVisibleNormal(const Vector3& _wi, float u1, float u2, float* pPdf, float Roughness);
+			static float	GGX_Pdf_VisibleNormal(const Vector3& wi, const Vector3& H, float Roughness);
 		};
 
 		class LambertianDiffuse : public BSDF

@@ -20,7 +20,7 @@ namespace EDX
 			float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 			roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 			float sampleRough = roughness * roughness;
-			Vector3 wh = GGX_SampleNormal(sample.u, sample.v, &microfacetPdf, sampleRough);
+			Vector3 wh = GGX_SampleVisibleNormal(wo, sample.u, sample.v, &microfacetPdf, sampleRough);
 
 			if (microfacetPdf == 0.0f)
 				return 0.0f;

@@ -95,13 +95,13 @@ namespace EDX
 					dwh_dwi = (etat * etat * Math::Abs(IDotH)) / (sqrtDenom * sqrtDenom);
 				}
 
-				wh *= BSDFCoordinate::CosTheta(wh) > 0.0f ? 1.0f : -1.0f;
+				wh *= Math::Sign(BSDFCoordinate::CosTheta(wh));
 
 				float enlargeFactor = (1.2f - 0.2f * Math::Sqrt((BSDFCoordinate::AbsCosTheta(wo))));
 
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
-				float whProb = GGX_Pdf(wh, roughness * roughness * enlargeFactor);
+				float whProb = GGX_Pdf_VisibleNormal(Math::Sign(BSDFCoordinate::CosTheta(wo)) * wo, wh, roughness * roughness * enlargeFactor);
 				if (sampleReflect && sampleRefract)
 				{
 					float F = BSDF::FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
