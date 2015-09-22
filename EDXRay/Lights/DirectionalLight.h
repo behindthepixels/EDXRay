@@ -27,7 +27,7 @@ namespace EDX
 				const uint sampCount = 1)
 				: Light(sampCount)
 				, mDirection(Math::Normalize(dir))
-				, mDirFrame(-mDirection)
+				, mDirFrame(mDirection)
 				, mIntensity(intens)
 				, mpScene(pScene)
 			{

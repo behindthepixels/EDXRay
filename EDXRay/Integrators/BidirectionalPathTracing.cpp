@@ -317,8 +317,8 @@ namespace EDX
 
 			const BSDF* pBSDF = diffGeom.mpBSDF;
 			Color bsdfFac = pBSDF->Eval(dirToCamera, -pathState.Direction, diffGeom)
-				* Math::Dot(-pathState.Direction, diffGeom.mNormal)
-				/ Math::Dot(-pathState.Direction, diffGeom.mGeomNormal);
+				* Math::AbsDot(-pathState.Direction, diffGeom.mNormal)
+				/ Math::AbsDot(-pathState.Direction, diffGeom.mGeomNormal);
 			if (bsdfFac.IsBlack())
 			{
 				return Color::BLACK;

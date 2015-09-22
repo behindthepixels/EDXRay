@@ -43,6 +43,8 @@ namespace EDX
 					{
 						for (auto i = 1; i < mCDF.LinearSize(); i++)
 							mCDF[i] = i / float(size);
+
+						mIntegralVal = 1.0f;
 					}
 					else
 					{
@@ -60,7 +62,7 @@ namespace EDX
 					if (pOffset)
 						*pOffset = offset;
 
-					float du = (u - mCDF[offset]) / (mCDF[offset + 1] - mCDF[offset]);
+					float du = (u - mCDF[offset]) / (mCDF[offset + 1] - mCDF[offset] + float(Math::EDX_EPSILON));
 
 					return (offset + du) / float(mSize);
 				}

@@ -212,6 +212,8 @@ namespace EDX
 				*pPdf = pdfW * pdfA;
 				if (pDirectPdf)
 					*pDirectPdf = pdfW;
+
+				assert(*pPdf > 0.0f);
 				
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
 				return mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear) * mScale;
