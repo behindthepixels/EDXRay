@@ -174,7 +174,13 @@ namespace EDX
 				{
 					mpDistribution->SampleContinuous(lightSample1.u, lightSample1.v, &u, &v, &mapPdf);
 					if (mapPdf == 0.0f)
+					{
+						*pPdf = 0.0f;
+						if (pDirectPdf)
+							*pDirectPdf = 0.0f;
+
 						return Color::BLACK;
+					}
 
 					float phi = u * float(Math::EDX_TWO_PI);
 					phi = ApplyRotation(phi);

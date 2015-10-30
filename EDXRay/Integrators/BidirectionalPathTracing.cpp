@@ -179,7 +179,9 @@ namespace EDX
 			Sample lightSample2 = Sample(mLightEmitSampleOffsets, pSamples, 1);
 
 			ret.Throughput = pSampledLight->Sample(lightSample1, lightSample2, &lightRay, &emitDir, &emitPdf, &directPdf);
-			
+			if (emitPdf == 0.0f)
+				return ret;
+
 			directPdf *= lightPickPdf;
 			emitPdf *= lightPickPdf;
 			ret.Throughput /= emitPdf;
@@ -205,6 +207,8 @@ namespace EDX
 		{
 			// Choose a light source, and generate the light path
 			PathState lightPathState = SampleLightSource(pScene, pSamples, random);
+			if (lightPathState.Throughput.IsBlack())
+				return 0;
 
 			// Trace light path
 			int pathIdx = 0;

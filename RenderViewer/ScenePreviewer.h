@@ -58,7 +58,9 @@ namespace EDX
 					phi -= twoPi;
 				vec2 envTexCoord = vec2(1.0f - phi / twoPi, theta / 3.1415926f);
 				vec4 sample = texture2D(EnvTexSampler, envTexCoord);
-				sample.xyz = pow(sample.xyz, 0.454545f);
+				sample.x = pow(sample.x, 0.454545f);
+				sample.y = pow(sample.y, 0.454545f);
+				sample.z = pow(sample.z, 0.454545f);
 				gl_FragColor = sample;
 			})";
 
