@@ -6,6 +6,7 @@
 #include "../Integrators/BidirectionalPathTracing.h"
 #include "Sampler.h"
 #include "../Sampler/RandomSampler.h"
+#include "../Sampler/SobolSampler.h"
 #include "Film.h"
 #include "DifferentialGeom.h"
 #include "Graphics/Color.h"
@@ -65,7 +66,7 @@ namespace EDX
 				mpSampler = new RandomSampler;
 				break;
 			case ESamplerType::Sobol:
-				mpSampler = new RandomSampler;
+				mpSampler = new SobolSampler(mJobDesc.ImageWidth, mJobDesc.ImageHeight);
 				break;
 			case ESamplerType::Metropolis:
 				mpSampler = new RandomSampler;
@@ -122,7 +123,7 @@ namespace EDX
 						if (mTaskSync.Aborted())
 							return;
 
-						mpSampler->GenerateSamples(pSampleBuf, random);
+						mpSampler->GenerateSamples(x, y, pSampleBuf, random);
 						pSampleBuf->imageX += x;
 						pSampleBuf->imageY += y;
 
@@ -155,6 +156,7 @@ namespace EDX
 				// One thread only
 				if (threadId == 0)
 				{
+					mpSampler->AdvanceSampleIndex();
 					mpFilm->IncreSampleCount();
 					mpFilm->ScaleToPixel();
 					mTaskSync.ResetTasks();

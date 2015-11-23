@@ -141,6 +141,12 @@
     <ClInclude Include="BSDFs\Disney.h">
       <Filter>Source Files\BSDFs</Filter>
     </ClInclude>
+    <ClInclude Include="Sampler\SobolSampler.h">
+      <Filter>Source Files\Samplers</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler\SobolMatrices.h">
+      <Filter>Source Files\Samplers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -202,6 +208,12 @@
     </ClCompile>
     <ClCompile Include="BSDFs\Disney.cpp">
       <Filter>Source Files\BSDFs</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler\SobolSampler.cpp">
+      <Filter>Source Files\Samplers</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler\SobolMatrices.cpp">
+      <Filter>Source Files\Samplers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

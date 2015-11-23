@@ -85,7 +85,13 @@ namespace EDX
 			{
 				return mSample;
 			}
-			virtual void GenerateSamples(SampleBuffer* pSamples, RandomGen& random) = 0;
+
+			virtual void GenerateSamples(
+				const int pixelX,
+				const int pixelY,
+				SampleBuffer* pSamples,
+				RandomGen& random) = 0;
+			virtual void AdvanceSampleIndex() = 0;
 		};
 	}
 }

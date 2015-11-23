@@ -8,7 +8,11 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		void RandomSampler::GenerateSamples(SampleBuffer* pSamples, RandomGen& random)
+		void RandomSampler::GenerateSamples(
+			const int pixelX,
+			const int pixelY,
+			SampleBuffer* pSamples,
+			RandomGen& random)
 		{
 			assert(pSamples);
 
@@ -28,6 +32,10 @@ namespace EDX
 				pSamples->p2D[i].u = random.Float();
 				pSamples->p2D[i].v = random.Float();
 			}
+		}
+
+		void RandomSampler::AdvanceSampleIndex()
+		{
 		}
 	}
 }

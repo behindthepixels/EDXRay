@@ -16,10 +16,11 @@ namespace EDX
 		void Primitive::LoadMesh(const char* path,
 			const Vector3& pos,
 			const Vector3& scl,
-			const Vector3& rot)
+			const Vector3& rot,
+			const bool forceComputeNormal)
 		{
 			ObjMesh* pObjMesh = new ObjMesh;
-			pObjMesh->LoadFromObj(pos, scl, rot, path, true);
+			pObjMesh->LoadFromObj(pos, scl, rot, path, forceComputeNormal, true);
 
 			mpMesh = new TriangleMesh;
 			mpMesh->LoadMesh(pObjMesh);
@@ -53,10 +54,11 @@ namespace EDX
 			const Color& reflectance,
 			const Vector3& pos,
 			const Vector3& scl,
-			const Vector3& rot)
+			const Vector3& rot,
+			const bool forceComputeNormal)
 		{
 			ObjMesh* pObjMesh = new ObjMesh;
-			pObjMesh->LoadFromObj(pos, scl, rot, path, true);
+			pObjMesh->LoadFromObj(pos, scl, rot, path, forceComputeNormal, true);
 
 			mpMesh = new TriangleMesh;
 			mpMesh->LoadMesh(pObjMesh);

@@ -51,6 +51,8 @@
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_RGB.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_Spectral.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
+    <ClInclude Include="Sampler\SobolMatrices.h" />
+    <ClInclude Include="Sampler\SobolSampler.h" />
     <ClInclude Include="Tracer\BVH.h" />
     <ClInclude Include="Tracer\BVHBuildTask.h" />
     <ClInclude Include="Tracer\Triangle4.h" />
@@ -75,6 +77,8 @@
     <ClCompile Include="Integrators\PathTracing.cpp" />
     <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
+    <ClCompile Include="Sampler\SobolMatrices.cpp" />
+    <ClCompile Include="Sampler\SobolSampler.cpp" />
     <ClCompile Include="Tracer\BVH.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

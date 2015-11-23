@@ -9,7 +9,12 @@ namespace EDX
 		class RandomSampler : public Sampler
 		{
 		public:
-			void GenerateSamples(SampleBuffer* pSamples, RandomGen& random);
+			void GenerateSamples(
+				const int pixelX,
+				const int pixelY,
+				SampleBuffer* pSamples,
+				RandomGen& random) override;
+			void AdvanceSampleIndex() override;
 		};
 	}
 }
