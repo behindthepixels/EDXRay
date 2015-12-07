@@ -17,7 +17,7 @@ namespace EDX
 		{
 			assert(pSamples);
 
-			int sobolIndex = EnumerateSampleIndex(pixelX, pixelY);
+			uint64 sobolIndex = EnumerateSampleIndex(pixelX, pixelY);
 
 			int dimension = 0;
 			pSamples->imageX = SobolSample(sobolIndex, dimension++) * mResolution - pixelX;
@@ -43,7 +43,7 @@ namespace EDX
 			mSampleIndex++;
 		}
 
-		int SobolSampler::EnumerateSampleIndex(const uint pixelX, const uint pixelY) const
+		uint64 SobolSampler::EnumerateSampleIndex(const uint pixelX, const uint pixelY) const
 		{
 			if (mLogTwoResolution == 0)
 				return 0;
@@ -69,11 +69,11 @@ namespace EDX
 			return index;
 		}
 
-		float SobolSampler::SobolSample(const int index, const int dimension) const
+		float SobolSampler::SobolSample(const int64 index, const int dimension) const
 		{
 			assert(dimension < NumSobolDimensions);
 			uint32 v = mScramble;
-			int _index = index;
+			int64 _index = index;
 			for (int i = dimension * SobolMatrixSize + SobolMatrixSize - 1; _index != 0; _index >>= 1, i--)
 			{
 				if (_index & 1)

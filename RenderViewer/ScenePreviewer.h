@@ -67,7 +67,7 @@ namespace EDX
 		class Previewer
 		{
 		private:
-			Camera mCamera;
+			RefPtr<Camera> mpCamera;
 			vector<RefPtr<GLMesh>> mMeshes;
 			OpenGL::Texture2D mEnvMap;
 			const Scene* mpScene;
@@ -84,16 +84,10 @@ namespace EDX
 			bool mLockCameraMovement;
 
 		public:
-			void Initialize(const Scene& scene, const RenderJobDesc& jobDesc)
+			void Initialize(const Scene& scene, const RefPtr<Camera>& pCamera)
 			{
 				mpScene = &scene;
-				mCamera.Init(jobDesc.CameraParams.Pos,
-					jobDesc.CameraParams.Target,
-					jobDesc.CameraParams.Up,
-					jobDesc.ImageWidth,
-					jobDesc.ImageHeight,
-					jobDesc.CameraParams.FieldOfView,
-					0.01f);
+				mpCamera = pCamera;
 				mPickedPrimIdx = -1;
 				mSetFocusDistance = false;
 				mLockCameraMovement = false;
@@ -160,11 +154,11 @@ namespace EDX
 				glLightfv(GL_LIGHT0, GL_AMBIENT, mat_specular);
 
 				glMatrixMode(GL_MODELVIEW);
-				const Matrix& mView = mCamera.GetViewMatrix();
+				const Matrix& mView = mpCamera->GetViewMatrix();
 				glLoadTransposeMatrixf((float*)&mView);
 
 				glMatrixMode(GL_PROJECTION);
-				const Matrix& mProj = mCamera.GetProjMatrix();
+				const Matrix& mProj = mpCamera->GetProjMatrix();
 				glLoadTransposeMatrixf((float*)&mProj);
 
 				glEnable(GL_DEPTH_TEST);
@@ -272,7 +266,7 @@ namespace EDX
 				{
 					mProgram.Use();
 
-					Matrix mViewProj = Matrix::Mul(mCamera.GetProjMatrix(), mCamera.GetViewMatrix());
+					Matrix mViewProj = Matrix::Mul(mpCamera->GetProjMatrix(), mpCamera->GetViewMatrix());
 					mProgram.SetUniform("ScreenToWorld", Matrix::Inverse(mViewProj), false);
 					mProgram.SetUniform("EnvTexSampler", 0);
 					mProgram.SetUniform("rotation", mpCachedEnvLight->GetRotation());
@@ -295,13 +289,7 @@ namespace EDX
 
 			void OnResize(int width, int height)
 			{
-				mCamera.Resize(width, height);
-
-				glViewport(0, 0, width, height);
-
-				glMatrixMode(GL_PROJECTION);
-				const Matrix& mProj = mCamera.GetProjMatrix();
-				glLoadTransposeMatrixf((float*)&mProj);
+				mpCamera->Resize(width, height);
 			}
 
 			void Pick(const int x, const int y)
@@ -309,7 +297,7 @@ namespace EDX
 				CameraSample camSample = { x, y, 0, 0, 0.0f };
 
 				Ray ray;
-				mCamera.GenerateRay(camSample, &ray);
+				mpCamera->GenerateRay(camSample, &ray, true);
 
 				Intersection isect;
 				if (mpScene->Intersect(ray, &isect))
@@ -320,7 +308,7 @@ namespace EDX
 						mPickedTriIdx = isect.mTriId;
 					}
 					else
-						mCamera.mFocalPlaneDist = isect.mDist;
+						mpCamera->mFocalPlaneDist = isect.mDist;
 				}
 				else
 				{
@@ -332,7 +320,7 @@ namespace EDX
 			void HandleMouseMsg(const MouseEventArgs& args)
 			{
 				if (!mLockCameraMovement)
-					mCamera.HandleMouseMsg(args);
+					mpCamera->HandleMouseMsg(args);
 
 				if (args.Action == MouseAction::LButtonDown && (GetAsyncKeyState(VK_CONTROL) & (1 << 15)))
 					Pick(args.x, args.y);
@@ -341,12 +329,12 @@ namespace EDX
 			void HandleKeyboardMsg(const KeyboardEventArgs& args)
 			{
 				if (!mLockCameraMovement)
-					mCamera.HandleKeyboardMsg(args);
+					mpCamera->HandleKeyboardMsg(args);
 			}
 
 			Camera& GetCamera()
 			{
-				return mCamera;
+				return *mpCamera;
 			}
 
 			GLMesh* GetMesh(int meshId) const

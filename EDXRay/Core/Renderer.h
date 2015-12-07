@@ -47,7 +47,8 @@ namespace EDX
 			Film* GetFilm();
 			RenderJobDesc* GetJobDesc() { return &mJobDesc; }
 			RefPtr<Scene> GetScene() { return mpScene; }
-			void SetCameraParams(const CameraParameters& params);
+			RefPtr<Camera> GetCamera() { return mpCamera; }
+			void SetJobDesc(const RenderJobDesc& jobDesc);
 		};
 	}
 }

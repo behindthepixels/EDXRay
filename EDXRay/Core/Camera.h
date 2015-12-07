@@ -7,15 +7,24 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		struct LensSettings
+		{
+			static const int FullFrameSensorSize = 36; // In millimeters
+			float FocalLengthMilliMeters;
+			float FStop;
+
+			float CalcFieldOfView() const;
+			float CalcLensRadius() const;
+		};
+
 		struct CameraParameters
 		{
 			Vector3	Pos;
 			Vector3	Target;
 			Vector3	Up;
-			float	FieldOfView;
 			float	NearClip, FarClip;
 			float	FocusPlaneDist;
-			float	LensRadius;
+			LensSettings mLensSettings;
 		};
 
 		class Camera : public EDX::Camera
@@ -41,7 +50,7 @@ namespace EDX
 				const float focalDist = 0.0f);
 
 			void Resize(int width, int height);
-			void GenerateRay(const CameraSample& sample, Ray* pRay) const;
+			void GenerateRay(const CameraSample& sample, Ray* pRay, const bool forcePinHole = false) const;
 			void GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const;
 
 			float GetLensRadius() const
@@ -62,11 +71,9 @@ namespace EDX
 				ret.Pos = mPos;
 				ret.Target = mTarget;
 				ret.Up = mUp;
-				ret.FieldOfView = mFOV;
 				ret.NearClip = mNearClip;
 				ret.FarClip = mFarClip;
 				ret.FocusPlaneDist = mFocalPlaneDist;
-				ret.LensRadius = mLensRadius;
 
 				return ret;
 			}

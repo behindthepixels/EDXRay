@@ -36,8 +36,8 @@ namespace EDX
 			void AdvanceSampleIndex() override;
 
 		private:
-			int EnumerateSampleIndex(const uint pixelX, const uint pixelY) const;
-			float SobolSample(const int index, const int dimension) const;
+			uint64 EnumerateSampleIndex(const uint pixelX, const uint pixelY) const;
+			float SobolSample(const int64 index, const int dimension) const;
 		};
 	}
 }

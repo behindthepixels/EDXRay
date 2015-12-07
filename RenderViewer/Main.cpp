@@ -40,7 +40,7 @@ void OnInit(Object* pSender, EventArgs args)
 	gpRenderer = new Renderer;
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
-	Primitive* pMesh = new Primitive;
+	//Primitive* pMesh = new Primitive;
 	Primitive* pMesh2 = new Primitive;
 	Primitive* pMesh3 = new Primitive;
 	Primitive* pMesh4 = new Primitive;
@@ -84,25 +84,25 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->AddPrimitive(pMesh2);
 	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
-	pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
+	//pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
 	//pScene->AddLight(new EnvironmentLight(Color(3.0f), Color(0.2f), 40.0f, pScene, -60.0f));
-	//pScene->AddLight(new DirectionalLight(Vector3(0.0f, 10.0f, 10.0f), Color(3.0f), pScene));
+	pScene->AddLight(new DirectionalLight(Vector3(10.0f, 60.0f, 10.0f), Color(2000.0f), pScene, 2.0f));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 7.9f, 0.0f), Color(50.0f)));
 
 	pScene->InitAccelerator();
 
 	OpenGL::InitializeOpenGLExtensions();
 
-	RenderJobDesc desc;
-	desc.ImageWidth = Application::GetMainWindow()->GetWindowWidth();
-	desc.ImageHeight = Application::GetMainWindow()->GetWindowHeight();
-	desc.SamplesPerPixel = 4096;
-	desc.CameraParams.FieldOfView = 40;
-	desc.CameraParams.Pos = Vector3(-6.17641401f, 14.5548525f, 16.4850121f);
-	desc.CameraParams.Target = Vector3(-5.86896896f, 14.0666752f, 15.6682129f);
-	desc.CameraParams.LensRadius = 0.5f;
+	RenderJobDesc jobDesc;
+	jobDesc.ImageWidth = Application::GetMainWindow()->GetWindowWidth();
+	jobDesc.ImageHeight = Application::GetMainWindow()->GetWindowHeight();
+	jobDesc.SamplesPerPixel = 4096;
+	jobDesc.CameraParams.Pos = Vector3(-6.17641401f, 14.5548525f, 16.4850121f);
+	jobDesc.CameraParams.Target = Vector3(-5.86896896f, 14.0666752f, 15.6682129f);
+	gpRenderer->SetJobDesc(jobDesc);
+
 	gpPreview = new Previewer;
-	gpPreview->Initialize(*pScene, desc);
+	gpPreview->Initialize(*pScene, gpRenderer->GetCamera());
 
 	// Initialize UI
 	EDXGui::Init();
@@ -112,26 +112,29 @@ void OnRender(Object* pSender, EventArgs args)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	auto jobDesc = gpRenderer->GetJobDesc();
+	auto pJobDesc = gpRenderer->GetJobDesc();
 	if (gRendering)
 	{
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(0, jobDesc->ImageWidth, 0, jobDesc->ImageHeight, -1, 1);
+		glOrtho(0, pJobDesc->ImageWidth, 0, pJobDesc->ImageHeight, -1, 1);
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 
 		glRasterPos3f(0.0f, 0.0f, 0.0f);
-		glDrawPixels(jobDesc->ImageWidth, jobDesc->ImageHeight, GL_RGBA, GL_FLOAT, (float*)gpRenderer->GetFilm()->GetPixelBuffer());
+		glDrawPixels(pJobDesc->ImageWidth, pJobDesc->ImageHeight, GL_RGBA, GL_FLOAT, (float*)gpRenderer->GetFilm()->GetPixelBuffer());
 	}
 	else
 		gpPreview->OnRender();
 
 	EDXGui::BeginFrame();
 	EDXGui::BeginDialog(LayoutStrategy::DockRight);
+	static float scroller = 0.0f;
+	static int contentHeight = 0;
+	EDXGui::BeginScrollableArea(pJobDesc->ImageHeight - 50, contentHeight, scroller);
 	{
-		EDXGui::Text("Image Res: %i, %i", jobDesc->ImageWidth, jobDesc->ImageHeight);
+		EDXGui::Text("Image Res: %i, %i", pJobDesc->ImageWidth, pJobDesc->ImageHeight);
 		EDXGui::Text("Samples per Pixel: %i", gpRenderer->GetFilm() ? gpRenderer->GetFilm()->GetSampleCount() : 0);
 		EDXGui::Text("(%.2f, %.2f, %.2f)", gCursorColor.r, gCursorColor.g, gCursorColor.b);
 		if (EDXGui::Button(!gRendering ? "Render" : "Stop Rendering"))
@@ -140,7 +143,6 @@ void OnRender(Object* pSender, EventArgs args)
 			if (gRendering)
 			{
 				gpRenderer->InitComponent();
-				gpRenderer->SetCameraParams(gpPreview->GetCamera().GetCameraParams());
 				gpRenderer->QueueRenderTasks();
 			}
 			else
@@ -154,7 +156,7 @@ void OnRender(Object* pSender, EventArgs args)
 			char directory[MAX_PATH];
 			sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
 			sprintf_s(name, "%sEDXRay_%i.bmp", directory, time(0));
-			Bitmap::SaveBitmapFile(name, (float*)gpRenderer->GetFilm()->GetPixelBuffer(), jobDesc->ImageWidth, jobDesc->ImageHeight);
+			Bitmap::SaveBitmapFile(name, (float*)gpRenderer->GetFilm()->GetPixelBuffer(), pJobDesc->ImageWidth, pJobDesc->ImageHeight);
 		}
 
 		static bool showRenderSettings = true;
@@ -167,7 +169,7 @@ void OnRender(Object* pSender, EventArgs args)
 					{ 3, "Multiplexed MLT" },
 					{ 4, "Stochastic PPM" }
 			};
-			EDXGui::ComboBox("Integrator", integratoriItems, 5, (int&)jobDesc->IntegratorType);
+			EDXGui::ComboBox("Integrator", integratoriItems, 5, (int&)pJobDesc->IntegratorType);
 
 			static int sampler = 0;
 			ComboBoxItem samplerItems[] = {
@@ -175,7 +177,7 @@ void OnRender(Object* pSender, EventArgs args)
 					{ 1, "Sobol" },
 					{ 2, "Metroplis" }
 			};
-			EDXGui::ComboBox("Sampler", samplerItems, 3, (int&)jobDesc->SamplerType);
+			EDXGui::ComboBox("Sampler", samplerItems, 3, (int&)pJobDesc->SamplerType);
 
 			static int filter = 0;
 			ComboBoxItem filteriItems[] = {
@@ -183,12 +185,12 @@ void OnRender(Object* pSender, EventArgs args)
 					{ 1, "Gaussion" },
 					{ 2, "Mitchell Netravali" }
 			};
-			EDXGui::ComboBox("Filter", filteriItems, 3, (int&)jobDesc->FilterType);
+			EDXGui::ComboBox("Filter", filteriItems, 3, (int&)pJobDesc->FilterType);
 
-			EDXGui::InputDigit((int&)jobDesc->MaxPathLength, "Max Length");
-			EDXGui::InputDigit((int&)jobDesc->SamplesPerPixel, "Max Samples");
-			EDXGui::CheckBox("Adaptive Sampling", jobDesc->AdaptiveSample);
-			EDXGui::CheckBox("Use RHF", jobDesc->UseRHF);
+			EDXGui::InputDigit((int&)pJobDesc->MaxPathLength, "Max Length");
+			EDXGui::InputDigit((int&)pJobDesc->SamplesPerPixel, "Max Samples");
+			EDXGui::CheckBox("Adaptive Sampling", pJobDesc->AdaptiveSample);
+			EDXGui::CheckBox("Use RHF", pJobDesc->UseRHF);
 
 			EDXGui::CloseHeaderSection();
 		}
@@ -196,7 +198,15 @@ void OnRender(Object* pSender, EventArgs args)
 		static bool showCameraSettings = true;
 		if (EDXGui::CollapsingHeader("Camera Settings", showCameraSettings))
 		{
-			EDXGui::Slider<float>("Lens Radius", &gpPreview->GetCamera().mLensRadius, 0.0f, 0.5f);
+			if (EDXGui::Slider<float>("Focal Length", &pJobDesc->CameraParams.mLensSettings.FocalLengthMilliMeters, 14, 240.0f))
+			{
+				gpPreview->GetCamera().mFOV = pJobDesc->CameraParams.mLensSettings.CalcFieldOfView();
+				gpPreview->GetCamera().Resize(pJobDesc->ImageWidth, pJobDesc->ImageHeight);
+			}
+			if (EDXGui::Slider<float>("F-Stop", &gpRenderer->GetJobDesc()->CameraParams.mLensSettings.FStop, 1.0f, 22.0f))
+			{
+				gpPreview->GetCamera().mLensRadius = pJobDesc->CameraParams.mLensSettings.CalcLensRadius();
+			}
 			EDXGui::CheckBox("Set Focus Distance", gpPreview->mSetFocusDistance);
 			EDXGui::CheckBox("Lock Camera", gpPreview->mLockCameraMovement);
 
@@ -250,7 +260,7 @@ void OnRender(Object* pSender, EventArgs args)
 		}
 
 		static bool showRHF = true;
-		if (jobDesc->UseRHF && EDXGui::CollapsingHeader("RHF Denoise", showRHF))
+		if (pJobDesc->UseRHF && EDXGui::CollapsingHeader("RHF Denoise", showRHF))
 		{
 			if (EDXGui::Button("Denoise"))
 			{
@@ -260,6 +270,7 @@ void OnRender(Object* pSender, EventArgs args)
 			EDXGui::CloseHeaderSection();
 		}
 	}
+	EDXGui::EndScrollableArea(pJobDesc->ImageHeight, contentHeight, scroller);
 	EDXGui::EndDialog();
 
 	if (gpPreview->GetPickedPrimId() != -1 && !gRendering)
@@ -391,10 +402,6 @@ void OnResize(Object* pSender, ResizeEventArgs args)
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(0, args.Width, 0, args.Height, -1, 1);
-
-		//gpRenderer->StopRenderTasks();
-		//gpRenderer->Resize(args.Width, args.Height);
-		//gpRenderer->QueueRenderTasks();
 	}
 	else
 	{
@@ -416,7 +423,6 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 		gCursorColor = gpRenderer->GetFilm() ?
 			gpRenderer->GetFilm()->GetPixelBuffer()[args.x + (jobDesc->ImageHeight - args.y - 1) * jobDesc->ImageWidth] :
 			Color::BLACK;
-
 	}
 
 	if (!gRendering)
@@ -452,7 +458,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdArgs, int cmdS
 	mainWindow->SetMouseHandler(MouseEvent(OnMouseEvent));
 	mainWindow->SetkeyboardHandler(KeyboardEvent(OnKeyboardEvent));
 
-	mainWindow->Create(L"EDXRay", 1280, 800);
+	mainWindow->Create(L"EDXRay", 1024, 640);
 
 	Application::Run(mainWindow);
 

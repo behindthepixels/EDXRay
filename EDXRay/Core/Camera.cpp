@@ -7,6 +7,21 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		float LensSettings::CalcFieldOfView() const
+		{
+			return Math::ToDegrees(
+				2.0f * Math::Atan2(0.5f * FullFrameSensorSize, FocalLengthMilliMeters)
+				);
+		}
+
+		float LensSettings::CalcLensRadius() const
+		{
+			if (FStop == 22.0f)
+				return 0.0f;
+
+			return 0.005f * FocalLengthMilliMeters / FStop; // Convert to meters
+		}
+
 		void Camera::Init(const Vector3& pos,
 			const Vector3& tar,
 			const Vector3& up,
@@ -38,14 +53,14 @@ namespace EDX
 			mImagePlaneDist = mFilmResY * 0.5f / tanHalfAngle;
 		}
 
-		void Camera::GenerateRay(const CameraSample& sample, Ray* pRay) const
+		void Camera::GenerateRay(const CameraSample& sample, Ray* pRay, const bool forcePinHole) const
 		{
 			Vector3 camCoord = Matrix::TransformPoint(Vector3(sample.imageX, sample.imageY, 0.0f), mRasterToCamera);
 
 			pRay->mOrg = Vector3::ZERO;
 			pRay->mDir = Math::Normalize(camCoord);
 
-			if (mLensRadius > 0.0f)
+			if (mLensRadius > 0.0f && !forcePinHole)
 			{
 				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);

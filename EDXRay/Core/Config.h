@@ -52,11 +52,11 @@ namespace EDX
 				CameraParams.Pos = Vector3::ZERO;
 				CameraParams.Target = -Vector3::UNIT_Z;
 				CameraParams.Up = Vector3::UNIT_Y;
-				CameraParams.FieldOfView = 65.0f;
 				CameraParams.NearClip = 1.0f;
 				CameraParams.FarClip = 1000.0f;
-				CameraParams.FocusPlaneDist = 0.0f;
-				CameraParams.LensRadius = 0.0f;
+				CameraParams.FocusPlaneDist = 99999999.9f;
+				CameraParams.mLensSettings.FocalLengthMilliMeters = 50.0f;
+				CameraParams.mLensSettings.FStop = 11.0f;
 
 				IntegratorType = EIntegratorType::BidirectionalPathTracing;
 				SamplerType = ESamplerType::Random;

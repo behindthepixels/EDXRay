@@ -32,16 +32,16 @@ namespace EDX
 
 		void Renderer::InitComponent()
 		{
-			mpCamera->Init(mJobDesc.CameraParams.Pos,
-				mJobDesc.CameraParams.Target,
-				mJobDesc.CameraParams.Up,
-				mJobDesc.ImageWidth,
-				mJobDesc.ImageHeight,
-				mJobDesc.CameraParams.FieldOfView,
-				mJobDesc.CameraParams.NearClip,
-				mJobDesc.CameraParams.FarClip,
-				mJobDesc.CameraParams.LensRadius,
-				mJobDesc.CameraParams.FocusPlaneDist);
+			//mpCamera->Init(mJobDesc.CameraParams.Pos,
+			//	mJobDesc.CameraParams.Target,
+			//	mJobDesc.CameraParams.Up,
+			//	mJobDesc.ImageWidth,
+			//	mJobDesc.ImageHeight,
+			//	mJobDesc.CameraParams.mLensSettings.CalcFieldOfView(),
+			//	mJobDesc.CameraParams.NearClip,
+			//	mJobDesc.CameraParams.FarClip,
+			//	mJobDesc.CameraParams.mLensSettings.CalcLensRadius(),
+			//	mJobDesc.CameraParams.FocusPlaneDist);
 
 			Filter* pFilter;
 			switch (mJobDesc.FilterType)
@@ -193,19 +193,19 @@ namespace EDX
 			ThreadScheduler::Instance()->JoinAllTasks();
 		}
 
-		void Renderer::SetCameraParams(const CameraParameters& params)
+		void Renderer::SetJobDesc(const RenderJobDesc& jobDesc)
 		{
-			mJobDesc.CameraParams = params;
+			mJobDesc = jobDesc;
 
 			mpCamera->Init(mJobDesc.CameraParams.Pos,
 				mJobDesc.CameraParams.Target,
 				mJobDesc.CameraParams.Up,
 				mJobDesc.ImageWidth,
 				mJobDesc.ImageHeight,
-				mJobDesc.CameraParams.FieldOfView,
+				mJobDesc.CameraParams.mLensSettings.CalcFieldOfView(),
 				mJobDesc.CameraParams.NearClip,
 				mJobDesc.CameraParams.FarClip,
-				mJobDesc.CameraParams.LensRadius,
+				mJobDesc.CameraParams.mLensSettings.CalcLensRadius(),
 				mJobDesc.CameraParams.FocusPlaneDist);
 		}
 

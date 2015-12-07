@@ -131,19 +131,20 @@ namespace EDX
 				http://psgraphics.blogspot.ch/2011/01/improved-code-for-concentric-map.html */
 
 				float phi, r;
-				if (r1 == 0 && r2 == 0)
+				if (r1 == 0.0f && r2 == 0.0f)
 					r = phi = 0;
-
-				if (r1*r1 > r2*r2)
+				else
 				{
-					r = r1;
-					phi = float(Math::EDX_PI_4) * (r2 / r1);
+					if (r1*r1 > r2*r2)
+					{
+						r = r1;
+						phi = float(Math::EDX_PI_4) * (r2 / r1);
+					}
+					else {
+						r = r2;
+						phi = float(Math::EDX_PI_2) - (r1 / r2) * float(Math::EDX_PI_4);
+					}
 				}
-				else {
-					r = r2;
-					phi = float(Math::EDX_PI_2) - (r1 / r2) * float(Math::EDX_PI_4);
-				}
-
 				*dx = r * Math::Cos(phi);
 				*dy = r * Math::Sin(phi);
 			}
@@ -200,6 +201,9 @@ namespace EDX
 			}
 			inline float UniformConePDF(float cosThetaMax)
 			{
+				if (cosThetaMax == 1.0f)
+					return 1.0f;
+
 				return 1.0f / (2.0f * float(Math::EDX_PI) * (1.0f - cosThetaMax));
 			}
 
