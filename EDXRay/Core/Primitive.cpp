@@ -131,6 +131,7 @@ namespace EDX
 		void Primitive::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
 		{
 			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
+			pDiffGeom->mpAreaLight = mpAreaLight;
 			mpMesh->PostIntersect(ray, pDiffGeom);
 		}
 

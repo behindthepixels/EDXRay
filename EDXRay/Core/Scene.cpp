@@ -3,6 +3,7 @@
 #include "../Tracer/BVH.h"
 #include "TriangleMesh.h"
 #include "Light.h"
+#include "../Lights/AreaLight.h"
 #include "DifferentialGeom.h"
 
 namespace EDX
@@ -59,6 +60,11 @@ namespace EDX
 					mLights.push_back(pLight);
 
 				mEnvMap = pLight;
+			}
+			else if (pLight->IsAreaLight())
+			{
+				mPrimitives.push_back(((AreaLight*)pLight)->GetPrimitive());
+				mLights.push_back(pLight);
 			}
 			else
 				mLights.push_back(pLight);

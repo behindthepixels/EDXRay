@@ -60,6 +60,7 @@ namespace EDX
 				float* pDirectPdf = nullptr) const = 0;
 			virtual float Pdf(const Vector3& pos, const Vector3& dir) const = 0;
 			virtual bool IsEnvironmentLight() const { return false; }
+			virtual bool IsAreaLight() const { return false; }
 			virtual bool IsDelta() const = 0;
 			virtual bool IsFinite() const = 0;
 			float GetSampleCount() const { return mSampleCount; }

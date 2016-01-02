@@ -18,10 +18,13 @@ namespace EDX
 
 			// Materials
 			vector<RefPtr<BSDF>>	mpBSDFs;
+			const AreaLight*		mpAreaLight;
 			uint*					mpMaterialIndices;
 
 		public:
 			Primitive()
+				: mpAreaLight(nullptr)
+				, mpMaterialIndices(nullptr)
 			{
 			}
 			~Primitive();
@@ -58,6 +61,10 @@ namespace EDX
 			BSDF* GetBSDF(const uint triId) const;
 			BSDF* GetBSDF_FromIdx(const uint idx) const;
 			void SetBSDF(const BSDFType type, const int triId);
+			void SetAreaLight(const AreaLight* pAreaLt)
+			{
+				mpAreaLight = pAreaLt;
+			}
 
 			const TriangleMesh* GetMesh() const
 			{
