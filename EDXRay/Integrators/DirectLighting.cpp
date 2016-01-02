@@ -18,7 +18,6 @@ namespace EDX
 			if (pScene->Intersect(ray, &diffGeom))
 			{
 				pScene->PostIntersect(ray, &diffGeom);
-				return Color(diffGeom.mNormal);
 
 				auto numLights = pScene->GetLights().size();
 
@@ -38,7 +37,8 @@ namespace EDX
 			}
 			else
 			{
-				L += pScene->GetEnvironmentMap()->Emit(-ray.mDir);
+				if (auto envMap = pScene->GetEnvironmentMap())
+					L += envMap->Emit(-ray.mDir);
 			}
 
 			return L;

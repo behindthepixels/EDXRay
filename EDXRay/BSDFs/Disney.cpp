@@ -114,7 +114,7 @@ namespace EDX
 				}
 
 				float diffusePdf = BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI) * (1.0f - prob);
-				float specPdf = microfacetPdf * prob;
+				float specPdf = GGX_Pdf_VisibleNormal(wo, wh, roughness * roughness) * prob;
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				specPdf *= dwh_dwi;
 
