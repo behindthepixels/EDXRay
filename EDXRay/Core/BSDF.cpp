@@ -236,7 +236,7 @@ namespace EDX
 			if (thetaI < 1e-4f)
 			{
 				float SinPhi, CosPhi;
-				float R = Math::Sqrt(Math::Max(u1 / (1 - u1), 0.0f));
+				float R = Math::Sqrt(Math::Max(u1 / ((1 - u1) + 1e-6f), 0.0f));
 				Math::SinCos(2 * float(Math::EDX_PI) * u2, SinPhi, CosPhi);
 				return Vector2(R * CosPhi, R * SinPhi);
 			}
@@ -302,7 +302,7 @@ namespace EDX
 
 			// Get polar coordinates
 			float Theta = 0, Phi = 0;
-			if (wi.z < (float) 0.99999)
+			if (wi.z < float(0.99999f))
 			{
 				Theta = Math::Acos(wi.z);
 				Phi = Math::Atan2(wi.y, wi.x);

@@ -111,15 +111,28 @@ namespace EDX
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				float specPdf = microfacetPdf * dwh_dwi;
 
-				pdf += specPdf;
-				pdf += BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI);
+				float normalRef = Math::Lerp(0.0f, 0.08f, mSpecular);
+				float ODotH = Math::Dot(wo, wh);
+				float F = Fresnel_Schlick(ODotH, normalRef);
+				float probSpec = F;
+
+				pdf += specPdf * probSpec;
+				pdf += BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI) * (1.0f - probSpec);
 
 				if (mClearCoat > 0.0f)
 				{
+					Color albedo = GetValue(mpTexture.Ptr(), diffGeom);
+					float coatWeight = mClearCoat / (mClearCoat + albedo.Luminance());
+					float FresnelCoat = Fresnel_Schlick_Coat(BSDFCoordinate::AbsCosTheta(wo));
+					float probCoat = (FresnelCoat * coatWeight) /
+						(FresnelCoat * coatWeight +
+						(1 - FresnelCoat) * (1 - coatWeight));
 					float coatRough = Math::Lerp(0.005f, 0.10f, mClearCoatGloss);
 					float coatHalfPdf = GGX_Pdf_VisibleNormal(wo, wh, coatRough);
 					float coatPdf = coatHalfPdf * dwh_dwi;
-					pdf += coatPdf;
+
+					pdf *= 1.0f - probCoat;
+					pdf += coatPdf * probCoat;
 				}
 
 				return pdf;
