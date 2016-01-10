@@ -11,6 +11,7 @@
 #include "Core/Primitive.h"
 #include "Core/TriangleMesh.h"
 #include "Lights/PointLight.h"
+#include "Lights/AreaLight.h"
 #include "Lights/DirectionalLight.h"
 #include "Lights/EnvironmentLight.h"
 #include "Core/BSDF.h"
@@ -84,9 +85,9 @@ void OnInit(Object* pSender, EventArgs args)
 	pScene->AddPrimitive(pMesh2);
 	pScene->AddPrimitive(pMesh3);
 	pScene->AddPrimitive(pMesh4);
-	//pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
+	pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
 	//pScene->AddLight(new EnvironmentLight(Color(3.0f), Color(0.2f), 40.0f, pScene, -60.0f));
-	pScene->AddLight(new DirectionalLight(Vector3(10.0f, 60.0f, 10.0f), Color(2000.0f), pScene, 2.0f));
+	//pScene->AddLight(new DirectionalLight(Vector3(10.0f, 60.0f, 10.0f), Color(2000.0f), pScene, 2.0f));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 7.9f, 0.0f), Color(50.0f)));
 
 	pScene->InitAccelerator();
@@ -275,7 +276,11 @@ void OnRender(Object* pSender, EventArgs args)
 
 	if (gpPreview->GetPickedPrimId() != -1 && !gRendering)
 	{
-		EDXGui::BeginDialog(LayoutStrategy::Floating);
+		static int dialogHeight = 500;
+		EDXGui::BeginDialog(LayoutStrategy::Floating, 25, 25, 250, dialogHeight);
+		static float scroller = 0.0f;
+		static int contentHeight = 0;
+		EDXGui::BeginScrollableArea(450, contentHeight, scroller);
 		{
 			EDXGui::Text("Material Editor");
 			ComboBoxItem items[] = {
@@ -386,7 +391,11 @@ void OnRender(Object* pSender, EventArgs args)
 					break;
 				}
 			}
+
+			// Adapt the dialog height
+			dialogHeight = Math::Min(EDXGui::GetCurrentDialogHeight() + 15, 500);
 		}
+		EDXGui::EndScrollableArea(450, contentHeight, scroller);
 		EDXGui::EndDialog();
 	}
 	EDXGui::EndFrame();

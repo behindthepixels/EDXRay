@@ -138,7 +138,7 @@ namespace EDX
 				return pdf;
 			}
 
-			Color Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types) const
+			Color Eval(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types) const override
 			{
 				if (Math::Dot(vOut, diffGeom.mGeomNormal) * Math::Dot(vIn, diffGeom.mGeomNormal) > 0.0f)
 					types = ScatterType(types & ~BSDF_TRANSMISSION);
@@ -152,7 +152,12 @@ namespace EDX
 
 				Vector3 wo = diffGeom.WorldToLocal(vOut);
 				Vector3 wi = diffGeom.WorldToLocal(vIn);
+				
+				return EvalTransformed(wo, wi, diffGeom, types);
+			}
 
+			Color EvalTransformed(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const
+			{
 				Color albedo = GetValue(mpTexture.Ptr(), diffGeom);
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
@@ -176,7 +181,7 @@ namespace EDX
 					+ Color(ClearCoatTerm(wo, wi, wh, IDotH, mClearCoatGloss));
 			}
 
-			float EvalInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const
+			float EvalInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const override
 			{
 				return 0.0f;
 			}
