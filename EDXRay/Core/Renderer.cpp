@@ -55,10 +55,13 @@ namespace EDX
 			case EFilterType::MitchellNetravali:
 				pFilter = new MitchellNetravaliFilter;
 				break;
+			default:
+				pFilter = new GaussianFilter;
+				break;
 			}
 
 			mpFilm = mJobDesc.UseRHF ? new FilmRHF : new Film;
-			mpFilm->Init(mJobDesc.ImageWidth, mJobDesc.ImageHeight, new GaussianFilter);
+			mpFilm->Init(mJobDesc.ImageWidth, mJobDesc.ImageHeight, pFilter);
 
 			switch (mJobDesc.SamplerType)
 			{
