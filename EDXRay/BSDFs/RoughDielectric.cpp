@@ -20,14 +20,12 @@ namespace EDX
 			bool sampleBoth = sampleReflect == sampleRefract;
 			const Vector3 wo = diffGeom.WorldToLocal(_wo);
 
-			float enlargeFactor = (1.2f - 0.2f * Math::Sqrt((BSDFCoordinate::AbsCosTheta(wo))));
-
 			float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 			roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 			float sampleRough = roughness * roughness;
 
 			float microfacetPdf;
-			const Vector3 wh = GGX_SampleVisibleNormal(Math::Sign(BSDFCoordinate::CosTheta(wo)) * wo, sample.u, sample.v, &microfacetPdf, sampleRough * enlargeFactor);
+			const Vector3 wh = GGX_SampleVisibleNormal(Math::Sign(BSDFCoordinate::CosTheta(wo)) * wo, sample.u, sample.v, &microfacetPdf, sampleRough);
 			if (microfacetPdf == 0.0f)
 				return 0.0f;
 
@@ -51,8 +49,8 @@ namespace EDX
 				*pvIn = diffGeom.LocalToWorld(wi);
 
 				*pPdf = !sampleBoth ? microfacetPdf : microfacetPdf * prob;
-				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
-				*pPdf *= dwh_dwi;
+				float dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
+				*pPdf *= Math::Abs(dwh_dwi);
 
 				float G = GGX_G(wo, wi, wh, sampleRough);
 
@@ -60,7 +58,7 @@ namespace EDX
 					*pSampledTypes = ReflectScatter;
 
 
-				return GetValue(mpTexture.Ptr(), diffGeom) * F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
+				return GetValue(mpTexture.Ptr(), diffGeom) * Math::Abs(F * D * G / (4.0f * BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo)));
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
@@ -87,8 +85,8 @@ namespace EDX
 					return Color::BLACK;
 				}
 
-				float dwh_dwi = (etat * etat * Math::Abs(IDotH)) / (sqrtDenom * sqrtDenom);
-				*pPdf *= dwh_dwi;
+				float dwh_dwi = (etat * etat * IDotH) / (sqrtDenom * sqrtDenom);
+				*pPdf *= Math::Abs(dwh_dwi);
 
 				if (pSampledTypes != nullptr)
 					*pSampledTypes = RefractScatter;
