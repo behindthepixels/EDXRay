@@ -320,16 +320,17 @@ namespace EDX
 			dirToCamera = Math::Normalize(dirToCamera);
 
 			const BSDF* pBSDF = diffGeom.mpBSDF;
-			Color bsdfFac = pBSDF->Eval(dirToCamera, -pathState.Direction, diffGeom)
+			Color bsdfFac = pBSDF->Eval(dirToCamera, -pathState.Direction, diffGeom, ScatterType(BSDF_ALL & ~BSDF_SPECULAR))
 				* Math::AbsDot(-pathState.Direction, diffGeom.mNormal)
 				/ Math::AbsDot(-pathState.Direction, diffGeom.mGeomNormal);
 			if (bsdfFac.IsBlack())
-			{
 				return Color::BLACK;
-			}
 
-			float pdf = pBSDF->Pdf(-pathState.Direction, dirToCamera, diffGeom);
-			float reversePdf = pBSDF->Pdf(dirToCamera, -pathState.Direction, diffGeom) * Math::Min(1.0f, pathState.Throughput.Luminance());
+			float pdf = pBSDF->Pdf(-pathState.Direction, dirToCamera, diffGeom, ScatterType(BSDF_ALL & ~BSDF_SPECULAR));
+			float reversePdf = pBSDF->Pdf(dirToCamera, -pathState.Direction, diffGeom, ScatterType(BSDF_ALL & ~BSDF_SPECULAR)) * Math::Min(1.0f, pathState.Throughput.Luminance());
+			if (pdf == 0.0f || reversePdf == 0.0f)
+				return Color::BLACK;
+
 			float cosToCam = Math::Dot(diffGeom.mGeomNormal, dirToCamera);
 
 			float cosAtCam = Math::Dot(camDir, -dirToCamera);

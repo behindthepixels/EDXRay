@@ -77,7 +77,7 @@ namespace EDX
 					//if (!entering)
 					//	wh *= -1.0f;
 
-					dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
+					dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
 				}
 				else
 				{
@@ -92,16 +92,14 @@ namespace EDX
 
 					const float ODotH = Math::Dot(wo, wh), IDotH = Math::Dot(wi, wh);
 					float sqrtDenom = etai * ODotH + etat * IDotH;
-					dwh_dwi = (etat * etat * Math::Abs(IDotH)) / (sqrtDenom * sqrtDenom);
+					dwh_dwi = (etat * etat * IDotH) / (sqrtDenom * sqrtDenom);
 				}
 
 				wh *= Math::Sign(BSDFCoordinate::CosTheta(wh));
 
-				float enlargeFactor = (1.2f - 0.2f * Math::Sqrt((BSDFCoordinate::AbsCosTheta(wo))));
-
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
-				float whProb = GGX_Pdf_VisibleNormal(Math::Sign(BSDFCoordinate::CosTheta(wo)) * wo, wh, roughness * roughness * enlargeFactor);
+				float whProb = GGX_Pdf_VisibleNormal(Math::Sign(BSDFCoordinate::CosTheta(wo)) * wo, wh, roughness * roughness);
 				if (sampleReflect && sampleRefract)
 				{
 					float F = BSDF::FresnelDielectric(Math::Dot(wo, wh), mEtai, mEtat);
@@ -147,8 +145,6 @@ namespace EDX
 						return 0.0f;
 
 					wh = Math::Normalize(wh);
-					if (!entering)
-						wh *= -1.0f;
 				}
 				else
 				{
@@ -157,6 +153,8 @@ namespace EDX
 
 					wh = -Math::Normalize(etai * wo + etat * wi);
 				}
+
+				wh *= Math::Sign(BSDFCoordinate::CosTheta(wh));
 
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
@@ -171,7 +169,7 @@ namespace EDX
 
 				if (reflect)
 				{
-					return F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
+					return Math::Abs(F * D * G / (4.0f * BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo)));
 				}
 				else
 				{
