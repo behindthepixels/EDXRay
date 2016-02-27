@@ -75,13 +75,13 @@ namespace EDX
 
 		class Sampler
 		{
-		private:
+		protected:
 			SampleBuffer mSample;
 
 		public:
 			virtual ~Sampler() {}
 
-			const SampleBuffer& GetConfigSample() const
+			SampleBuffer& GetSampleBuffer()
 			{
 				return mSample;
 			}
@@ -92,6 +92,13 @@ namespace EDX
 				SampleBuffer* pSamples,
 				RandomGen& random) = 0;
 			virtual void AdvanceSampleIndex() = 0;
+
+			virtual void StartPixel(const int pixelX, const int pixelY) = 0;
+			virtual float Get1D() = 0;
+			virtual Vector2 Get2D() = 0;
+			virtual Sample GetSample() = 0;
+
+			virtual Sampler* Clone() const = 0;
 		};
 	}
 }

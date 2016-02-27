@@ -17,30 +17,71 @@ namespace EDX
 		{
 			assert(pSamples);
 
-			uint64 sobolIndex = EnumerateSampleIndex(pixelX, pixelY);
-
-			int dimension = 0;
-			pSamples->imageX = SobolSample(sobolIndex, dimension++) * mResolution - pixelX;
-			pSamples->imageY = SobolSample(sobolIndex, dimension++) * mResolution - pixelY;
-			pSamples->lensU = SobolSample(sobolIndex, dimension++);
-			pSamples->lensV = SobolSample(sobolIndex, dimension++);
-			pSamples->time = SobolSample(sobolIndex, dimension++);
+			pSamples->imageX = SobolSample(mSobolIndex, mDimension++) * mResolution - pixelX;
+			pSamples->imageY = SobolSample(mSobolIndex, mDimension++) * mResolution - pixelY;
+			pSamples->lensU = SobolSample(mSobolIndex, mDimension++);
+			pSamples->lensV = SobolSample(mSobolIndex, mDimension++);
+			pSamples->time = SobolSample(mSobolIndex, mDimension++);
 
 			for (auto i = 0; i < pSamples->count1D; i++)
 			{
-				pSamples->p1D[i] = SobolSample(sobolIndex, dimension++);
+				pSamples->p1D[i] = SobolSample(mSobolIndex, mDimension++);
 			}
 
 			for (auto i = 0; i < pSamples->count2D; i++)
 			{
-				pSamples->p2D[i].u = SobolSample(sobolIndex, dimension++);
-				pSamples->p2D[i].v = SobolSample(sobolIndex, dimension++);
+				pSamples->p2D[i].u = SobolSample(mSobolIndex, mDimension++);
+				pSamples->p2D[i].v = SobolSample(mSobolIndex, mDimension++);
 			}
 		}
 
 		void SobolSampler::AdvanceSampleIndex()
 		{
 			mSampleIndex++;
+		}
+
+		void SobolSampler::StartPixel(const int pixelX, const int pixelY)
+		{
+			mSobolIndex = EnumerateSampleIndex(pixelX, pixelY);
+			mDimension = 0;
+		}
+
+		float SobolSampler::Get1D()
+		{
+			return SobolSample(mSobolIndex, mDimension++);
+		}
+
+		Vector2 SobolSampler::Get2D()
+		{
+			int dim = mDimension;
+			Vector2 ret = Vector2(SobolSample(mSobolIndex, dim),
+				SobolSample(mSobolIndex, dim + 1));
+			mDimension += 2;
+
+			return ret;
+		}
+
+		Sample SobolSampler::GetSample()
+		{
+			int dim = mDimension;
+
+			Sample ret;
+			ret.u = SobolSample(mSobolIndex, dim);
+			ret.v = SobolSample(mSobolIndex, dim + 1);
+			ret.w = SobolSample(mSobolIndex, dim + 2);
+
+			mDimension += 3;
+
+			return ret;
+		}
+
+		Sampler* SobolSampler::Clone() const
+		{
+			auto ret = new SobolSampler(mResolution, mLogTwoResolution, mScramble);
+			ret->GetSampleBuffer().count1D = mSample.count1D;
+			ret->GetSampleBuffer().count2D = mSample.count2D;
+
+			return ret;
 		}
 
 		uint64 SobolSampler::EnumerateSampleIndex(const uint pixelX, const uint pixelY) const

@@ -30,6 +30,7 @@
     <ClInclude Include="Core\Filter.h" />
     <ClInclude Include="Core\Integrator.h" />
     <ClInclude Include="Core\Light.h" />
+    <ClInclude Include="Core\Medium.h" />
     <ClInclude Include="Core\Primitive.h" />
     <ClInclude Include="Core\Renderer.h" />
     <ClInclude Include="Core\RenderTask.h" />

@@ -12,7 +12,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		Color PathTracingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory) const
+		Color PathTracingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryArena& memory) const
 		{
 			Color L = Color::BLACK;
 			Color pathThroughput = Color::WHITE;
@@ -33,8 +33,8 @@ namespace EDX
 					const BSDF* pBSDF = diffGeom.mpBSDF;
 					if (!pBSDF->IsSpecular())
 					{
-						Sample lightSample = Sample(mpLightSampleOffsets, pSampleBuf, bounce);
-						Sample bsdfSample = Sample(mpBSDFSampleOffsets, pSampleBuf, bounce);
+						Sample lightSample = pSampler->GetSample();
+						Sample bsdfSample = pSampler->GetSample();
 						auto lightIdx = Math::Min(lightSample.w * pScene->GetLights().size(), pScene->GetLights().size() - 1);
 						L += pathThroughput * Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, lightSample, bsdfSample);
 					}
@@ -45,7 +45,7 @@ namespace EDX
 					Vector3 vIn;
 					float pdf;
 					ScatterType bsdfFlags;
-					Sample scatterSample = Sample(mpScatterOffsets, pSampleBuf, bounce);
+					Sample scatterSample = pSampler->GetSample();
 					Color f = pBSDF->SampleScattered(vOut, scatterSample, diffGeom, &vIn, &pdf, BSDF_ALL, &bsdfFlags);
 					if (f.IsBlack() || pdf == 0.0f)
 						break;

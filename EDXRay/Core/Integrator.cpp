@@ -87,9 +87,9 @@ namespace EDX
 
 		Color Integrator::SpecularReflect(const Integrator* pIntegrator,
 			const Scene* pScene,
+			Sampler* pSampler,
 			const RayDifferential& ray,
 			const DifferentialGeom& diffGeom,
-			const SampleBuffer* pSamples,
 			RandomGen& random,
 			MemoryArena& memory)
 		{
@@ -126,7 +126,7 @@ namespace EDX
 					rayRef.mDyDir = vIn - vDOutdy + 2.0f * (Math::Dot(vOut, normal) * vDndy + fDcosdy * normal);
 				}
 
-				Color L = pIntegrator->Li(rayRef, pScene, pSamples, random, memory);
+				Color L = pIntegrator->Li(rayRef, pScene, pSampler, random, memory);
 				color = f * L * Math::AbsDot(vIn, normal) / pdf;
 			}
 
@@ -135,9 +135,9 @@ namespace EDX
 
 		Color Integrator::SpecularTransmit(const Integrator* pIntegrator,
 			const Scene* pScene,
+			Sampler* pSampler,
 			const RayDifferential& ray,
 			const DifferentialGeom& diffGeom,
-			const SampleBuffer* pSamples,
 			RandomGen& random,
 			MemoryArena& memory)
 		{
@@ -183,7 +183,7 @@ namespace EDX
 					rayRfr.mDyDir = vIn + fEta * vDOutdy - (fMu * vDndy + dfMudy * normal);
 				}
 
-				Color L = pIntegrator->Li(rayRfr, pScene, pSamples, random, memory);
+				Color L = pIntegrator->Li(rayRfr, pScene, pSampler, random, memory);
 				color = f * L * Math::AbsDot(vIn, normal) / pdf;
 			}
 

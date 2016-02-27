@@ -36,7 +36,7 @@ namespace EDX
 
 			void Resize(int width, int height);
 
-			void RenderFrame(SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory);
+			void RenderFrame(Sampler* pSampler, RandomGen& random, MemoryArena& memory);
 			void RenderImage(int threadId, RandomGen& random, MemoryArena& memory);
 
 			void BakeSamples();

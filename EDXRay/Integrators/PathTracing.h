@@ -25,7 +25,7 @@ namespace EDX
 			~PathTracingIntegrator();
 
 		public:
-			Color Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSamples, RandomGen& random, MemoryArena& memory) const;
+			Color Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryArena& memory) const;
 			void RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf);
 		};
 	}

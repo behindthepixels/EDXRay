@@ -42,13 +42,13 @@ namespace EDX
 
 		Color BidirPathTracingIntegrator::Li(const RayDifferential& ray,
 			const Scene* pScene,
-			const SampleBuffer* pSampleBuf,
+			Sampler* pSampler,
 			RandomGen& random,
 			MemoryArena& memory) const
 		{
 			// Generate the light path
 			PathVertex* pLightPath = memory.Alloc<PathVertex>(mMaxDepth);
-			int lightPathLength = GenerateLightPath(pScene, pSampleBuf, pLightPath, random);
+			int lightPathLength = GenerateLightPath(pScene, pSampler, pLightPath, random);
 
 			// Initialize the camera PathState
 			PathState cameraPathState;
@@ -69,7 +69,6 @@ namespace EDX
 							HittingLightSource(pScene,
 							pathRay,
 							diffGeomLocal,
-							pSampleBuf,
 							pScene->GetEnvironmentMap(),
 							cameraPathState,
 							random);
@@ -92,7 +91,6 @@ namespace EDX
 						HittingLightSource(pScene,
 						pathRay,
 						diffGeomLocal,
-						pSampleBuf,
 						diffGeomLocal.GetAreaLight(),
 						cameraPathState,
 						random);
@@ -111,7 +109,7 @@ namespace EDX
 						ConnectToLight(pScene,
 						pathRay,
 						diffGeomLocal,
-						pSampleBuf,
+						pSampler,
 						cameraPathState,
 						random);
 
@@ -128,14 +126,13 @@ namespace EDX
 						Ret += lightVertex.Throughput * cameraPathState.Throughput *
 							ConnectVertex(pScene,
 							diffGeomLocal,
-							pSampleBuf,
 							lightVertex,
 							cameraPathState,
 							random);
 					}
 				}
 
-				if (!SampleScattering(pScene, pathRay, diffGeomLocal, Sample(mCameraPathSampleOffsets, pSampleBuf, cameraPathState.PathLength - 1), cameraPathState, random))
+				if (!SampleScattering(pScene, pathRay, diffGeomLocal, pSampler->GetSample(), cameraPathState, random))
 				{
 					break;
 				}
@@ -163,20 +160,20 @@ namespace EDX
 
 		BidirPathTracingIntegrator::PathState BidirPathTracingIntegrator::SampleLightSource(
 			const Scene* pScene,
-			const SampleBuffer* pSamples,
+			Sampler* pSampler,
 			RandomGen& random) const
 		{
 			PathState ret;
 
-			float lightIdSample = pSamples->p1D[mLightIdSampleOffset];
+			float lightIdSample = pSampler->Get1D();
 			float lightPickPdf;
 			auto pSampledLight = pScene->ChooseLightSource(lightIdSample, &lightPickPdf);
 
 			Ray lightRay;
 			Vector3 emitDir;
 			float emitPdf, directPdf;
-			Sample lightSample1 = Sample(mLightEmitSampleOffsets, pSamples, 0);
-			Sample lightSample2 = Sample(mLightEmitSampleOffsets, pSamples, 1);
+			Sample lightSample1 = pSampler->GetSample();
+			Sample lightSample2 = pSampler->GetSample();
 
 			ret.Throughput = pSampledLight->Sample(lightSample1, lightSample2, &lightRay, &emitDir, &emitPdf, &directPdf);
 			if (emitPdf == 0.0f)
@@ -199,14 +196,14 @@ namespace EDX
 		}
 
 		int BidirPathTracingIntegrator::GenerateLightPath(const Scene* pScene,
-			const SampleBuffer* pSamples,
+			Sampler* pSampler,
 			PathVertex* pPath,
 			RandomGen& random,
 			const DifferentialGeom* surfDiffGeom,
 			Color* pColorConnectToCam) const
 		{
 			// Choose a light source, and generate the light path
-			PathState lightPathState = SampleLightSource(pScene, pSamples, random);
+			PathState lightPathState = SampleLightSource(pScene, pSampler, random);
 			if (lightPathState.Throughput.IsBlack())
 				return 0;
 
@@ -246,7 +243,7 @@ namespace EDX
 					lightVertex.DVC = lightPathState.DVC;
 
 					// Connect to camera
-					auto connectRadiance = ConnectToCamera(pScene, diffGeom, pSamples, lightPathState, random, surfDiffGeom);
+					auto connectRadiance = ConnectToCamera(pScene, diffGeom, lightPathState, random, surfDiffGeom);
 					if (pColorConnectToCam)
 						*pColorConnectToCam += connectRadiance;
 				}
@@ -257,7 +254,7 @@ namespace EDX
 					break;
 				}
 
-				if (!SampleScattering(pScene, pathRay, diffGeom, Sample(mLightPathSampleOffsets, pSamples, lightPathState.PathLength - 1), lightPathState, random))
+				if (!SampleScattering(pScene, pathRay, diffGeom, pSampler->GetSample(), lightPathState, random))
 				{
 					break;
 				}
@@ -268,7 +265,6 @@ namespace EDX
 
 		Color BidirPathTracingIntegrator::ConnectToCamera(const Scene* pScene,
 			const DifferentialGeom& diffGeom,
-			const SampleBuffer* pSamples,
 			const PathState& pathState,
 			RandomGen& random,
 			const DifferentialGeom* pSurfDiffGeom) const
@@ -387,12 +383,12 @@ namespace EDX
 		Color BidirPathTracingIntegrator::ConnectToLight(const Scene* pScene,
 			const RayDifferential& pathRay,
 			const DifferentialGeom& diffGeom,
-			const SampleBuffer* pSamples,
+			Sampler* pSampler,
 			const PathState& cameraPathState,
 			RandomGen& random) const
 		{
 			// Sample light source and get radiance
-			float lightIdSample = pSamples->p1D[mLightConnectIdSampleOffset + cameraPathState.PathLength - 1];
+			float lightIdSample = pSampler->Get1D();
 			float lightPickPdf;
 			const Light* pLight = pScene->ChooseLightSource(lightIdSample, &lightPickPdf);
 
@@ -402,7 +398,7 @@ namespace EDX
 			float lightPdfW;
 			float cosAtLight;
 			float emitPdfW;
-			Sample lightSample = Sample(mLightConnectSampleOffsets, pSamples, cameraPathState.PathLength - 1);
+			Sample lightSample = pSampler->GetSample();
 			Color radiance = pLight->Illuminate(pos, lightSample, &vIn, &visibility, &lightPdfW, &cosAtLight, &emitPdfW);
 			if (radiance.IsBlack() || lightPdfW == 0.0f)
 			{
@@ -452,7 +448,6 @@ namespace EDX
 		Color BidirPathTracingIntegrator::HittingLightSource(const Scene* pScene,
 			const RayDifferential& pathRay,
 			const DifferentialGeom& diffGeom,
-			const SampleBuffer* pSamples,
 			const Light* pLight,
 			const PathState& cameraPathState,
 			RandomGen& random) const
@@ -482,7 +477,6 @@ namespace EDX
 
 		Color BidirPathTracingIntegrator::ConnectVertex(const Scene* pScene,
 			const DifferentialGeom& cameraDiffGeom,
-			const SampleBuffer* pSamples,
 			const PathVertex& lightVertex,
 			const PathState& cameraState,
 			RandomGen& random) const

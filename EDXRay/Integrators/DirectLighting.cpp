@@ -11,7 +11,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		Color DirectLightingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, const SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory) const
+		Color DirectLightingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryArena& memory) const
 		{
 			DifferentialGeom diffGeom;
 			Color L;
@@ -24,15 +24,15 @@ namespace EDX
 				for (auto i = 0; i < pScene->GetLights().size(); i++)
 				{
 					auto pLight = pScene->GetLights()[i].Ptr();
-					Sample lightSample = Sample(mpLightSampleOffsets[i], pSampleBuf);
-					Sample bsdfSample = Sample(mpBSDFSampleOffsets[i], pSampleBuf);
+					Sample lightSample = pSampler->GetSample();
+					Sample bsdfSample = pSampler->GetSample();
 					L += Integrator::EstimateDirectLighting(diffGeom, -ray.mDir, pLight, pScene, lightSample, bsdfSample);
 				}
 
 				if (ray.mDepth < mMaxDepth)
 				{
-					L += Integrator::SpecularReflect(this, pScene, ray, diffGeom, pSampleBuf, random, memory);
-					L += Integrator::SpecularTransmit(this, pScene, ray, diffGeom, pSampleBuf, random, memory);
+					L += Integrator::SpecularReflect(this, pScene, pSampler, ray, diffGeom, random, memory);
+					L += Integrator::SpecularTransmit(this, pScene, pSampler, ray, diffGeom, random, memory);
 				}
 			}
 			else

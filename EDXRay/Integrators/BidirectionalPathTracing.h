@@ -44,24 +44,23 @@ namespace EDX
 		public:
 			Color Li(const RayDifferential& ray,
 				const Scene* pScene,
-				const SampleBuffer* pSamples,
+				Sampler* pSampler,
 				RandomGen& random,
 				MemoryArena& memory) const override;
 			void RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf) override;
 
 		private:
 			PathState SampleLightSource(const Scene* pScene,
-				const SampleBuffer* pSamples,
+				Sampler* pSampler,
 				RandomGen& random) const;
 			int GenerateLightPath(const Scene* pScene,
-				const SampleBuffer* pSamples,
+				Sampler* pSampler,
 				PathVertex* pPath,
 				RandomGen& random,
 				const DifferentialGeom* diffGeom = nullptr,
 				Color* pColorConnectToCam = nullptr) const;
 			Color ConnectToCamera(const Scene* pScene,
 				const DifferentialGeom& diffGeom,
-				const SampleBuffer* pSamples,
 				const PathState& pathState,
 				RandomGen& random,
 				const DifferentialGeom* pSurfDiffGeom) const;
@@ -72,19 +71,17 @@ namespace EDX
 			Color ConnectToLight(const Scene* pScene,
 				const RayDifferential& pathRay,
 				const DifferentialGeom& diffGeom,
-				const SampleBuffer* pSamples,
+				Sampler* pSampler,
 				const PathState& cameraPathState,
 				RandomGen& random) const;
 			Color HittingLightSource(const Scene* pScene,
 				const RayDifferential& pathRay,
 				const DifferentialGeom& diffGeom,
-				const SampleBuffer* pSamples,
 				const Light* pLight,
 				const PathState& cameraPathState,
 				RandomGen& random) const;
 			Color ConnectVertex(const Scene* pScene,
 				const DifferentialGeom& cameraDiffGeom,
-				const SampleBuffer* pSamples,
 				const PathVertex& lightVertex,
 				const PathState& cameraState,
 				RandomGen& random) const;

@@ -37,5 +37,33 @@ namespace EDX
 		void RandomSampler::AdvanceSampleIndex()
 		{
 		}
+
+		void RandomSampler::StartPixel(const int pixelX, const int pixelY)
+		{
+		}
+
+		float RandomSampler::Get1D()
+		{
+			return mRandom.Float();
+		}
+
+		Vector2 RandomSampler::Get2D()
+		{
+			return Vector2(mRandom.Float(), mRandom.Float());
+		}
+
+		Sample RandomSampler::GetSample()
+		{
+			return Sample(mRandom);
+		}
+
+		Sampler* RandomSampler::Clone() const
+		{
+			auto ret = new RandomSampler();
+			ret->GetSampleBuffer().count1D = mSample.count1D;
+			ret->GetSampleBuffer().count2D = mSample.count2D;
+
+			return ret;
+		}
 	}
 }

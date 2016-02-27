@@ -4,7 +4,6 @@
 #include "../Integrators/DirectLighting.h"
 #include "../Integrators/PathTracing.h"
 #include "../Integrators/BidirectionalPathTracing.h"
-#include "Sampler.h"
 #include "../Sampler/RandomSampler.h"
 #include "../Sampler/SobolSampler.h"
 #include "Film.h"
@@ -95,7 +94,7 @@ namespace EDX
 				break;
 			}
 
-			BakeSamples();
+			//BakeSamples();
 			//mpScene->InitAccelerator();
 
 			mTaskSync.Init(mJobDesc.ImageWidth, mJobDesc.ImageHeight);
@@ -114,9 +113,10 @@ namespace EDX
 			mTaskSync.Init(width, height);
 		}
 
-		void Renderer::RenderFrame(SampleBuffer* pSampleBuf, RandomGen& random, MemoryArena& memory)
+		void Renderer::RenderFrame(Sampler* pSampler, RandomGen& random, MemoryArena& memory)
 		{
 			RenderTile* pTask;
+			auto pSampleBuf = &pSampler->GetSampleBuffer();
 			while (mTaskSync.GetNextTask(pTask))
 			{
 				for (auto y = pTask->minY; y < pTask->maxY; y++)
@@ -126,14 +126,15 @@ namespace EDX
 						if (mTaskSync.Aborted())
 							return;
 
-						mpSampler->GenerateSamples(x, y, pSampleBuf, random);
+						pSampler->StartPixel(x, y);
+						pSampler->GenerateSamples(x, y, pSampleBuf, random);
 						pSampleBuf->imageX += x;
 						pSampleBuf->imageY += y;
 
 						RayDifferential ray;
 						mpCamera->GenRayDifferential(*pSampleBuf, &ray);
 
-						Color L = mpIntegrator->Li(ray, mpScene.Ptr(), pSampleBuf, random, memory);
+						Color L = mpIntegrator->Li(ray, mpScene.Ptr(), pSampler, random, memory);
 
 						mpFilm->AddSample(pSampleBuf->imageX, pSampleBuf->imageY, L);
 						memory.FreeAll();
@@ -144,22 +145,23 @@ namespace EDX
 
 		void Renderer::RenderImage(int threadId, RandomGen& random, MemoryArena& memory)
 		{
-			SampleBuffer* pSampleBuf = mpSampleBuf->Duplicate(1);
+			RefPtr<Sampler> pTileSampler = mpSampler->Clone();
 
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
 				// Sync barrier before render
 				mTaskSync.SyncThreadsPreRender(threadId);
 
-				RenderFrame(pSampleBuf, random, memory);
+				RenderFrame(pTileSampler.Ptr(), random, memory);
 
 				// Sync barrier after render
 				mTaskSync.SyncThreadsPostRender(threadId);
 
+				pTileSampler->AdvanceSampleIndex();
+
 				// One thread only
 				if (threadId == 0)
 				{
-					mpSampler->AdvanceSampleIndex();
 					mpFilm->IncreSampleCount();
 					mpFilm->ScaleToPixel();
 					mTaskSync.ResetTasks();
@@ -168,14 +170,11 @@ namespace EDX
 				if (mTaskSync.Aborted())
 					break;
 			}
-
-			SafeDeleteArray(pSampleBuf);
 		}
 
 		void Renderer::BakeSamples()
 		{
-			mpSampleBuf = new SampleBuffer;
-			mpIntegrator->RequestSamples(mpScene.Ptr(), mpSampleBuf.Ptr());
+			mpIntegrator->RequestSamples(mpScene.Ptr(), &mpSampler->GetSampleBuffer());
 		}
 
 		void Renderer::QueueRenderTasks()
