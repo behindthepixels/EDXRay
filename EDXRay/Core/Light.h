@@ -2,8 +2,8 @@
 
 #include "EDXPrerequisites.h"
 
+#include "../Core/Ray.h"
 #include "Math/Vector.h"
-#include "Math/Ray.h"
 #include "../ForwardDecl.h"
 
 namespace EDX

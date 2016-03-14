@@ -3,9 +3,10 @@
 #include "../Core/Light.h"
 #include "../Core/DifferentialGeom.h"
 #include "../Core/BSDF.h"
+#include "../Core/Medium.h"
 #include "../Core/Sampler.h"
 #include "../Core/Sampling.h"
-#include "Math/Ray.h"
+#include "../Core/Ray.h"
 #include "Graphics/Color.h"
 
 namespace EDX
@@ -85,10 +86,6 @@ namespace EDX
 			mpLightSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
 			mpBSDFSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
 			mpScatterOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
-		}
-
-		PathTracingIntegrator::~PathTracingIntegrator()
-		{
 		}
 	}
 }

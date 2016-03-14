@@ -32,6 +32,7 @@
     <ClInclude Include="Core\Light.h" />
     <ClInclude Include="Core\Medium.h" />
     <ClInclude Include="Core\Primitive.h" />
+    <ClInclude Include="Core\Ray.h" />
     <ClInclude Include="Core\Renderer.h" />
     <ClInclude Include="Core\RenderTask.h" />
     <ClInclude Include="Core\Sampler.h" />
@@ -51,6 +52,7 @@
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_CIEXYZ.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_RGB.h" />
     <ClInclude Include="Lights\SkyLight\ArHosekSkyModelData_Spectral.h" />
+    <ClInclude Include="Media\Homogeneous.h" />
     <ClInclude Include="Sampler\RandomSampler.h" />
     <ClInclude Include="Sampler\SobolMatrices.h" />
     <ClInclude Include="Sampler\SobolSampler.h" />
@@ -68,6 +70,7 @@
     <ClCompile Include="Core\Film.cpp" />
     <ClCompile Include="Core\Integrator.cpp" />
     <ClCompile Include="Core\Light.cpp" />
+    <ClCompile Include="Core\Medium.cpp" />
     <ClCompile Include="Core\Primitive.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
     <ClCompile Include="Core\Sampler.cpp" />
@@ -77,6 +80,7 @@
     <ClCompile Include="Integrators\DirectLighting.cpp" />
     <ClCompile Include="Integrators\PathTracing.cpp" />
     <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp" />
+    <ClCompile Include="Media\Homogeneous.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />
     <ClCompile Include="Sampler\SobolMatrices.cpp" />
     <ClCompile Include="Sampler\SobolSampler.cpp" />

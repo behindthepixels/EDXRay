@@ -1,8 +1,9 @@
 #pragma once
 
 #include "EDXPrerequisites.h"
-#include "Math/Vector.h"
 #include "../ForwardDecl.h"
+
+#include "Math/Vector.h"
 
 namespace EDX
 {
@@ -52,6 +53,21 @@ namespace EDX
 
 		};
 
+		class Scatter
+		{
+		public:
+			Vector3 mPosition;
+			Vector3 mNormal;
+
+		public:
+			Scatter(const Vector3 pos = Vector3::ZERO, const Vector3& norm = Vector3::UNIT_Z)
+				: mPosition(pos)
+				, mNormal(norm)
+			{
+			}
+			virtual bool IsMediumScatter() const = 0;
+		};
+
 		class Intersection
 		{
 		public:
@@ -67,10 +83,9 @@ namespace EDX
 			}
 		};
 
-		class DifferentialGeom : public Intersection
+		class DifferentialGeom : public Intersection, public Scatter
 		{
 		public:
-			Vector3 mPosition, mNormal;
 			Vector2 mTexcoord;
 			Vector3 mGeomNormal;
 			Vector3 mDpdu, mDpdv;
@@ -109,7 +124,33 @@ namespace EDX
 			}
 			Color Emit(const Vector3& dir) const; // Deprecated
 			void ComputeDifferentials(const RayDifferential& ray) const;
+
+			bool IsMediumScatter() const override
+			{
+				return false;
+			}
 		};
 
+		class MediumScatter : public Scatter
+		{
+		public:
+			const PhaseFunctionHG* mpPhaseFunc;
+
+			MediumScatter(const Vector3& pos = Vector3::ZERO, PhaseFunctionHG* pPhaseFunc = nullptr)
+				: Scatter(pos, Vector3::ZERO)
+				, mpPhaseFunc(pPhaseFunc)
+			{
+			}
+
+			bool IsValid()
+			{
+				return mpPhaseFunc != nullptr;
+			}
+
+			bool IsMediumScatter() const override
+			{
+				return true;
+			}
+		};
 	}
 }

@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "Scene.h"
+#include "../Core/Ray.h"
 #include "../Integrators/DirectLighting.h"
 #include "../Integrators/PathTracing.h"
 #include "../Integrators/BidirectionalPathTracing.h"

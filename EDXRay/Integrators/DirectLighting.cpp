@@ -3,7 +3,7 @@
 #include "../Core/Light.h"
 #include "../Core/DifferentialGeom.h"
 #include "../Core/Sampler.h"
-#include "Math/Ray.h"
+#include "../Core/Ray.h"
 #include "Graphics/Color.h"
 #include "Memory/Memory.h"
 

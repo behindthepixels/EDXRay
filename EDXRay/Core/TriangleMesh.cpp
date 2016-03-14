@@ -1,8 +1,8 @@
 #include "TriangleMesh.h"
 
+#include "../Core/Ray.h"
 #include "Graphics/ObjMesh.h"
 #include "DifferentialGeom.h"
-#include "Math/Ray.h"
 #include "Memory/Memory.h"
 
 #include "BSDF.h"

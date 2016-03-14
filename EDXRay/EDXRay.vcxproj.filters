@@ -34,6 +34,9 @@
     <Filter Include="Source Files\BSDFs">
       <UniqueIdentifier>{d56e4f40-4f1c-443d-a253-1f561a60f7cb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Media">
+      <UniqueIdentifier>{032da907-c37e-4477-acaf-ea51ed258faa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ForwardDecl.h">
@@ -150,6 +153,12 @@
     <ClInclude Include="Core\Medium.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Media\Homogeneous.h">
+      <Filter>Source Files\Media</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Ray.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -217,6 +226,12 @@
     </ClCompile>
     <ClCompile Include="Sampler\SobolMatrices.cpp">
       <Filter>Source Files\Samplers</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Medium.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Media\Homogeneous.cpp">
+      <Filter>Source Files\Media</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

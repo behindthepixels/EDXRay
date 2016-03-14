@@ -22,7 +22,9 @@ namespace EDX
 				: mMaxDepth(depth)
 			{
 			}
-			~PathTracingIntegrator();
+			~PathTracingIntegrator()
+			{
+			}
 
 		public:
 			Color Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryArena& memory) const;

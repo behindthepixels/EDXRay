@@ -6,7 +6,7 @@
 #include "BSDF.h"
 #include "Sampler.h"
 #include "Graphics/Color.h"
-#include "Math/Ray.h"
+#include "../Core/Ray.h"
 
 namespace EDX
 {

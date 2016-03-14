@@ -1,7 +1,7 @@
 #include "DifferentialGeom.h"
 #include "../Lights/AreaLight.h"
 #include "Graphics/Color.h"
-#include "Math/Ray.h"
+#include "../Core/Ray.h"
 
 namespace EDX
 {

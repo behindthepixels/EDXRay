@@ -1,7 +1,7 @@
 #include "Camera.h"
 #include "Sampler.h"
 #include "Sampling.h"
-
+#include "../Core/Ray.h"
 
 namespace EDX
 {

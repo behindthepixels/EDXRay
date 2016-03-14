@@ -20,8 +20,14 @@ namespace EDX
 		struct Sample;
 		struct SampleOffsets;
 		class Sampler;
+		class RayDifferential;
+		class Scatter;
 		class Intersection;
 		class DifferentialGeom;
+		class Medium;
+		class MediumInterface;
+		class MediumScatter;
+		class PhaseFunctionHG;
 		class Frame;
 		class Primitive;
 		class TriangleMesh;
