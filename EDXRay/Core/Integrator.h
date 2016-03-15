@@ -17,8 +17,8 @@ namespace EDX
 			virtual ~Integrator() {}
 
 		public:
-			static Color EstimateDirectLighting(const DifferentialGeom& diffGeom, const Vector3& outVec, const Light* pLight,
-				const Scene* pScene, const Sample& lightSample, const Sample& bsdfSample);
+			static Color EstimateDirectLighting(const Scatter& scatter, const Vector3& outVec, const Light* pLight,
+				const Scene* pScene, const Sample& lightSample, const Sample& shadingSample);
 			static Color SpecularReflect(const Integrator* pIntegrator, const Scene* pScene, Sampler* pSampler, const RayDifferential& ray,
 				const DifferentialGeom& diffGeom, RandomGen& random, MemoryArena& memory);
 			static Color SpecularTransmit(const Integrator* pIntegrator, const Scene* pScene, Sampler* pSampler, const RayDifferential& ray,

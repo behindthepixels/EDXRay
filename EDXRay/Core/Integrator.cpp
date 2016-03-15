@@ -1,6 +1,7 @@
 #include "Integrator.h"
 #include "Scene.h"
 #include "Light.h"
+#include "Medium.h"
 #include "Sampling.h"
 #include "DifferentialGeom.h"
 #include "BSDF.h"
@@ -12,72 +13,113 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		Color Integrator::EstimateDirectLighting(const DifferentialGeom& diffGeom,
+		Color Integrator::EstimateDirectLighting(const Scatter& scatter,
 			const Vector3& outDir,
 			const Light* pLight,
 			const Scene* pScene,
 			const Sample& lightSample,
-			const Sample& bsdfSample)
+			const Sample& shadingSample)
 		{
-			const Vector3& position = diffGeom.mPosition;
-			const Vector3& normal = diffGeom.mNormal;
-			const BSDF* pBSDF = diffGeom.mpBSDF;
+			const Vector3& position = scatter.mPosition;
+			const Vector3& normal = scatter.mNormal;
 
 			Color L;
 
 			// Sample light sources
-			Vector3 lightDir;
-			VisibilityTester visibility;
-			float lightPdf;
-			const Color Li = pLight->Illuminate(position, lightSample, &lightDir, &visibility, &lightPdf);
-			if (lightPdf > 0.0f && !Li.IsBlack())
 			{
-				const Color f = pBSDF->Eval(outDir, lightDir, diffGeom, ScatterType(BSDF_ALL & ~BSDF_SPECULAR));
-				if (!f.IsBlack() && visibility.Unoccluded(pScene))
+				Vector3 lightDir;
+				VisibilityTester visibility;
+				float lightPdf, shadingPdf;
+				const Color Li = pLight->Illuminate(position, lightSample, &lightDir, &visibility, &lightPdf);
+
+				if (lightPdf > 0.0f && !Li.IsBlack())
 				{
-					if (pLight->IsDelta())
+					Color f;
+					if (!scatter.IsMediumScatter()) // Handle surface scattering
 					{
-						L += f * Li * Math::AbsDot(lightDir, normal) / lightPdf;
-						return L;
+						const DifferentialGeom& diffGeom = static_cast<const DifferentialGeom&>(scatter);
+						const BSDF* pBSDF = diffGeom.mpBSDF;
+
+						f = pBSDF->Eval(outDir, lightDir, diffGeom, ScatterType(BSDF_ALL & ~BSDF_SPECULAR));
+						f *= Math::AbsDot(lightDir, normal);
+						shadingPdf = pBSDF->Pdf(outDir, lightDir, diffGeom);
+					}
+					else
+					{
+						const MediumScatter& mediumScatter = static_cast<const MediumScatter&>(scatter);
+						const PhaseFunctionHG* pPhaseFunc = mediumScatter.mpPhaseFunc;
+
+						const float phase = pPhaseFunc->Eval(outDir, lightDir);
+						f = Color(phase);
+						shadingPdf = phase;
 					}
 
-					const float bsdfPdf = pBSDF->Pdf(outDir, lightDir, diffGeom);
-					const float misWeight = Sampling::PowerHeuristic(1, lightPdf, 1, bsdfPdf);
-					L += f * Li * Math::AbsDot(lightDir, normal) * misWeight / lightPdf;
+					if (!f.IsBlack() && visibility.Unoccluded(pScene))
+					{
+						if (pLight->IsDelta())
+						{
+							L += f * Li / lightPdf;
+							return L;
+						}
+
+						const float misWeight = Sampling::PowerHeuristic(1, lightPdf, 1, shadingPdf);
+						L += f * Li * misWeight / lightPdf;
+					}
 				}
 			}
 
-			if (pLight->IsDelta())
-				return L;
-
-			// Sample BSDF for MIS
-			ScatterType types;
-			float bsdfPdf;
-			const Color f = pBSDF->SampleScattered(outDir, bsdfSample, diffGeom, &lightDir, &bsdfPdf, ScatterType(BSDF_ALL & ~BSDF_SPECULAR), &types);
-			if (bsdfPdf > 0.0f && !f.IsBlack())
+			// Sample BSDF or medium
 			{
-				lightPdf = pLight->Pdf(position, lightDir);
-				if (lightPdf > 0.0f)
+				if (!pLight->IsDelta())
 				{
-					float misWeight = Sampling::PowerHeuristic(1, bsdfPdf, 1, lightPdf);
+					Vector3 lightDir;
+					Color f;
+					float shadingPdf;
+					if (!scatter.IsMediumScatter()) // Handle surface scattering
+					{
+						const DifferentialGeom& diffGeom = static_cast<const DifferentialGeom&>(scatter);
+						const BSDF* pBSDF = diffGeom.mpBSDF;
 
-					DifferentialGeom diffGeom;
-					Ray rayLight = Ray(position, lightDir);
-					Color Li;
-					if (pScene->Intersect(rayLight, &diffGeom))
-					{
-						pScene->PostIntersect(rayLight, &diffGeom);
-						if (pLight == (Light*)diffGeom.mpAreaLight)
-							Li = diffGeom.Emit(-lightDir);
+						ScatterType types;
+						f = pBSDF->SampleScattered(outDir, shadingSample, diffGeom, &lightDir, &shadingPdf, ScatterType(BSDF_ALL & ~BSDF_SPECULAR), &types);
+						f *= Math::AbsDot(lightDir, normal);
 					}
-					else if ((Light*)pScene->GetEnvironmentMap() == pLight)
+					else
 					{
-						Li = pLight->Emit(-lightDir);
+						const MediumScatter& mediumScatter = static_cast<const MediumScatter&>(scatter);
+						const PhaseFunctionHG* pPhaseFunc = mediumScatter.mpPhaseFunc;
+
+						const float phase = pPhaseFunc->Sample(outDir, &lightDir, Vector2(shadingSample.u, shadingSample.v));
+						f = Color(phase);
+						shadingPdf = phase;
 					}
 
-					if (!Li.IsBlack())
+					if (shadingPdf > 0.0f && !f.IsBlack())
 					{
-						L += f * Li * Math::AbsDot(lightDir, normal) * misWeight / bsdfPdf;
+						float lightPdf = pLight->Pdf(position, lightDir);
+						if (lightPdf > 0.0f)
+						{
+							float misWeight = Sampling::PowerHeuristic(1, shadingPdf, 1, lightPdf);
+
+							DifferentialGeom diffGeom;
+							Ray rayLight = Ray(position, lightDir);
+							Color Li;
+							if (pScene->Intersect(rayLight, &diffGeom))
+							{
+								pScene->PostIntersect(rayLight, &diffGeom);
+								if (pLight == (Light*)diffGeom.mpAreaLight)
+									Li = diffGeom.Emit(-lightDir);
+							}
+							else if ((Light*)pScene->GetEnvironmentMap() == pLight)
+							{
+								Li = pLight->Emit(-lightDir);
+							}
+
+							if (!Li.IsBlack())
+							{
+								L += f * Li * misWeight / shadingPdf;
+							}
+						}
 					}
 				}
 			}
