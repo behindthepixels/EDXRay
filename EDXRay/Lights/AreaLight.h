@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "../Core/Light.h"
+#include "../Core/DifferentialGeom.h"
 #include "../Core/Primitive.h"
 #include "../Core/TriangleMesh.h"
 #include "../Core/Sampler.h"
@@ -49,7 +50,7 @@ namespace EDX
 				mLightBVH->Construct(primitives);
 			}
 
-			Color Illuminate(const Vector3& pos,
+			Color Illuminate(const Scatter& scatter,
 				const RayTracer::Sample& lightSample,
 				Vector3* pDir,
 				VisibilityTester* pVisTest,
@@ -57,6 +58,7 @@ namespace EDX
 				float* pCosAtLight = nullptr,
 				float* pEmitPdfW = nullptr) const override
 			{
+				const Vector3& pos = scatter.mPosition;
 				uint triId = lightSample.w * mTriangleCount;
 				triId = Math::Clamp(triId, 0, mTriangleCount - 1);
 
@@ -69,6 +71,7 @@ namespace EDX
 				const Vector3 lightVec = lightPoint - pos;
 				*pDir = Math::Normalize(lightVec);
 				pVisTest->SetSegment(pos, lightPoint);
+				pVisTest->SetMedium(scatter.mMediumInterface.GetMedium(*pDir, scatter.mNormal));
 
 				const float dist = Math::Length(lightVec);
 				*pPdf = (dist * dist) /

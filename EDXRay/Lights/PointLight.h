@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "../Core/Light.h"
+#include "../Core/DifferentialGeom.h"
 #include "../Core/Sampler.h"
 #include "../Core/Sampling.h"
 #include "Graphics/Color.h"
@@ -26,7 +27,7 @@ namespace EDX
 			{
 			}
 
-			Color Illuminate(const Vector3& pos,
+			Color Illuminate(const Scatter& scatter,
 				const RayTracer::Sample& lightSample,
 				Vector3* pDir,
 				VisibilityTester* pVisTest,
@@ -34,9 +35,11 @@ namespace EDX
 				float* pCosAtLight = nullptr,
 				float* pEmitPdfW = nullptr) const override
 			{
+				const Vector3& pos = scatter.mPosition;
 				*pDir = Math::Normalize(mPosition - pos);
 				*pPdf = Math::DistanceSquared(mPosition, pos);
 				pVisTest->SetSegment(pos, mPosition);
+				pVisTest->SetMedium(scatter.mMediumInterface.GetMedium(*pDir, scatter.mNormal));
 
 				if (pCosAtLight != NULL)
 				{

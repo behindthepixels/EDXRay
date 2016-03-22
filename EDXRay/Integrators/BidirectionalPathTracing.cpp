@@ -341,7 +341,7 @@ namespace EDX
 
 			Color contrib = MISWeight * pathState.Throughput * bsdfFac * cameraPdfA / (float)mpFilm->GetPixelCount();
 
-			Ray rayToCam = Ray(diffGeom.mPosition, dirToCamera, distToCamera);
+			Ray rayToCam = Ray(diffGeom.mPosition, dirToCamera, diffGeom.mMediumInterface.GetMedium(dirToCamera, diffGeom.mNormal), distToCamera);
 
 			if (!contrib.IsBlack())
 			{
@@ -399,7 +399,7 @@ namespace EDX
 			float cosAtLight;
 			float emitPdfW;
 			Sample lightSample = pSampler->GetSample();
-			Color radiance = pLight->Illuminate(pos, lightSample, &vIn, &visibility, &lightPdfW, &cosAtLight, &emitPdfW);
+			Color radiance = pLight->Illuminate(diffGeom, lightSample, &vIn, &visibility, &lightPdfW, &cosAtLight, &emitPdfW);
 			if (radiance.IsBlack() || lightPdfW == 0.0f)
 			{
 				return Color::BLACK;
@@ -533,7 +533,7 @@ namespace EDX
 
 			Color contribution = (fMISWeight * geometryTerm) * lightBsdfFac * cameraBsdfFac;
 
-			Ray rayToLight = Ray(cameraPos, dirToLight, distToLight);
+			Ray rayToLight = Ray(cameraPos, dirToLight, cameraDiffGeom.mMediumInterface.GetMedium(dirToLight, cameraNormal), distToLight);
 			if (contribution.IsBlack() || pScene->Occluded(rayToLight))
 			{
 				return Color::BLACK;

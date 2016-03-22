@@ -20,24 +20,46 @@ namespace EDX
 
 			bool specBounce = true;
 			RayDifferential pathRay = ray;
-			for (auto bounce = 0; bounce < mMaxDepth; bounce++)
+			for (auto bounce = 0; ; bounce++)
 			{
 				DifferentialGeom diffGeom;
-				if (pScene->Intersect(pathRay, &diffGeom)) // Hit the scene
+				bool intersected = pScene->Intersect(pathRay, &diffGeom);
+
+				MediumScatter mediumScatter;
+				if (pathRay.mpMedium)
+					pathThroughput *= pathRay.mpMedium->Sample(pathRay, pSampler, &mediumScatter);
+
+				if (pathThroughput.IsBlack())
+					break;
+				
+				// Sampled surface
+				if (!mediumScatter.IsValid())
 				{
 					pScene->PostIntersect(pathRay, &diffGeom);
 
 					if (specBounce)
-						L += pathThroughput * diffGeom.Emit(-pathRay.mDir);
+					{
+						if (intersected)
+						{
+							L += pathThroughput * diffGeom.Emit(-pathRay.mDir);
+						}
+						else
+						{
+							if (pScene->GetEnvironmentMap())
+								L += pathThroughput * pScene->GetEnvironmentMap()->Emit(-pathRay.mDir);
+						}
+					}
+
+					if (!intersected || bounce >= mMaxDepth)
+						break;
 
 					// Explicitly sample light sources
 					const BSDF* pBSDF = diffGeom.mpBSDF;
 					if (!pBSDF->IsSpecular())
 					{
-						Sample lightSample = pSampler->GetSample();
-						Sample bsdfSample = pSampler->GetSample();
-						auto lightIdx = Math::Min(lightSample.w * pScene->GetLights().size(), pScene->GetLights().size() - 1);
-						L += pathThroughput * Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, lightSample, bsdfSample);
+						float lightIdxSample = pSampler->Get1D();
+						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
+						L += pathThroughput * Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
 					}
 
 					const Vector3& pos = diffGeom.mPosition;
@@ -53,26 +75,34 @@ namespace EDX
 
 					specBounce = (bsdfFlags & BSDF_SPECULAR) != 0;
 					pathThroughput *= f * Math::AbsDot(vIn, normal) / pdf;
-					pathRay = Ray(pos, vIn);
-
-					// Russian Roulette
-					if (bounce > 3)
-					{
-						float RR = Math::Min(1.0f, pathThroughput.Luminance());
-						if (random.Float() > RR)
-							break;
-
-						pathThroughput /= RR;
-					}
+					pathRay = Ray(pos, vIn, diffGeom.mMediumInterface.GetMedium(vIn, normal));
 				}
-				else // Hit the environmental light source (if there is one)
+				else // Sampled medium
 				{
-					if (specBounce)
-					{
-						if (pScene->GetEnvironmentMap())
-							L += pathThroughput * pScene->GetEnvironmentMap()->Emit(-pathRay.mDir);
-					}
-					break;
+					float lightIdxSample = pSampler->Get1D();
+					auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
+					L += pathThroughput * Integrator::EstimateDirectLighting(mediumScatter, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
+
+					if (bounce >= mMaxDepth)
+						break;
+
+					const PhaseFunctionHG* pPhaseFunc = mediumScatter.mpPhaseFunc;
+
+					Vector3 vOut = -pathRay.mDir;
+					Vector3 vIn;
+					pPhaseFunc->Sample(vOut, &vIn, pSampler->Get2D());
+
+					pathRay = Ray(mediumScatter.mPosition, vIn, pathRay.mpMedium);
+				}
+
+				// Russian Roulette
+				if (bounce > 3)
+				{
+					float RR = Math::Min(1.0f, pathThroughput.Luminance());
+					if (random.Float() > RR)
+						break;
+
+					pathThroughput /= RR;
 				}
 			}
 

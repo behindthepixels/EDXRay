@@ -15,6 +15,8 @@ namespace EDX
 		class PointLight;
 		class AreaLight;
 		class BSDF;
+		class Ray;
+		class RayDifferential;
 		struct CameraSample;
 		struct SampleBuffer;
 		struct Sample;
@@ -45,6 +47,5 @@ namespace EDX
 	class MemoryArena;
 	class Color;
 	class Ray;
-	class RayDifferential;
 	class ObjMesh;
 }

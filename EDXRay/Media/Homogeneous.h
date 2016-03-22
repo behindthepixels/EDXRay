@@ -21,6 +21,7 @@ namespace EDX
 				, mSigmaS(sigmaS)
 				, mSigmaA(sigmaA)
 			{
+				mSigmaT = mSigmaS + mSigmaA;
 			}
 
 			Color Transmittance(const Ray& ray, Sampler*pSampler) const override;

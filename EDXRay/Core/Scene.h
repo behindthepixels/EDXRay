@@ -18,6 +18,7 @@ namespace EDX
 			Light*						mEnvMap;
 			RefPtr<BVH2>				mAccel;
 			bool						mDirty;
+			vector<RefPtr<const Medium>> mMedia;
 
 		public:
 			Scene();

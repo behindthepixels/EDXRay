@@ -36,7 +36,7 @@ namespace EDX
 			{
 			}
 
-			Color Illuminate(const Vector3& pos,
+			Color Illuminate(const Scatter& scatter,
 				const RayTracer::Sample& lightSample,
 				Vector3* pDir,
 				VisibilityTester* pVisTest,
@@ -44,6 +44,7 @@ namespace EDX
 				float* pCosAtLight = nullptr,
 				float* pEmitPdfW = nullptr) const override
 			{
+				const Vector3& pos = scatter.mPosition;
 				*pDir = Sampling::UniformSampleCone(lightSample.u, lightSample.v,
 					mConeCosMax,
 					mDirFrame.mX,
@@ -52,6 +53,7 @@ namespace EDX
 
 				*pPdf = Sampling::UniformConePDF(mConeCosMax);
 				pVisTest->SetRay(pos, *pDir);
+				pVisTest->SetMedium(scatter.mMediumInterface.GetMedium(*pDir, scatter.mNormal));
 
 				if (pCosAtLight)
 					*pCosAtLight = Math::Dot(*pDir, mDirection);

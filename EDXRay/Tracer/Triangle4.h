@@ -2,6 +2,7 @@
 
 #include "SIMD/SSE.h"
 #include "BVH.h"
+#include "../Core/Ray.h"
 #include "../Core/DifferentialGeom.h"
 #include "../Core/Primitive.h"
 #include "../Core/TriangleMesh.h"

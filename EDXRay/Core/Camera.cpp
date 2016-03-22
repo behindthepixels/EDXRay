@@ -74,7 +74,7 @@ namespace EDX
 				pRay->mDir = Math::Normalize(ptFocal - pRay->mOrg);
 			}
 
-			*pRay = Matrix::TransformRay(*pRay, mViewInv);
+			*pRay = TransformRay(*pRay, mViewInv);
 			pRay->mMin = float(Math::EDX_EPSILON);
 			pRay->mMax = float(Math::EDX_INFINITY);
 		}
@@ -105,7 +105,7 @@ namespace EDX
 			pRay->mDyDir = Math::Normalize(camCoord + mDyCam);
 			pRay->mHasDifferential = true;
 
-			*pRay = Matrix::TransformRayDiff(*pRay, mViewInv);
+			*pRay = TransformRayDiff(*pRay, mViewInv);
 			pRay->mMin = float(Math::EDX_EPSILON);
 			pRay->mMax = float(Math::EDX_INFINITY);
 		}

@@ -4,6 +4,7 @@
 #include "../ForwardDecl.h"
 
 #include "BSDF.h"
+#include "Medium.h"
 #include "Math/Vector.h"
 #include "Memory/RefPtr.h"
 
@@ -14,12 +15,16 @@ namespace EDX
 		class Primitive
 		{
 		private:
+			friend class Scene;
+
 			RefPtr<TriangleMesh>	mpMesh;
 
 			// Materials
 			vector<RefPtr<BSDF>>	mpBSDFs;
 			const AreaLight*		mpAreaLight;
 			uint*					mpMaterialIndices;
+			// Medium
+			vector<MediumInterface>	mMediumInterfaces;
 
 		public:
 			Primitive()
@@ -33,14 +38,16 @@ namespace EDX
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO,
-				const bool forceComputeNormal = false);
+				const bool forceComputeNormal = false,
+				const MediumInterface& mediumInterface = MediumInterface());
 			void LoadMesh(const char* path,
 				const BSDFType bsdfType = BSDFType::Diffuse,
 				const Color& reflectance = Color(0.8f, 0.8f, 0.8f),
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO,
-				const bool forceComputeNormal = false);
+				const bool forceComputeNormal = false,
+				const MediumInterface& mediumInterface = MediumInterface());
 			void LoadSphere(const float radius,
 				const BSDFType bsdfType = BSDFType::Diffuse,
 				const Color& reflectance = Color(0.8f, 0.8f, 0.8f),
@@ -48,7 +55,8 @@ namespace EDX
 				const int stacks = 64,
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
-				const Vector3& rot = Vector3::ZERO);
+				const Vector3& rot = Vector3::ZERO,
+				const MediumInterface& mediumInterface = MediumInterface());
 			void LoadPlane(const float length,
 				const BSDFType bsdfType = BSDFType::Diffuse,
 				const Color& reflectance = Color(0.8f, 0.8f, 0.8f),

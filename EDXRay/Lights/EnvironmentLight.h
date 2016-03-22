@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "../Core/Light.h"
+#include "../Core/DifferentialGeom.h"
 #include "../Core/Sampler.h"
 #include "../Core/Sampling.h"
 #include "Graphics/Color.h"
@@ -110,7 +111,7 @@ namespace EDX
 				CalcLuminanceDistribution();
 			}
 
-			Color Illuminate(const Vector3& pos,
+			Color Illuminate(const Scatter& scatter,
 				const RayTracer::Sample& lightSample,
 				Vector3* pDir,
 				VisibilityTester* pVisTest,
@@ -118,6 +119,7 @@ namespace EDX
 				float* pCosAtLight = nullptr,
 				float* pEmitPdfW = nullptr) const override
 			{
+				const Vector3& pos = scatter.mPosition;
 				float u, v;
 				if (mIsTexture)
 				{
@@ -156,6 +158,7 @@ namespace EDX
 				}
 
 				pVisTest->SetRay(pos, *pDir);
+				pVisTest->SetMedium(scatter.mMediumInterface.GetMedium(*pDir, scatter.mNormal));
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
 				return mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear) * mScale;

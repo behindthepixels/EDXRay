@@ -17,7 +17,8 @@ namespace EDX
 			const Vector3& pos,
 			const Vector3& scl,
 			const Vector3& rot,
-			const bool forceComputeNormal)
+			const bool forceComputeNormal,
+			const MediumInterface& mediumInterface)
 		{
 			ObjMesh* pObjMesh = new ObjMesh;
 			pObjMesh->LoadFromObj(pos, scl, rot, path, forceComputeNormal, true);
@@ -42,6 +43,8 @@ namespace EDX
 					else
 						mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].color));
 				}
+
+				mMediumInterfaces.push_back(mediumInterface);
 			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
@@ -55,7 +58,8 @@ namespace EDX
 			const Vector3& pos,
 			const Vector3& scl,
 			const Vector3& rot,
-			const bool forceComputeNormal)
+			const bool forceComputeNormal,
+			const MediumInterface& mediumInterface)
 		{
 			ObjMesh* pObjMesh = new ObjMesh;
 			pObjMesh->LoadFromObj(pos, scl, rot, path, forceComputeNormal, true);
@@ -66,7 +70,10 @@ namespace EDX
 			// Initialize materials
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();
 			for (auto i = 0; i < materialInfo.size(); i++)
+			{
 				mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
+				mMediumInterfaces.push_back(mediumInterface);
+			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
 			for (auto i = 0; i < mpMesh->GetTriangleCount(); i++)
@@ -80,7 +87,8 @@ namespace EDX
 			const int stacks,
 			const Vector3& pos,
 			const Vector3& scl,
-			const Vector3& rot)
+			const Vector3& rot,
+			const MediumInterface& mediumInterface)
 		{
 			ObjMesh* pObjMesh = new ObjMesh;
 			pObjMesh->LoadSphere(pos, scl, rot, radius, slices, stacks);
@@ -96,6 +104,8 @@ namespace EDX
 					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, materialInfo[i].strTexturePath));
 				else
 					mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
+
+				mMediumInterfaces.push_back(mediumInterface);
 			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
@@ -131,7 +141,8 @@ namespace EDX
 		void Primitive::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
 		{
 			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
-			pDiffGeom->mpAreaLight = mpAreaLight;
+			pDiffGeom->mpAreaLight = this->mpAreaLight;
+			pDiffGeom->mMediumInterface = this->mMediumInterfaces[mpMaterialIndices[pDiffGeom->mTriId]];
 			mpMesh->PostIntersect(ray, pDiffGeom);
 		}
 

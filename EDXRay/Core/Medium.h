@@ -71,6 +71,21 @@ namespace EDX
 			{
 			}
 
+			const Medium* GetOutside() const
+			{
+				return mpOutside;
+			}
+
+			const Medium* GetInside() const
+			{
+				return mpInside;
+			}
+
+			const Medium* GetMedium(const Vector3& dir, const Vector3& normal) const
+			{
+				return Math::Dot(dir, normal) > 0.0f ? mpOutside : mpInside;
+			}
+
 			bool IsMediumTransition() const { return mpInside != mpOutside; }
 
 		};

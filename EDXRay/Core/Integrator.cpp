@@ -17,8 +17,7 @@ namespace EDX
 			const Vector3& outDir,
 			const Light* pLight,
 			const Scene* pScene,
-			const Sample& lightSample,
-			const Sample& shadingSample)
+			Sampler* pSampler)
 		{
 			const Vector3& position = scatter.mPosition;
 			const Vector3& normal = scatter.mNormal;
@@ -30,12 +29,13 @@ namespace EDX
 				Vector3 lightDir;
 				VisibilityTester visibility;
 				float lightPdf, shadingPdf;
-				const Color Li = pLight->Illuminate(position, lightSample, &lightDir, &visibility, &lightPdf);
+				Color transmittance;
+				const Color Li = pLight->Illuminate(scatter, pSampler->GetSample(), &lightDir, &visibility, &lightPdf);
 
 				if (lightPdf > 0.0f && !Li.IsBlack())
 				{
 					Color f;
-					if (!scatter.IsMediumScatter()) // Handle surface scattering
+					if (scatter.IsSurfaceScatter()) // Handle surface scattering
 					{
 						const DifferentialGeom& diffGeom = static_cast<const DifferentialGeom&>(scatter);
 						const BSDF* pBSDF = diffGeom.mpBSDF;
@@ -56,14 +56,15 @@ namespace EDX
 
 					if (!f.IsBlack() && visibility.Unoccluded(pScene))
 					{
+						Color transmittance = visibility.Transmittance(pScene, pSampler);
 						if (pLight->IsDelta())
 						{
-							L += f * Li / lightPdf;
+							L += f * Li * transmittance / lightPdf;
 							return L;
 						}
 
 						const float misWeight = Sampling::PowerHeuristic(1, lightPdf, 1, shadingPdf);
-						L += f * Li * misWeight / lightPdf;
+						L += f * Li * transmittance * misWeight / lightPdf;
 					}
 				}
 			}
@@ -75,13 +76,13 @@ namespace EDX
 					Vector3 lightDir;
 					Color f;
 					float shadingPdf;
-					if (!scatter.IsMediumScatter()) // Handle surface scattering
+					if (scatter.IsSurfaceScatter()) // Handle surface scattering
 					{
 						const DifferentialGeom& diffGeom = static_cast<const DifferentialGeom&>(scatter);
 						const BSDF* pBSDF = diffGeom.mpBSDF;
 
 						ScatterType types;
-						f = pBSDF->SampleScattered(outDir, shadingSample, diffGeom, &lightDir, &shadingPdf, ScatterType(BSDF_ALL & ~BSDF_SPECULAR), &types);
+						f = pBSDF->SampleScattered(outDir, pSampler->GetSample(), diffGeom, &lightDir, &shadingPdf, ScatterType(BSDF_ALL & ~BSDF_SPECULAR), &types);
 						f *= Math::AbsDot(lightDir, normal);
 					}
 					else
@@ -89,7 +90,7 @@ namespace EDX
 						const MediumScatter& mediumScatter = static_cast<const MediumScatter&>(scatter);
 						const PhaseFunctionHG* pPhaseFunc = mediumScatter.mpPhaseFunc;
 
-						const float phase = pPhaseFunc->Sample(outDir, &lightDir, Vector2(shadingSample.u, shadingSample.v));
+						const float phase = pPhaseFunc->Sample(outDir, &lightDir, pSampler->Get2D());
 						f = Color(phase);
 						shadingPdf = phase;
 					}
@@ -102,7 +103,7 @@ namespace EDX
 							float misWeight = Sampling::PowerHeuristic(1, shadingPdf, 1, lightPdf);
 
 							DifferentialGeom diffGeom;
-							Ray rayLight = Ray(position, lightDir);
+							Ray rayLight = Ray(position, lightDir, scatter.mMediumInterface.GetMedium(lightDir, normal));
 							Color Li;
 							if (pScene->Intersect(rayLight, &diffGeom))
 							{
@@ -117,7 +118,11 @@ namespace EDX
 
 							if (!Li.IsBlack())
 							{
-								L += f * Li * misWeight / shadingPdf;
+								Color transmittance = Color::WHITE;
+								if (rayLight.mpMedium)
+									transmittance = rayLight.mpMedium->Transmittance(rayLight, pSampler);
+
+								L += f * Li * transmittance * misWeight / shadingPdf;
 							}
 						}
 					}
@@ -146,7 +151,7 @@ namespace EDX
 			Color color;
 			if (pdf > 0.0f && !f.IsBlack() && Math::AbsDot(vIn, normal) != 0.0f)
 			{
-				RayDifferential rayRef = RayDifferential(position, vIn, float(Math::EDX_INFINITY), 0.0f, ray.mDepth + 1);
+				RayDifferential rayRef = RayDifferential(position, vIn, diffGeom.mMediumInterface.GetMedium(vIn, normal), float(Math::EDX_INFINITY), 0.0f, ray.mDepth + 1);
 				if (ray.mHasDifferential)
 				{
 					rayRef.mHasDifferential = true;
@@ -194,7 +199,7 @@ namespace EDX
 			Color color;
 			if (pdf > 0.0f && !f.IsBlack() && Math::AbsDot(vIn, normal) != 0.0f)
 			{
-				RayDifferential rayRfr = RayDifferential(position, vIn, float(Math::EDX_INFINITY), 0.0f, ray.mDepth + 1);
+				RayDifferential rayRfr = RayDifferential(position, vIn, diffGeom.mMediumInterface.GetMedium(vIn, normal), float(Math::EDX_INFINITY), 0.0f, ray.mDepth + 1);
 				if (ray.mHasDifferential)
 				{
 					rayRfr.mHasDifferential = true;

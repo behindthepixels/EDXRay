@@ -5,6 +5,7 @@
 #include "Light.h"
 #include "../Lights/AreaLight.h"
 #include "DifferentialGeom.h"
+#include "Medium.h"
 
 namespace EDX
 {
@@ -40,6 +41,13 @@ namespace EDX
 		void Scene::AddPrimitive(Primitive* pPrim)
 		{
 			mPrimitives.push_back(pPrim);
+			for (const auto& it : pPrim->mMediumInterfaces)
+			{
+				if (auto ptr = it.GetInside())
+					mMedia.push_back(ptr);
+				if (auto ptr = it.GetOutside())
+					mMedia.push_back(ptr);
+			}
 			mDirty = true;
 		}
 

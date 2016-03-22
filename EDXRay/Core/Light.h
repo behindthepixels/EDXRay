@@ -19,14 +19,19 @@ namespace EDX
 			void SetSegment(const Vector3 &pt1, const Vector3 &pt2)
 			{
 				float fDist = Math::Distance(pt1, pt2);
-				mRay = Ray(pt1, (pt2 - pt1) / fDist, fDist, 0.0f, 0);
+				mRay = Ray(pt1, (pt2 - pt1) / fDist, nullptr, fDist, 0.0f, 0);
 			}
 			void SetRay(const Vector3 &pt, const Vector3 &vDir)
 			{
-				mRay = Ray(pt, vDir, float(Math::EDX_INFINITY), 0.0f, 0);
+				mRay = Ray(pt, vDir, nullptr, float(Math::EDX_INFINITY), 0.0f, 0);
+			}
+			void SetMedium(const Medium* pMed)
+			{
+				mRay.mpMedium = pMed;
 			}
 
 			bool Unoccluded(const Scene* pScene) const;
+			Color Transmittance(const Scene* pScene, Sampler* pSampler) const;
 		};
 
 		class Light
@@ -41,7 +46,7 @@ namespace EDX
 			}
 
 			virtual ~Light() {}
-			virtual Color Illuminate(const Vector3& pos,
+			virtual Color Illuminate(const Scatter& scatter,
 				const Sample& lightSample,
 				Vector3* pDir,
 				VisibilityTester* pVisTest,

@@ -2,7 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
-
+#include "Medium.h"
 #include "Math/Vector.h"
 
 namespace EDX
@@ -58,6 +58,7 @@ namespace EDX
 		public:
 			Vector3 mPosition;
 			Vector3 mNormal;
+			MediumInterface mMediumInterface;
 
 		public:
 			Scatter(const Vector3 pos = Vector3::ZERO, const Vector3& norm = Vector3::UNIT_Z)
@@ -65,7 +66,7 @@ namespace EDX
 				, mNormal(norm)
 			{
 			}
-			virtual bool IsMediumScatter() const = 0;
+			virtual bool IsSurfaceScatter() const = 0;
 		};
 
 		class Intersection
@@ -125,9 +126,9 @@ namespace EDX
 			Color Emit(const Vector3& dir) const; // Deprecated
 			void ComputeDifferentials(const RayDifferential& ray) const;
 
-			bool IsMediumScatter() const override
+			bool IsSurfaceScatter() const override
 			{
-				return false;
+				return true;
 			}
 		};
 
@@ -147,9 +148,9 @@ namespace EDX
 				return mpPhaseFunc != nullptr;
 			}
 
-			bool IsMediumScatter() const override
+			bool IsSurfaceScatter() const override
 			{
-				return true;
+				return false;
 			}
 		};
 	}

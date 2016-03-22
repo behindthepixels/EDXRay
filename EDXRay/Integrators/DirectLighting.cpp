@@ -24,9 +24,7 @@ namespace EDX
 				for (auto i = 0; i < pScene->GetLights().size(); i++)
 				{
 					auto pLight = pScene->GetLights()[i].Ptr();
-					Sample lightSample = pSampler->GetSample();
-					Sample bsdfSample = pSampler->GetSample();
-					L += Integrator::EstimateDirectLighting(diffGeom, -ray.mDir, pLight, pScene, lightSample, bsdfSample);
+					L += Integrator::EstimateDirectLighting(diffGeom, -ray.mDir, pLight, pScene, pSampler);
 				}
 
 				if (ray.mDepth < mMaxDepth)
