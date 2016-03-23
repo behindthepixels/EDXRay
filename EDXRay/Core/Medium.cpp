@@ -29,7 +29,7 @@ namespace EDX
 
 			Vector3 v1, v2;
 			Math::CoordinateSystem(wo, &v1, &v2);
-			*pvIn = Math::SphericalDirection(sinTheta, cosTheta, phi, v1, v2, -wo);
+			*pvIn = Math::SphericalDirection(sinTheta, cosTheta, phi, v1, -wo, v2);
 
 			return HenyeyGreenstein(-cosTheta, mG);
 		}

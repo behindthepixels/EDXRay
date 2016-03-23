@@ -92,11 +92,12 @@ namespace EDX
 					Vector3 vIn;
 					pPhaseFunc->Sample(vOut, &vIn, pSampler->Get2D());
 
+					specBounce = false;
 					pathRay = Ray(mediumScatter.mPosition, vIn, pathRay.mpMedium);
 				}
 
 				// Russian Roulette
-				if (bounce > 3)
+				if (bounce > 5)
 				{
 					float RR = Math::Min(1.0f, pathThroughput.Luminance());
 					if (random.Float() > RR)

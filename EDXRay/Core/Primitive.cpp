@@ -118,7 +118,8 @@ namespace EDX
 			const Color& reflectance,
 			const Vector3& pos,
 			const Vector3& scl,
-			const Vector3& rot)
+			const Vector3& rot,
+			const MediumInterface& mediumInterface)
 		{
 			ObjMesh* pObjMesh = new ObjMesh;
 			pObjMesh->LoadPlane(pos, scl, rot, length);
@@ -131,6 +132,8 @@ namespace EDX
 			for (auto i = 0; i < materialInfo.size(); i++)
 			{
 				mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
+
+				mMediumInterfaces.push_back(mediumInterface);
 			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];

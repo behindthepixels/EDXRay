@@ -21,7 +21,7 @@ namespace EDX
 			// Sample distance along the ray
 			float sampledDist = -Math::Log(1 - pSampler->Get1D()) / mSigmaT[channel];
 			float dist = Math::Min(sampledDist, ray.mMax);
-			bool sampledMedium = dist < ray.mMax;
+			bool sampledMedium = sampledDist < ray.mMax;
 
 			if (sampledMedium)
 				*pMS = MediumScatter(ray.CalcPoint(dist), mpPhaseFunc.Ptr());
