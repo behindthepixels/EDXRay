@@ -52,7 +52,11 @@ namespace EDX
 					mDirFrame.mZ);
 
 				*pPdf = Sampling::UniformConePDF(mConeCosMax);
-				pVisTest->SetRay(pos, *pDir);
+
+				Vector3 center;
+				float radius;
+				mpScene->WorldBounds().BoundingSphere(&center, &radius);
+				pVisTest->SetSegment(pos, pos + 2.0f * radius * *pDir);
 				pVisTest->SetMedium(scatter.mMediumInterface.GetMedium(*pDir, scatter.mNormal));
 
 				if (pCosAtLight)
@@ -60,9 +64,6 @@ namespace EDX
 
 				if (pEmitPdfW)
 				{
-					Vector3 center;
-					float radius;
-					mpScene->WorldBounds().BoundingSphere(&center, &radius);
 					*pEmitPdfW = Sampling::ConcentricDiscPdf() / (radius * radius) * (*pPdf);
 				}
 

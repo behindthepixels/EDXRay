@@ -102,8 +102,12 @@ namespace EDX
 						{
 							float misWeight = Sampling::PowerHeuristic(1, shadingPdf, 1, lightPdf);
 
+							Vector3 center;
+							float radius;
+							pScene->WorldBounds().BoundingSphere(&center, &radius);
+
 							DifferentialGeom diffGeom;
-							Ray rayLight = Ray(position, lightDir, scatter.mMediumInterface.GetMedium(lightDir, normal));
+							Ray rayLight = Ray(position, lightDir, scatter.mMediumInterface.GetMedium(lightDir, normal), 2.0f * radius);
 							Color Li;
 							if (pScene->Intersect(rayLight, &diffGeom))
 							{

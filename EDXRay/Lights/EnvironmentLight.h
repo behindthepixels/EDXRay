@@ -149,15 +149,16 @@ namespace EDX
 				if (pCosAtLight)
 					*pCosAtLight = 1.f;
 
+				Vector3 center;
+				float radius;
+				mpScene->WorldBounds().BoundingSphere(&center, &radius);
+
 				if (pEmitPdfW)
 				{
-					Vector3 center;
-					float radius;
-					mpScene->WorldBounds().BoundingSphere(&center, &radius);
 					*pEmitPdfW = *pPdf * Sampling::ConcentricDiscPdf() / (radius * radius);
 				}
-
-				pVisTest->SetRay(pos, *pDir);
+				
+				pVisTest->SetSegment(pos, pos + 2.0f * radius * *pDir);
 				pVisTest->SetMedium(scatter.mMediumInterface.GetMedium(*pDir, scatter.mNormal));
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
