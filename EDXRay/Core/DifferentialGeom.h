@@ -61,9 +61,10 @@ namespace EDX
 			MediumInterface mMediumInterface;
 
 		public:
-			Scatter(const Vector3 pos = Vector3::ZERO, const Vector3& norm = Vector3::UNIT_Z)
+			Scatter(const Vector3 pos = Vector3::ZERO, const Vector3& norm = Vector3::UNIT_Z, const MediumInterface& mediumInterface = MediumInterface())
 				: mPosition(pos)
 				, mNormal(norm)
+				, mMediumInterface(mediumInterface)
 			{
 			}
 			virtual bool IsSurfaceScatter() const = 0;
@@ -137,8 +138,8 @@ namespace EDX
 		public:
 			const PhaseFunctionHG* mpPhaseFunc;
 
-			MediumScatter(const Vector3& pos = Vector3::ZERO, PhaseFunctionHG* pPhaseFunc = nullptr)
-				: Scatter(pos, Vector3::ZERO)
+			MediumScatter(const Vector3& pos = Vector3::ZERO, PhaseFunctionHG* pPhaseFunc = nullptr, const MediumInterface& mediumInterface = MediumInterface())
+				: Scatter(pos, Vector3::ZERO, mediumInterface)
 				, mpPhaseFunc(pPhaseFunc)
 			{
 			}

@@ -24,7 +24,7 @@ namespace EDX
 			bool sampledMedium = sampledDist < ray.mMax;
 
 			if (sampledMedium)
-				*pMS = MediumScatter(ray.CalcPoint(dist), mpPhaseFunc.Ptr());
+				*pMS = MediumScatter(ray.CalcPoint(dist), mpPhaseFunc.Ptr(), MediumInterface(ray.mpMedium));
 
 			Color transmittance = Math::Exp((-1.0f * mSigmaT) * dist);
 			Color density = sampledMedium ? (mSigmaT * transmittance) : transmittance;
