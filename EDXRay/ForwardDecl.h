@@ -15,6 +15,7 @@ namespace EDX
 		class PointLight;
 		class AreaLight;
 		class BSDF;
+		class BSSRDF;
 		class Ray;
 		class RayDifferential;
 		struct CameraSample;

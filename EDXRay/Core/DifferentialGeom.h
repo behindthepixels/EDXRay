@@ -100,6 +100,7 @@ namespace EDX
 			Frame mShadingFrame;
 
 			const BSDF* mpBSDF;
+			const BSSRDF* mpBSSRDF;
 			const AreaLight* mpAreaLight;
 
 		public:

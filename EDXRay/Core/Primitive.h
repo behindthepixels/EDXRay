@@ -3,7 +3,7 @@
 #include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
 
-#include "BSDF.h"
+#include "../Core/BSDF.h"
 #include "Medium.h"
 #include "Math/Vector.h"
 #include "Memory/RefPtr.h"
@@ -21,15 +21,14 @@ namespace EDX
 
 			// Materials
 			vector<RefPtr<BSDF>>	mpBSDFs;
-			const AreaLight*		mpAreaLight;
-			uint*					mpMaterialIndices;
+			vector<RefPtr<BSSRDF>>	mpBSSRDFs;
+			const AreaLight*		mpAreaLight = nullptr;
+			uint*					mpMaterialIndices = nullptr;
 			// Medium
 			vector<MediumInterface>	mMediumInterfaces;
 
 		public:
 			Primitive()
-				: mpAreaLight(nullptr)
-				, mpMaterialIndices(nullptr)
 			{
 			}
 			~Primitive();
@@ -39,7 +38,8 @@ namespace EDX
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO,
 				const bool forceComputeNormal = false,
-				const MediumInterface& mediumInterface = MediumInterface());
+				const MediumInterface& mediumInterface = MediumInterface(),
+				const Vector3& meanFreePath = Vector3::ZERO);
 			void LoadMesh(const char* path,
 				const BSDFType bsdfType = BSDFType::Diffuse,
 				const Color& reflectance = Color(0.8f, 0.8f, 0.8f),
@@ -47,7 +47,8 @@ namespace EDX
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO,
 				const bool forceComputeNormal = false,
-				const MediumInterface& mediumInterface = MediumInterface());
+				const MediumInterface& mediumInterface = MediumInterface(),
+				const Vector3& meanFreePath = Vector3::ZERO);
 			void LoadSphere(const float radius,
 				const BSDFType bsdfType = BSDFType::Diffuse,
 				const Color& reflectance = Color(0.8f, 0.8f, 0.8f),
@@ -56,14 +57,16 @@ namespace EDX
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO,
-				const MediumInterface& mediumInterface = MediumInterface());
+				const MediumInterface& mediumInterface = MediumInterface(),
+				const Vector3& meanFreePath = Vector3::ZERO);
 			void LoadPlane(const float length,
 				const BSDFType bsdfType = BSDFType::Diffuse,
 				const Color& reflectance = Color(0.8f, 0.8f, 0.8f),
 				const Vector3& pos = Vector3::ZERO,
 				const Vector3& scl = Vector3::UNIT_SCALE,
 				const Vector3& rot = Vector3::ZERO,
-				const MediumInterface& mediumInterface = MediumInterface());
+				const MediumInterface& mediumInterface = MediumInterface(),
+				const Vector3& meanFreePath = Vector3::ZERO);
 
 			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
 

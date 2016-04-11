@@ -3,6 +3,7 @@
 #include "../Core/Light.h"
 #include "../Core/DifferentialGeom.h"
 #include "../Core/BSDF.h"
+#include "../Core/BSSRDF.h"
 #include "../Core/Medium.h"
 #include "../Core/Sampler.h"
 #include "../Core/Sampling.h"
@@ -59,7 +60,8 @@ namespace EDX
 					{
 						float lightIdxSample = pSampler->Get1D();
 						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
-						L += pathThroughput * Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
+						L += pathThroughput *
+							Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
 					}
 
 					const Vector3& pos = diffGeom.mPosition;
@@ -76,6 +78,35 @@ namespace EDX
 					specBounce = (bsdfFlags & BSDF_SPECULAR) != 0;
 					pathThroughput *= f * Math::AbsDot(vIn, normal) / pdf;
 					pathRay = Ray(pos, vIn, diffGeom.mMediumInterface.GetMedium(vIn, normal));
+
+					// Account for attenuated subsurface scattering, if applicable
+					if (diffGeom.mpBSSRDF && (bsdfFlags & BSDF_TRANSMISSION)) {
+						// Importance sample the BSSRDF
+						DifferentialGeom subsurfDiffGeom;
+						float subsurfPdf;
+						Color S = diffGeom.mpBSSRDF->SampleSubsurfaceScattered(
+							pSampler->GetSample(), diffGeom, pScene, &subsurfDiffGeom, &subsurfPdf);
+
+						if (S.IsBlack() || subsurfPdf == 0)
+							break;
+						pathThroughput *= S / subsurfPdf;
+
+						// Account for the attenuated direct subsurface scattering
+						// component
+						float lightIdxSample = pSampler->Get1D();
+						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
+						L += pathThroughput *
+							Integrator::EstimateDirectLighting(subsurfDiffGeom, subsurfDiffGeom.mNormal, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
+
+						// Account for the indirect subsurface scattering component
+						f = pBSDF->SampleScattered(subsurfDiffGeom.mNormal, pSampler->GetSample(), subsurfDiffGeom, &vIn, &pdf, BSDF_ALL, &bsdfFlags);
+						if (f.IsBlack() || pdf == 0.0f)
+							break;
+
+						specBounce = false;
+						pathThroughput *= f * Math::AbsDot(vIn, subsurfDiffGeom.mNormal) / pdf;
+						pathRay = Ray(subsurfDiffGeom.mPosition, vIn, subsurfDiffGeom.mMediumInterface.GetMedium(vIn, subsurfDiffGeom.mNormal));
+					}
 				}
 				else // Sampled medium
 				{

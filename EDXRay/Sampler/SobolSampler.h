@@ -24,7 +24,7 @@ namespace EDX
 				, mScramble(0)
 			{
 				mResolution =
-					Math::RoundUpPowTwo(
+					Math::RoundUpPowOfTwo(
 						Math::Max(resX, resY)
 					);
 

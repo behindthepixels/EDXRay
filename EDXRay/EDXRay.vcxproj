@@ -23,6 +23,7 @@
     <ClInclude Include="BSDFs\RoughConductor.h" />
     <ClInclude Include="BSDFs\RoughDielectric.h" />
     <ClInclude Include="Core\BSDF.h" />
+    <ClInclude Include="Core\BSSRDF.h" />
     <ClInclude Include="Core\Camera.h" />
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\Film.h" />
@@ -65,6 +66,7 @@
     <ClCompile Include="BSDFs\RoughConductor.cpp" />
     <ClCompile Include="BSDFs\RoughDielectric.cpp" />
     <ClCompile Include="Core\BSDF.cpp" />
+    <ClCompile Include="Core\BSSRDF.cpp" />
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\DifferentialGeom.cpp" />
     <ClCompile Include="Core\Film.cpp" />

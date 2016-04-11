@@ -159,6 +159,9 @@
     <ClInclude Include="Core\Ray.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\BSSRDF.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -232,6 +235,9 @@
     </ClCompile>
     <ClCompile Include="Media\Homogeneous.cpp">
       <Filter>Source Files\Media</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BSSRDF.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
