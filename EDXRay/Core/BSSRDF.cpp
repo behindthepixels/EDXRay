@@ -255,36 +255,41 @@ endfor
 			// Choose projection axis for BSSRDF sampling
 			const Frame& shadingFrame = diffGeom.mShadingFrame;
 			Vector3 vx, vy, vz;
-			if (u < 0.5f)
-			{
-				vx = shadingFrame.Binormal();
-				vy = shadingFrame.Tangent();
-				vz = shadingFrame.Normal();
-				u *= 2.0f;
-			}
-			else if (u < 0.75f)
-			{
-				// Prepare for sampling rays with respect to _ss_
-				vx = shadingFrame.Tangent();
-				vy = shadingFrame.Normal();
-				vz = shadingFrame.Binormal();
-				u = (u - 0.5f) * 4.0f;
-			}
-			else
-			{
-				// Prepare for sampling rays with respect to _ts_
-				vx = shadingFrame.Normal();
-				vy = shadingFrame.Binormal();
-				vz = shadingFrame.Tangent();
-				u = (u - 0.75f) * 4.0f;
-			}
+
+			vx = shadingFrame.Binormal();
+			vy = shadingFrame.Tangent();
+			vz = shadingFrame.Normal();
+
+			//if (u < 0.5f)
+			//{
+			//	vx = shadingFrame.Binormal();
+			//	vy = shadingFrame.Tangent();
+			//	vz = shadingFrame.Normal();
+			//	u *= 2.0f;
+			//}
+			//else if (u < 0.75f)
+			//{
+			//	// Prepare for sampling rays with respect to _ss_
+			//	vx = shadingFrame.Tangent();
+			//	vy = shadingFrame.Normal();
+			//	vz = shadingFrame.Binormal();
+			//	u = (u - 0.5f) * 4.0f;
+			//}
+			//else
+			//{
+			//	// Prepare for sampling rays with respect to _ts_
+			//	vx = shadingFrame.Normal();
+			//	vy = shadingFrame.Binormal();
+			//	vz = shadingFrame.Tangent();
+			//	u = (u - 0.75f) * 4.0f;
+			//}
 
 			int channel = Math::Min(3.0f * u, 2);
 			u = u * 3.0f - channel;
 
 			float d = mD[channel];
-			float radius = SampleRadius(sample.u, d);
-			float maxDist = SampleRadius(0.9999f, d);
+			float radius = SampleRadius(sample.u, d, mDiffuseReflectance[channel]);
+			float maxDist = SampleRadius(0.9999f, d, mDiffuseReflectance[channel]);
 			if (radius > maxDist)
 			{
 				*pPdf = 0.0f;
@@ -296,9 +301,8 @@ endfor
 
 			Vector3 base = diffGeom.mPosition + radius * (vx * Math::Cos(phi) + vy * Math::Sin(phi)) - 0.5f * isectHeight * vz;
 			Vector3 target = base + isectHeight * vz;
-			float rayLength = Math::Distance(base, target);
-			Vector3 rayDir = (target - base) / rayLength;
-			Ray projRay = Ray(base, rayDir);
+			Vector3 rayDir = (target - base) / isectHeight;
+			Ray projRay = Ray(base, rayDir, nullptr, isectHeight);
 
 			DifferentialGeom projDiffGeom;
 			if (!pScene->Intersect(projRay, pSampledDiffGeom))
@@ -308,12 +312,17 @@ endfor
 			}
 
 			pScene->PostIntersect(projRay, pSampledDiffGeom);
+			if (pSampledDiffGeom->mpBSSRDF != this)
+			{
+				*pPdf = 0.0f;
+				return Color::BLACK;
+			}
 
-			*pPdf = Pdf_Sample(diffGeom, *pSampledDiffGeom);
-			return NormalizeDiffusion(radius, mD[channel]);
+			*pPdf = Pdf_Sample(radius, diffGeom, *pSampledDiffGeom);
+			return radius * NormalizeDiffusion(radius, mD[channel], mDiffuseReflectance[channel]);
 		}
 
-		float BSSRDF::SampleRadius(const float u, const float d, float* pPdf) const
+		float BSSRDF::SampleRadius(const float u, const float d, const float A, float* pPdf) const
 		{
 			const float LUTOffset = Math::Min(u * LUTSize, LUTSize - 1);
 			const uint LUTIdxBase = Math::FloorToInt(LUTOffset);
@@ -323,17 +332,17 @@ endfor
 			const float radius = baseDistance * d;
 
 			if (pPdf)
-				*pPdf = Pdf_Radius(radius, d);
+				*pPdf = Pdf_Radius(radius, d, A);
 
 			return radius;
 		}
 
-		float BSSRDF::Pdf_Radius(const float radius, const float d) const
+		float BSSRDF::Pdf_Radius(const float radius, const float d, const float A) const
 		{
-			return NormalizeDiffusion(radius, d) * float(Math::EDX_TWO_PI) * radius;
+			return NormalizeDiffusion(radius, d, A) * float(Math::EDX_TWO_PI) * radius;
 		}
 
-		float BSSRDF::Pdf_Sample(const DifferentialGeom& diffGeomOut, const DifferentialGeom& diffGeomIn) const
+		float BSSRDF::Pdf_Sample(const float radius, const DifferentialGeom& diffGeomOut, const DifferentialGeom& diffGeomIn) const
 		{
 			Vector3 d = diffGeomOut.mPosition - diffGeomIn.mPosition;
 			const Frame& shadingFrame = diffGeomIn.mShadingFrame;
@@ -341,18 +350,21 @@ endfor
 			Vector3 localDotN(Math::Dot(shadingFrame.Binormal(), diffGeomIn.mNormal), Math::Dot(shadingFrame.Tangent(), diffGeomIn.mNormal), Math::Dot(shadingFrame.Normal(), diffGeomIn.mNormal));
 
 			// Compute BSSRDF profile radius under projection along each axis
-			float rProj[3] = { std::sqrt(localD.y * localD.y + localD.z * localD.z),
-				std::sqrt(localD.z * localD.z + localD.x * localD.x),
-				std::sqrt(localD.x * localD.x + localD.y * localD.y) };
+			float rProj[3] = {
+				Math::Sqrt(localD.y * localD.y + localD.z * localD.z),
+				Math::Sqrt(localD.z * localD.z + localD.x * localD.x),
+				Math::Sqrt(localD.x * localD.x + localD.y * localD.y) };
 
 			// Return combined probability from all BSSRDF sampling strategies
-			float pdf = 0.0f, axisProb[3] = { 0.25f, 0.25f, 0.5f };
+			float pdf = 0.0f, axisProb[3] = { 0.25f, 0.25f, 1.0f };
 			float chProb = 1.0f / 3.0f;
-			for (auto axis = 0; axis < 3; ++axis)
+			for (auto axis = 2; axis < 3; ++axis)
 			{
 				for (auto ch = 0; ch < 3; ++ch)
-					pdf += Pdf_Radius(rProj[axis], mD[ch]) * Math::Abs(localDotN[axis]) * chProb * axisProb[axis];
+					pdf += Pdf_Radius(radius, mD[ch], mDiffuseReflectance[ch])/* * Math::Abs(localDotN[axis])*/ * chProb * axisProb[axis] * float(Math::EDX_INV_2PI);
 			}
+
+			assert(Math::NumericValid(pdf));
 
 			return pdf;
 		}

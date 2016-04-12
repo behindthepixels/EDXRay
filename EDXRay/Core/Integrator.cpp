@@ -17,7 +17,8 @@ namespace EDX
 			const Vector3& outDir,
 			const Light* pLight,
 			const Scene* pScene,
-			Sampler* pSampler)
+			Sampler* pSampler,
+			ScatterType scatterType)
 		{
 			const Vector3& position = scatter.mPosition;
 			const Vector3& normal = scatter.mNormal;
@@ -40,7 +41,7 @@ namespace EDX
 						const DifferentialGeom& diffGeom = static_cast<const DifferentialGeom&>(scatter);
 						const BSDF* pBSDF = diffGeom.mpBSDF;
 
-						f = pBSDF->Eval(outDir, lightDir, diffGeom, ScatterType(BSDF_ALL & ~BSDF_SPECULAR));
+						f = pBSDF->Eval(outDir, lightDir, diffGeom, scatterType);
 						f *= Math::AbsDot(lightDir, normal);
 						shadingPdf = pBSDF->Pdf(outDir, lightDir, diffGeom);
 					}
@@ -82,7 +83,7 @@ namespace EDX
 						const BSDF* pBSDF = diffGeom.mpBSDF;
 
 						ScatterType types;
-						f = pBSDF->SampleScattered(outDir, pSampler->GetSample(), diffGeom, &lightDir, &shadingPdf, ScatterType(BSDF_ALL & ~BSDF_SPECULAR), &types);
+						f = pBSDF->SampleScattered(outDir, pSampler->GetSample(), diffGeom, &lightDir, &shadingPdf, scatterType, &types);
 						f *= Math::AbsDot(lightDir, normal);
 					}
 					else

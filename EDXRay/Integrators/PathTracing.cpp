@@ -80,12 +80,14 @@ namespace EDX
 					pathRay = Ray(pos, vIn, diffGeom.mMediumInterface.GetMedium(vIn, normal));
 
 					// Account for attenuated subsurface scattering, if applicable
-					if (diffGeom.mpBSSRDF && (bsdfFlags & BSDF_TRANSMISSION)) {
+					if (diffGeom.mpBSSRDF && Math::Dot(vOut, normal) > 0.0f && (bsdfFlags & BSDF_TRANSMISSION))
+					{
 						// Importance sample the BSSRDF
+						Sample bssrdfSample = pSampler->GetSample();
 						DifferentialGeom subsurfDiffGeom;
 						float subsurfPdf;
 						Color S = diffGeom.mpBSSRDF->SampleSubsurfaceScattered(
-							pSampler->GetSample(), diffGeom, pScene, &subsurfDiffGeom, &subsurfPdf);
+							bssrdfSample, diffGeom, pScene, &subsurfDiffGeom, &subsurfPdf);
 
 						if (S.IsBlack() || subsurfPdf == 0)
 							break;
@@ -96,14 +98,14 @@ namespace EDX
 						float lightIdxSample = pSampler->Get1D();
 						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
 						L += pathThroughput *
-							Integrator::EstimateDirectLighting(subsurfDiffGeom, subsurfDiffGeom.mNormal, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
+							Integrator::EstimateDirectLighting(subsurfDiffGeom, -subsurfDiffGeom.mNormal, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler, ScatterType(BSDF_ALL_TRANSMISSION & ~BSDF_SPECULAR));
 
 						// Account for the indirect subsurface scattering component
-						f = pBSDF->SampleScattered(subsurfDiffGeom.mNormal, pSampler->GetSample(), subsurfDiffGeom, &vIn, &pdf, BSDF_ALL, &bsdfFlags);
+						f = pBSDF->SampleScattered(-subsurfDiffGeom.mNormal, pSampler->GetSample(), subsurfDiffGeom, &vIn, &pdf, BSDF_ALL_TRANSMISSION, &bsdfFlags);
 						if (f.IsBlack() || pdf == 0.0f)
 							break;
 
-						specBounce = false;
+						specBounce = (bsdfFlags & BSDF_SPECULAR) != 0;
 						pathThroughput *= f * Math::AbsDot(vIn, subsurfDiffGeom.mNormal) / pdf;
 						pathRay = Ray(subsurfDiffGeom.mPosition, vIn, subsurfDiffGeom.mMediumInterface.GetMedium(vIn, subsurfDiffGeom.mNormal));
 					}
