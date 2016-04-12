@@ -2,6 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
+#include "BSDF.h"
 #include "Sampling.h"
 #include "Math/Vector.h"
 #include "Graphics/Color.h"
@@ -10,6 +11,27 @@ namespace EDX
 {
 	namespace RayTracer
 	{
+		class BSSRDFAdapter : public BSDF
+		{
+		private:
+			const BSSRDF* mpBSSRDF;
+
+		public:
+			BSSRDFAdapter(const BSSRDF* pBSSRDF, const Color& color)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, color)
+				, mpBSSRDF(pBSSRDF)
+			{
+			}
+
+			Color SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf,
+				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const;
+
+		private:
+			float PdfInner(const Vector3& vIn, const Vector3& vOut, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const override;
+			float EvalInner(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const override;
+		};
+
+
 		class BSSRDF
 		{
 		private:
@@ -19,6 +41,9 @@ namespace EDX
 			Color mDiffuseReflectance;
 			Vector3 mMeanFreePathLength;
 			Vector3 mD;
+			RefPtr<BSSRDFAdapter> mAdapter;
+			float mEtai = 1.0f;
+			float mEtat = 1.5f;
 
 		public:
 			BSSRDF(const Color& diffReflectance, const Vector3& meanFreePath)
@@ -37,14 +62,19 @@ namespace EDX
 					scaling[ch] = ComputeScaling(mDiffuseReflectance[ch]);
 
 				mD = mMeanFreePathLength / scaling;
+
+				mAdapter = new BSSRDFAdapter(this, mDiffuseReflectance);
 			}
 
 			Color SampleSubsurfaceScattered(
+				const Vector3&			wo,
 				const Sample&			sample,
 				const DifferentialGeom&	diffGeom,
 				const Scene*			pScene,
 				DifferentialGeom*		pSampledDiffGeom,
 				float*					pPdf) const;
+
+			float EvalWi(const Vector3& wi) const;
 
 		private:
 			inline float NormalizeDiffusion(const float r, const float d, const float A) const

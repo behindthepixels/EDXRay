@@ -191,10 +191,10 @@ namespace EDX
 			static BSDF* CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal);
 			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
 
-		protected:
 			static float FresnelDielectric(float cosi, float etai, float etat);
 			static float FresnelConductor(float cosi, const float& eta, const float k);
 
+		protected:
 			static float	GGX_D(const Vector3& wh, float alpha);
 			static Vector3	GGX_SampleNormal(float u1, float u2, float* pPdf, float alpha);
 			static float	SmithG(const Vector3& v, const Vector3& wh, float alpha);

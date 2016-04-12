@@ -238,6 +238,7 @@ endfor
 		};
 
 		Color BSSRDF::SampleSubsurfaceScattered(
+			const Vector3&			wo,
 			const Sample&			sample,
 			const DifferentialGeom&	diffGeom,
 			const Scene*			pScene,
@@ -319,7 +320,17 @@ endfor
 			}
 
 			*pPdf = Pdf_Sample(radius, diffGeom, *pSampledDiffGeom);
-			return radius * NormalizeDiffusion(radius, mD[channel], mDiffuseReflectance[channel]);
+			pSampledDiffGeom->mpBSDF = mAdapter.Ptr();
+
+			float Fo = BSDF::FresnelDielectric(Math::Dot(wo, diffGeom.mNormal), mEtai, mEtat);
+
+			return (1.0f - Fo) * radius * NormalizeDiffusion(radius, mD[channel], mDiffuseReflectance[channel]) * float(Math::EDX_INV_PI);
+		}
+
+		float BSSRDF::EvalWi(const Vector3& wi) const
+		{
+			float Fi = BSDF::FresnelDielectric(BSDFCoordinate::AbsCosTheta(wi), mEtai, mEtat);
+			return 1.0f - Fi;
 		}
 
 		float BSSRDF::SampleRadius(const float u, const float d, const float A, float* pPdf) const
@@ -367,6 +378,59 @@ endfor
 			assert(Math::NumericValid(pdf));
 
 			return pdf;
+		}
+
+		float BSSRDFAdapter::EvalInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types) const
+		{
+			return mpBSSRDF->EvalWi(wi);
+		}
+
+		float BSSRDFAdapter::PdfInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
+		{
+			if (BSDFCoordinate::CosTheta(wo) <= 0.0f || !BSDFCoordinate::SameHemisphere(wo, wi))
+				return 0.0f;
+
+			return BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI);
+		}
+
+		Color BSSRDFAdapter::SampleScattered(const Vector3& vOut, const Sample& sample, const DifferentialGeom& diffGeom, Vector3* pvIn, float* pPdf,
+			ScatterType types, ScatterType* pSampledTypes) const
+		{
+			if (!MatchesTypes(types))
+			{
+				*pPdf = 0.0f;
+				return Color::BLACK;
+			}
+
+			Vector3 vWo = diffGeom.WorldToLocal(vOut), vWi;
+			vWi = Sampling::CosineSampleHemisphere(sample.u, sample.v);
+			if (BSDFCoordinate::CosTheta(vWo) <= 0.0f || !BSDFCoordinate::SameHemisphere(vWo, vWi))
+				return 0.0f;
+
+			if (vWo.z < 0.0f)
+				vWi.z *= -1.0f;
+
+			*pvIn = diffGeom.LocalToWorld(vWi);
+
+			if (Math::Dot(vOut, diffGeom.mGeomNormal) * Math::Dot(*pvIn, diffGeom.mGeomNormal) > 0.0f)
+				types = ScatterType(types & ~BSDF_TRANSMISSION);
+			else
+				types = ScatterType(types & ~BSDF_REFLECTION);
+
+			if (!MatchesTypes(types))
+			{
+				*pPdf = 0.0f;
+				return Color::BLACK;
+			}
+
+			*pPdf = PdfInner(vWo, vWi, diffGeom, types);
+
+			if (pSampledTypes != NULL)
+			{
+				*pSampledTypes = mScatterType;
+			}
+
+			return GetValue(mpTexture.Ptr(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
 		}
 	}
 }

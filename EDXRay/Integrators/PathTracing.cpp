@@ -72,22 +72,25 @@ namespace EDX
 					ScatterType bsdfFlags;
 					Sample scatterSample = pSampler->GetSample();
 					Color f = pBSDF->SampleScattered(vOut, scatterSample, diffGeom, &vIn, &pdf, BSDF_ALL, &bsdfFlags);
-					if (f.IsBlack() || pdf == 0.0f)
-						break;
 
-					specBounce = (bsdfFlags & BSDF_SPECULAR) != 0;
-					pathThroughput *= f * Math::AbsDot(vIn, normal) / pdf;
-					pathRay = Ray(pos, vIn, diffGeom.mMediumInterface.GetMedium(vIn, normal));
+					bool sampleSubsurface = diffGeom.mpBSSRDF && Math::Dot(vOut, normal) > 0.0f && (bsdfFlags & BSDF_TRANSMISSION);
+					if (!sampleSubsurface)
+					{
+						if (f.IsBlack() || pdf == 0.0f)
+							break;
 
-					// Account for attenuated subsurface scattering, if applicable
-					if (diffGeom.mpBSSRDF && Math::Dot(vOut, normal) > 0.0f && (bsdfFlags & BSDF_TRANSMISSION))
+						specBounce = (bsdfFlags & BSDF_SPECULAR) != 0;
+						pathThroughput *= f * Math::AbsDot(vIn, normal) / pdf;
+						pathRay = Ray(pos, vIn, diffGeom.mMediumInterface.GetMedium(vIn, normal));
+					}
+					else // Account for attenuated subsurface scattering, if applicable
 					{
 						// Importance sample the BSSRDF
 						Sample bssrdfSample = pSampler->GetSample();
 						DifferentialGeom subsurfDiffGeom;
 						float subsurfPdf;
 						Color S = diffGeom.mpBSSRDF->SampleSubsurfaceScattered(
-							bssrdfSample, diffGeom, pScene, &subsurfDiffGeom, &subsurfPdf);
+							vOut, bssrdfSample, diffGeom, pScene, &subsurfDiffGeom, &subsurfPdf);
 
 						if (S.IsBlack() || subsurfPdf == 0)
 							break;
@@ -98,10 +101,11 @@ namespace EDX
 						float lightIdxSample = pSampler->Get1D();
 						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
 						L += pathThroughput *
-							Integrator::EstimateDirectLighting(subsurfDiffGeom, -subsurfDiffGeom.mNormal, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler, ScatterType(BSDF_ALL_TRANSMISSION & ~BSDF_SPECULAR));
+							Integrator::EstimateDirectLighting(subsurfDiffGeom, subsurfDiffGeom.mNormal, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
 
 						// Account for the indirect subsurface scattering component
-						f = pBSDF->SampleScattered(-subsurfDiffGeom.mNormal, pSampler->GetSample(), subsurfDiffGeom, &vIn, &pdf, BSDF_ALL_TRANSMISSION, &bsdfFlags);
+						pBSDF = subsurfDiffGeom.mpBSDF;
+						f = pBSDF->SampleScattered(subsurfDiffGeom.mNormal, pSampler->GetSample(), subsurfDiffGeom, &vIn, &pdf, BSDF_ALL, &bsdfFlags);
 						if (f.IsBlack() || pdf == 0.0f)
 							break;
 
