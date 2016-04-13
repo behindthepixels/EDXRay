@@ -72,7 +72,8 @@ namespace EDX
 				const DifferentialGeom&	diffGeom,
 				const Scene*			pScene,
 				DifferentialGeom*		pSampledDiffGeom,
-				float*					pPdf) const;
+				float*					pPdf,
+				MemoryArena&			memory) const;
 
 			float EvalWi(const Vector3& wi) const;
 

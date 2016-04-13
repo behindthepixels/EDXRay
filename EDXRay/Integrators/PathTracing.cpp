@@ -90,10 +90,11 @@ namespace EDX
 						DifferentialGeom subsurfDiffGeom;
 						float subsurfPdf;
 						Color S = diffGeom.mpBSSRDF->SampleSubsurfaceScattered(
-							vOut, bssrdfSample, diffGeom, pScene, &subsurfDiffGeom, &subsurfPdf);
+							vOut, bssrdfSample, diffGeom, pScene, &subsurfDiffGeom, &subsurfPdf, memory);
 
 						if (S.IsBlack() || subsurfPdf == 0)
 							break;
+
 						pathThroughput *= S / subsurfPdf;
 
 						// Account for the attenuated direct subsurface scattering

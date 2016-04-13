@@ -56,7 +56,7 @@ namespace EDX
 				CameraParams.FarClip = 1000.0f;
 				CameraParams.FocusPlaneDist = 99999999.9f;
 				CameraParams.mLensSettings.FocalLengthMilliMeters = 50.0f;
-				CameraParams.mLensSettings.FStop = 11.0f;
+				CameraParams.mLensSettings.FStop = 22.0f;
 
 				IntegratorType = EIntegratorType::BidirectionalPathTracing;
 				SamplerType = ESamplerType::Random;

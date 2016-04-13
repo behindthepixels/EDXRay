@@ -243,7 +243,8 @@ endfor
 			const DifferentialGeom&	diffGeom,
 			const Scene*			pScene,
 			DifferentialGeom*		pSampledDiffGeom,
-			float*					pPdf) const
+			float*					pPdf,
+			MemoryArena&			memory) const
 		{
 			if (mMeanFreePathLength == Vector3::ZERO)
 			{
@@ -257,33 +258,33 @@ endfor
 			const Frame& shadingFrame = diffGeom.mShadingFrame;
 			Vector3 vx, vy, vz;
 
-			vx = shadingFrame.Binormal();
-			vy = shadingFrame.Tangent();
-			vz = shadingFrame.Normal();
+			//vx = shadingFrame.Binormal();
+			//vy = shadingFrame.Tangent();
+			//vz = shadingFrame.Normal();
 
-			//if (u < 0.5f)
-			//{
-			//	vx = shadingFrame.Binormal();
-			//	vy = shadingFrame.Tangent();
-			//	vz = shadingFrame.Normal();
-			//	u *= 2.0f;
-			//}
-			//else if (u < 0.75f)
-			//{
-			//	// Prepare for sampling rays with respect to _ss_
-			//	vx = shadingFrame.Tangent();
-			//	vy = shadingFrame.Normal();
-			//	vz = shadingFrame.Binormal();
-			//	u = (u - 0.5f) * 4.0f;
-			//}
-			//else
-			//{
-			//	// Prepare for sampling rays with respect to _ts_
-			//	vx = shadingFrame.Normal();
-			//	vy = shadingFrame.Binormal();
-			//	vz = shadingFrame.Tangent();
-			//	u = (u - 0.75f) * 4.0f;
-			//}
+			if (u < 0.5f)
+			{
+				vx = shadingFrame.Binormal();
+				vy = shadingFrame.Tangent();
+				vz = shadingFrame.Normal();
+				u *= 2.0f;
+			}
+			else if (u < 0.75f)
+			{
+				// Prepare for sampling rays with respect to _ss_
+				vx = shadingFrame.Tangent();
+				vy = shadingFrame.Normal();
+				vz = shadingFrame.Binormal();
+				u = (u - 0.5f) * 4.0f;
+			}
+			else
+			{
+				// Prepare for sampling rays with respect to _ts_
+				vx = shadingFrame.Normal();
+				vy = shadingFrame.Binormal();
+				vz = shadingFrame.Tangent();
+				u = (u - 0.75f) * 4.0f;
+			}
 
 			int channel = Math::Min(3.0f * u, 2);
 			u = u * 3.0f - channel;
@@ -300,36 +301,65 @@ endfor
 			float phi = sample.v * float(Math::EDX_TWO_PI);
 			float isectHeight = 2.0f * Math::Sqrt(maxDist * maxDist - radius * radius);
 
-			Vector3 base = diffGeom.mPosition + radius * (vx * Math::Cos(phi) + vy * Math::Sin(phi)) - 0.5f * isectHeight * vz;
-			Vector3 target = base + isectHeight * vz;
+			Vector3 base = diffGeom.mPosition + radius * (vx * Math::Cos(phi) + vy * Math::Sin(phi)) + 0.5f * isectHeight * vz;
+			Vector3 target = base - isectHeight * vz;
 			Vector3 rayDir = (target - base) / isectHeight;
 			Ray projRay = Ray(base, rayDir, nullptr, isectHeight);
 
-			DifferentialGeom projDiffGeom;
-			if (!pScene->Intersect(projRay, pSampledDiffGeom))
+			struct IntersectionChain
+			{
+				DifferentialGeom diffGeom;
+				IntersectionChain *pNext;
+
+				IntersectionChain()
+					: pNext(nullptr)
+				{
+				}
+			};
+			IntersectionChain* pChain = memory.Alloc<IntersectionChain>();
+			*pChain = IntersectionChain();
+
+			IntersectionChain* pPtr = pChain;
+			int numIsect = 0;
+			while (pScene->Intersect(projRay, &pPtr->diffGeom))
+			{
+				pScene->PostIntersect(projRay, &pPtr->diffGeom);
+
+				isectHeight -= pPtr->diffGeom.mDist;
+				projRay = Ray(projRay.CalcPoint(pPtr->diffGeom.mDist), rayDir, nullptr, isectHeight);
+
+				if (pPtr->diffGeom.mpBSSRDF == this)
+				{
+					pPtr->pNext = memory.Alloc<IntersectionChain>();
+					pPtr = pPtr->pNext;
+					*pPtr = IntersectionChain();
+					numIsect++;
+				}
+			}
+
+			if (numIsect == 0)
 			{
 				*pPdf = 0.0f;
 				return Color::BLACK;
 			}
 
-			pScene->PostIntersect(projRay, pSampledDiffGeom);
-			if (pSampledDiffGeom->mpBSSRDF != this)
-			{
-				*pPdf = 0.0f;
-				return Color::BLACK;
-			}
+			int selected = Math::Clamp(u * numIsect, 0, numIsect - 1);
+			while (selected-- > 0)
+				pChain = pChain->pNext;
+			*pSampledDiffGeom = pChain->diffGeom;
 
-			*pPdf = Pdf_Sample(radius, diffGeom, *pSampledDiffGeom);
+			*pPdf = Pdf_Sample(radius, diffGeom, *pSampledDiffGeom) / float(numIsect);
 			pSampledDiffGeom->mpBSDF = mAdapter.Ptr();
 
 			float Fo = BSDF::FresnelDielectric(Math::Dot(wo, diffGeom.mNormal), mEtai, mEtat);
 
-			return (1.0f - Fo) * radius * NormalizeDiffusion(radius, mD[channel], mDiffuseReflectance[channel]) * float(Math::EDX_INV_PI);
+			float actualDist = Math::Distance(diffGeom.mPosition, pSampledDiffGeom->mPosition);
+			return (1.0f - Fo) * actualDist * NormalizeDiffusion(actualDist, mD[channel], mDiffuseReflectance[channel]) * float(Math::EDX_INV_PI);
 		}
 
 		float BSSRDF::EvalWi(const Vector3& wi) const
 		{
-			float Fi = BSDF::FresnelDielectric(BSDFCoordinate::AbsCosTheta(wi), mEtai, mEtat);
+			float Fi = BSDF::FresnelDielectric(BSDFCoordinate::CosTheta(wi), mEtai, mEtat);
 			return 1.0f - Fi;
 		}
 
@@ -367,12 +397,12 @@ endfor
 				Math::Sqrt(localD.x * localD.x + localD.y * localD.y) };
 
 			// Return combined probability from all BSSRDF sampling strategies
-			float pdf = 0.0f, axisProb[3] = { 0.25f, 0.25f, 1.0f };
+			float pdf = 0.0f, axisProb[3] = { 0.25f, 0.25f, 0.5f };
 			float chProb = 1.0f / 3.0f;
-			for (auto axis = 2; axis < 3; ++axis)
+			for (auto axis = 0; axis < 3; ++axis)
 			{
 				for (auto ch = 0; ch < 3; ++ch)
-					pdf += Pdf_Radius(radius, mD[ch], mDiffuseReflectance[ch])/* * Math::Abs(localDotN[axis])*/ * chProb * axisProb[axis] * float(Math::EDX_INV_2PI);
+					pdf += Pdf_Radius(rProj[axis], mD[ch], mDiffuseReflectance[ch]) * Math::Abs(localDotN[axis]) * chProb * axisProb[axis] * float(Math::EDX_INV_2PI);
 			}
 
 			assert(Math::NumericValid(pdf));
