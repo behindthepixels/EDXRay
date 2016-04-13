@@ -17,8 +17,8 @@ namespace EDX
 			const BSSRDF* mpBSSRDF;
 
 		public:
-			BSSRDFAdapter(const BSSRDF* pBSSRDF, const Color& color)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, color)
+			BSSRDFAdapter(const BSSRDF* pBSSRDF)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, Color::WHITE)
 				, mpBSSRDF(pBSSRDF)
 			{
 			}
@@ -63,7 +63,7 @@ namespace EDX
 
 				mD = mMeanFreePathLength / scaling;
 
-				mAdapter = new BSSRDFAdapter(this, mDiffuseReflectance);
+				mAdapter = new BSSRDFAdapter(this);
 			}
 
 			Color SampleSubsurfaceScattered(
@@ -78,10 +78,15 @@ namespace EDX
 			float EvalWi(const Vector3& wi) const;
 
 		private:
+			inline Color NormalizeDiffusion(const float r) const
+			{
+				return Color(Math::Exp(Vector3(-r) / mD) + Math::Exp(Vector3(-r) / (3.0f * mD))) /
+					Color(8.0f * float(Math::EDX_PI) * mD * r);
+			}
 			inline float NormalizeDiffusion(const float r, const float d, const float A) const
 			{
-				return A * (Math::Exp(-r / d) + Math::Exp(-r / (3.0f * d))) /
-					(8.0f * float(Math::EDX_PI) * d * r + 1e-6f);
+				return (Math::Exp(-r / d) + Math::Exp(-r / (3.0f * d))) /
+					(8.0f * float(Math::EDX_PI) * d * r);
 			}
 
 			float SampleRadius(const float u, const float d, const float A, float* pPdf = nullptr) const;

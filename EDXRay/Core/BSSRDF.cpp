@@ -354,13 +354,13 @@ endfor
 			float Fo = BSDF::FresnelDielectric(Math::Dot(wo, diffGeom.mNormal), mEtai, mEtat);
 
 			float actualDist = Math::Distance(diffGeom.mPosition, pSampledDiffGeom->mPosition);
-			return (1.0f - Fo) * actualDist * NormalizeDiffusion(actualDist, mD[channel], mDiffuseReflectance[channel]) * float(Math::EDX_INV_PI);
+			return /*(1.0f - Fo) * */actualDist * NormalizeDiffusion(actualDist) * float(Math::EDX_INV_PI);
 		}
 
 		float BSSRDF::EvalWi(const Vector3& wi) const
 		{
 			float Fi = BSDF::FresnelDielectric(BSDFCoordinate::CosTheta(wi), mEtai, mEtat);
-			return 1.0f - Fi;
+			return 1.0f/* - Fi*/;
 		}
 
 		float BSSRDF::SampleRadius(const float u, const float d, const float A, float* pPdf) const
