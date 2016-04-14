@@ -43,6 +43,7 @@ namespace EDX
 					float coatPdf;
 					wh = GGX_SampleVisibleNormal(wo, remappedSample.u, remappedSample.v, &coatPdf, coatRough);
 					wi = Math::Reflect(-wo, wh);
+					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_GLOSSY);
 				}
 				else
 				{
@@ -66,12 +67,15 @@ namespace EDX
 
 					wh = GGX_SampleVisibleNormal(wo, remappedSample.u, remappedSample.v, &microfacetPdf, roughness * roughness);
 					wi = Math::Reflect(-wo, wh);
+					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_GLOSSY);
 				}
 				else
 				{
 					wi = Sampling::CosineSampleHemisphere(remappedSample.u, remappedSample.v);
 					if (wo.z < 0.0f)
 						wi.z *= -1.0f;
+
+					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE);
 				}
 			}
 

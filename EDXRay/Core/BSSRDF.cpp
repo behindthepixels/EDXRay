@@ -355,7 +355,7 @@ endfor
 		float BSSRDF::EvalWi(const Vector3& wi) const
 		{
 			float Fi = BSDF::FresnelDielectric(BSDFCoordinate::CosTheta(wi), mEtai, mEtat);
-			return 1.0f/* - Fi*/;
+			return 1.0f - Fi;
 		}
 
 		float BSSRDF::SampleRadius(const float u, const float d, const float A, float* pPdf) const
