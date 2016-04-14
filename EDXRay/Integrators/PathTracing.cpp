@@ -61,7 +61,7 @@ namespace EDX
 						float lightIdxSample = pSampler->Get1D();
 						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
 						L += pathThroughput *
-							Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
+							Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler) * pScene->GetLights().size();
 					}
 
 					const Vector3& pos = diffGeom.mPosition;
@@ -118,7 +118,8 @@ namespace EDX
 				{
 					float lightIdxSample = pSampler->Get1D();
 					auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
-					L += pathThroughput * Integrator::EstimateDirectLighting(mediumScatter, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
+					L += pathThroughput *
+						Integrator::EstimateDirectLighting(mediumScatter, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler) * pScene->GetLights().size();
 
 					if (bounce >= mMaxDepth)
 						break;

@@ -80,13 +80,19 @@ namespace EDX
 		private:
 			inline Color NormalizeDiffusion(const float r) const
 			{
-				return Color(Math::Exp(Vector3(-r) / mD) + Math::Exp(Vector3(-r) / (3.0f * mD))) /
-					Color(8.0f * float(Math::EDX_PI) * mD * r);
+				if (r == 0.0f)
+					return 0.0f;
+				else
+					return Color(Math::Exp(Vector3(-r) / mD) + Math::Exp(Vector3(-r) / (3.0f * mD))) /
+						Color(8.0f * float(Math::EDX_PI) * mD * r);
 			}
 			inline float NormalizeDiffusion(const float r, const float d, const float A) const
 			{
-				return (Math::Exp(-r / d) + Math::Exp(-r / (3.0f * d))) /
-					(8.0f * float(Math::EDX_PI) * d * r);
+				if (r == 0.0f)
+					return 0.0f;
+				else
+					return (Math::Exp(-r / d) + Math::Exp(-r / (3.0f * d))) /
+						(8.0f * float(Math::EDX_PI) * d * r);
 			}
 
 			float SampleRadius(const float u, const float d, const float A, float* pPdf = nullptr) const;
