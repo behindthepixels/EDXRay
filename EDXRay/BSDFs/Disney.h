@@ -111,13 +111,8 @@ namespace EDX
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				float specPdf = microfacetPdf * dwh_dwi;
 
-				float normalRef = Math::Lerp(0.0f, 0.08f, mSpecular);
-				float ODotH = Math::Dot(wo, wh);
-				float F = Fresnel_Schlick(ODotH, normalRef);
-				float probSpec = F;
-
-				pdf += specPdf * probSpec;
-				pdf += BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI) * (1.0f - probSpec);
+				pdf += specPdf;
+				pdf += BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI);
 
 				if (mClearCoat > 0.0f)
 				{
@@ -161,14 +156,16 @@ namespace EDX
 				Color albedo = GetValue(mpTexture.Ptr(), diffGeom);
 				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
-				Color specAlbedo = Math::Lerp(Math::Lerp(albedo, Color::WHITE, 1.0f - mSpecularTint), albedo, mMetallic);
-				Color sheenAlbedo = Math::Lerp(Color::WHITE, albedo, mSheenTint);
+				Color UntintedSpecAlbedo = albedo.Luminance();
+				Color specAlbedo = Math::Lerp(Math::Lerp(albedo, UntintedSpecAlbedo, 1.0f - mSpecularTint), albedo, mMetallic);
+				Color sheenAlbedo = Math::Lerp(UntintedSpecAlbedo, albedo, mSheenTint);
 
 				Vector3 wh = Math::Normalize(wo + wi);
 				float ODotH = Math::Dot(wo, wh);
 				float IDotH = Math::Dot(wi, wh);
 				float OneMinusODotH = 1.0f - ODotH;
-				specAlbedo = Math::Lerp(specAlbedo, Color::WHITE, OneMinusODotH * OneMinusODotH * OneMinusODotH);
+				Color grazingSpecAlbedo = Math::Lerp(specAlbedo, UntintedSpecAlbedo, mMetallic);
+				specAlbedo = Math::Lerp(specAlbedo, UntintedSpecAlbedo, OneMinusODotH * OneMinusODotH * OneMinusODotH);
 
 				// Sheen term
 				float F = Fresnel_Schlick(ODotH, 0.0f);
