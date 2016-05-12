@@ -33,23 +33,25 @@ namespace EDX
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();
 			for (auto i = 0; i < materialInfo.size(); i++)
 			{
+				BSDF* pBSDF;
 				if (materialInfo[i].strTexturePath[0])
 				{
-					mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].strTexturePath));
+					pBSDF = BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].strTexturePath);
 				}
 				else
 				{
 					if (materialInfo[i].transColor != Color::BLACK)
-						mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Glass, materialInfo[i].transColor));
+						pBSDF = BSDF::CreateBSDF(BSDFType::Glass, materialInfo[i].transColor);
 					else if (materialInfo[i].specColor != Color::BLACK)
-						mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Mirror, materialInfo[i].specColor));
+						pBSDF = BSDF::CreateBSDF(BSDFType::Mirror, materialInfo[i].specColor);
 					else
-						mpBSDFs.push_back(BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].color));
+						pBSDF = BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].color);
 				}
 
+				mpBSDFs.push_back(pBSDF);
 				mMediumInterfaces.push_back(mediumInterface);
 				if (meanFreePath != Vector3::ZERO)
-					mpBSSRDFs.push_back(new BSSRDF(materialInfo[i].color, meanFreePath));
+					mpBSSRDFs.push_back(new BSSRDF(pBSDF, meanFreePath));
 				else
 					mpBSSRDFs.push_back(nullptr);
 			}
@@ -79,10 +81,11 @@ namespace EDX
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();
 			for (auto i = 0; i < materialInfo.size(); i++)
 			{
-				mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
+				BSDF* pBSDF = BSDF::CreateBSDF(bsdfType, reflectance);
+				mpBSDFs.push_back(pBSDF);
 				mMediumInterfaces.push_back(mediumInterface);
 				if (meanFreePath != Vector3::ZERO)
-					mpBSSRDFs.push_back(new BSSRDF(reflectance, meanFreePath));
+					mpBSSRDFs.push_back(new BSSRDF(pBSDF, meanFreePath));
 				else
 					mpBSSRDFs.push_back(nullptr);
 			}
@@ -110,10 +113,11 @@ namespace EDX
 			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
-			mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
+			BSDF* pBSDF = BSDF::CreateBSDF(bsdfType, reflectance);
+			mpBSDFs.push_back(pBSDF);
 			mMediumInterfaces.push_back(mediumInterface);
 			if (meanFreePath != Vector3::ZERO)
-				mpBSSRDFs.push_back(new BSSRDF(reflectance, meanFreePath));
+				mpBSSRDFs.push_back(new BSSRDF(pBSDF, meanFreePath));
 			else
 				mpBSSRDFs.push_back(nullptr);
 
@@ -138,10 +142,11 @@ namespace EDX
 			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
-			mpBSDFs.push_back(BSDF::CreateBSDF(bsdfType, reflectance));
+			BSDF* pBSDF = BSDF::CreateBSDF(bsdfType, reflectance);
+			mpBSDFs.push_back(pBSDF);
 			mMediumInterfaces.push_back(mediumInterface);
 			if (meanFreePath != Vector3::ZERO)
-				mpBSSRDFs.push_back(new BSSRDF(reflectance, meanFreePath));
+				mpBSSRDFs.push_back(new BSSRDF(pBSDF, meanFreePath));
 			else
 				mpBSSRDFs.push_back(nullptr);
 

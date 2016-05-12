@@ -1,4 +1,5 @@
 #include "BSSRDF.h"
+#include "BSDF.h"
 #include "Ray.h"
 #include "Scene.h"
 #include "DifferentialGeom.h"
@@ -284,9 +285,23 @@ endfor
 			int channel = Math::Min(3.0f * u, 2);
 			u = u * 3.0f - channel;
 
-			float d = mD[channel];
-			float radius = SampleRadius(sample.u, d, mDiffuseReflectance[channel]);
-			float maxDist = SampleRadius(0.9999f, d, mDiffuseReflectance[channel]);
+			auto ComputeFitting = [](const float A) -> float
+			{
+				const float tempTerm = Math::Abs(A - 0.8f);
+				const float tempTerm2 = tempTerm * tempTerm * tempTerm;
+				return 1.85f - A + 7 * tempTerm2;
+			};
+
+			Vector3 scaling;
+			Color diffuseReflectance = mpBSDF->GetValue(mpBSDF->GetTexture().Ptr(), diffGeom);
+			for (auto ch = 0; ch < 3; ch++)
+				scaling[ch] = ComputeFitting(diffuseReflectance[ch]);
+
+			Vector3 D = mMeanFreePathLength / scaling;
+
+			float d = D[channel];
+			float radius = SampleRadius(sample.u, d);
+			float maxDist = SampleRadius(0.996f, d);
 			if (radius > maxDist)
 			{
 				*pPdf = 0.0f;
@@ -343,13 +358,11 @@ endfor
 				pChain = pChain->pNext;
 			*pSampledDiffGeom = pChain->diffGeom;
 
-			*pPdf = Pdf_Sample(radius, diffGeom, *pSampledDiffGeom) / float(numIsect);
+			*pPdf = Pdf_Sample(radius, D, diffGeom, *pSampledDiffGeom) / float(numIsect);
 			pSampledDiffGeom->mpBSDF = mAdapter.Ptr();
 
-			float Fo = BSDF::FresnelDielectric(Math::Dot(wo, diffGeom.mNormal), mEtai, mEtat);
-
 			float actualDist = Math::Distance(diffGeom.mPosition, pSampledDiffGeom->mPosition);
-			return /*(1.0f - Fo) * */actualDist * NormalizeDiffusion(actualDist) * float(Math::EDX_INV_PI);
+			return Color(actualDist * NormalizeDiffusion(actualDist, D) * float(Math::EDX_INV_PI));
 		}
 
 		float BSSRDF::EvalWi(const Vector3& wi) const
@@ -358,7 +371,7 @@ endfor
 			return 1.0f - Fi;
 		}
 
-		float BSSRDF::SampleRadius(const float u, const float d, const float A, float* pPdf) const
+		float BSSRDF::SampleRadius(const float u, const float d, float* pPdf) const
 		{
 			const float LUTOffset = Math::Min(u * LUTSize, LUTSize - 1);
 			const uint LUTIdxBase = Math::FloorToInt(LUTOffset);
@@ -368,22 +381,23 @@ endfor
 			const float radius = baseDistance * d;
 
 			if (pPdf)
-				*pPdf = Pdf_Radius(radius, d, A);
+				*pPdf = Pdf_Radius(radius, d);
 
 			return radius;
 		}
 
-		float BSSRDF::Pdf_Radius(const float radius, const float d, const float A) const
+		float BSSRDF::Pdf_Radius(const float radius, const float d) const
 		{
-			return NormalizeDiffusion(radius, d, A) * float(Math::EDX_TWO_PI) * radius;
+			return NormalizeDiffusion(radius, d) * float(Math::EDX_TWO_PI) * radius;
 		}
 
-		float BSSRDF::Pdf_Sample(const float radius, const DifferentialGeom& diffGeomOut, const DifferentialGeom& diffGeomIn) const
+		float BSSRDF::Pdf_Sample(const float radius, const Vector3& D, const DifferentialGeom& diffGeomOut, const DifferentialGeom& diffGeomIn) const
 		{
 			Vector3 d = diffGeomOut.mPosition - diffGeomIn.mPosition;
 			const Frame& shadingFrame = diffGeomOut.mShadingFrame;
 			Vector3 localD(Math::Dot(shadingFrame.Binormal(), d), Math::Dot(shadingFrame.Tangent(), d), Math::Dot(shadingFrame.Normal(), d));
-			
+			Vector3 localDotN(Math::AbsDot(shadingFrame.Binormal(), diffGeomIn.mNormal), Math::AbsDot(shadingFrame.Tangent(), diffGeomIn.mNormal), Math::AbsDot(shadingFrame.Normal(), diffGeomIn.mNormal));
+
 			// Compute BSSRDF profile radius under projection along each axis
 			float projRadius[3] = {
 				Math::Sqrt(localD.y * localD.y + localD.z * localD.z),
@@ -396,7 +410,7 @@ endfor
 			for (auto axis = 0; axis < 3; axis++)
 			{
 				for (auto ch = 0; ch < 3; ch++)
-					pdf += Pdf_Radius(projRadius[axis], mD[ch], mDiffuseReflectance[ch]) * chProb * axisProb[axis] * float(Math::EDX_INV_2PI);
+					pdf += Pdf_Radius(projRadius[axis], D[ch]) * localDotN[axis] * chProb * axisProb[axis] * float(Math::EDX_INV_2PI);
 			}
 
 			assert(Math::NumericValid(pdf));
