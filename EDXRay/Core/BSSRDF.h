@@ -63,6 +63,16 @@ namespace EDX
 
 			float EvalWi(const Vector3& wi) const;
 
+			Vector3 GetMeanFreePath() const
+			{
+				return mMeanFreePathLength;
+			}
+
+			void SetMeanFreePath(const Vector3& inMFP)
+			{
+				mMeanFreePathLength = inMFP;
+			}
+
 		private:
 			inline Vector3 NormalizeDiffusion(const float r, const Vector3& D) const
 			{

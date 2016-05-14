@@ -1,6 +1,7 @@
 #include "Primitive.h"
 #include "BSDF.h"
 #include "BSSRDF.h"
+#include "../Media/Homogeneous.h"
 #include "TriangleMesh.h"
 #include "DifferentialGeom.h"
 #include "Graphics/ObjMesh.h"
@@ -164,9 +165,19 @@ namespace EDX
 			mpMesh->PostIntersect(ray, pDiffGeom);
 		}
 
-		BSDF* Primitive::GetBSDF(const uint triId) const
+		BSDF* Primitive::GetBSDF(const uint triId)
 		{
 			return mpBSDFs[mpMaterialIndices[triId]].Ptr();
+		}
+
+		BSSRDF* Primitive::GetBSSRDF(const uint triId)
+		{
+			return mpBSSRDFs[mpMaterialIndices[triId]].Ptr();
+		}
+
+		MediumInterface* Primitive::GetMediumInterface(const uint triId)
+		{
+			return &mMediumInterfaces[mpMaterialIndices[triId]];
 		}
 
 		BSDF* Primitive::GetBSDF_FromIdx(const uint idx) const
@@ -179,6 +190,20 @@ namespace EDX
 			auto& bsdf = mpBSDFs[mpMaterialIndices[triId]];
 			auto newBsdf = BSDF::CreateBSDF(type, bsdf->GetTexture(), bsdf->GetNormalMap());
 			bsdf = newBsdf;
+		}
+
+		void Primitive::SetBSSRDF(const int triId, const bool setNull)
+		{
+			auto& bsdf = mpBSDFs[mpMaterialIndices[triId]];
+			auto& bssrdf = mpBSSRDFs[mpMaterialIndices[triId]];
+			auto newBssrdf = !setNull ? new BSSRDF(bsdf.Ptr(), Vector3(0.05f)) : nullptr;
+			bssrdf = newBssrdf;
+		}
+
+		void Primitive::SetMediumInterface(const int triId, const bool setNull)
+		{
+			auto& materialInterface = mMediumInterfaces[mpMaterialIndices[triId]];
+			materialInterface.SetInside(!setNull ? new HomogeneousMedium(Vector3(0.1f), Vector3(0.02f), 0.7f) : nullptr);
 		}
 	}
 }

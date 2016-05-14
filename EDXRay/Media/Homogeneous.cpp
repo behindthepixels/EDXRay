@@ -10,7 +10,7 @@ namespace EDX
 	{
 		Color HomogeneousMedium::Transmittance(const Ray& ray, Sampler*pSampler) const
 		{
-			return Math::Exp((-1.0f * mSigmaT) * ray.mMax);
+			return Color(Math::Exp((-1.0f * mSigmaT) * ray.mMax));
 		}
 
 		Color HomogeneousMedium::Sample(const Ray& ray, Sampler* pSampler, MediumScatter* pMS) const
@@ -26,8 +26,8 @@ namespace EDX
 			if (sampledMedium)
 				*pMS = MediumScatter(ray.CalcPoint(dist), mpPhaseFunc.Ptr(), MediumInterface(ray.mpMedium));
 
-			Color transmittance = Math::Exp((-1.0f * mSigmaT) * dist);
-			Color density = sampledMedium ? (mSigmaT * transmittance) : transmittance;
+			Vector3 transmittance = Math::Exp((-1.0f * mSigmaT) * dist);
+			Vector3 density = sampledMedium ? (mSigmaT * transmittance) : transmittance;
 
 			float pdf = 0.0f;
 			for (auto i = 0; i < 3; i++)
@@ -36,7 +36,7 @@ namespace EDX
 			}
 			pdf /= 3.0f;
 
-			return sampledMedium ? (transmittance * mSigmaS / pdf) : (transmittance / pdf);
+			return sampledMedium ? Color(transmittance * mSigmaS / pdf) : Color(transmittance / pdf);
 		}
 	}
 }

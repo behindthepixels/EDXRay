@@ -70,9 +70,13 @@ namespace EDX
 
 			void PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const;
 
-			BSDF* GetBSDF(const uint triId) const;
+			BSDF* GetBSDF(const uint triId);
+			BSSRDF* GetBSSRDF(const uint triId);
+			MediumInterface* GetMediumInterface(const uint triId);
 			BSDF* GetBSDF_FromIdx(const uint idx) const;
 			void SetBSDF(const BSDFType type, const int triId);
+			void SetBSSRDF(const int triId, const bool setNull = false);
+			void SetMediumInterface(const int triId, const bool setNull = false);
 			void SetAreaLight(const AreaLight* pAreaLt)
 			{
 				mpAreaLight = pAreaLt;

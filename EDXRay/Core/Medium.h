@@ -3,6 +3,7 @@
 #include "EDXPrerequisites.h"
 #include "Math/Vector.h"
 #include "Memory/RefPtr.h"
+#include "Memory/Memory.h"
 #include "../ForwardDecl.h"
 
 namespace EDX
@@ -81,6 +82,18 @@ namespace EDX
 				return mpInside;
 			}
 
+			void SetOutside(const Medium* pMedium)
+			{
+				SafeDelete(mpOutside);
+				mpOutside = pMedium;
+			}
+
+			void SetInside(const Medium* pMedium)
+			{
+				SafeDelete(mpInside);
+				mpInside = pMedium;
+			}
+
 			const Medium* GetMedium(const Vector3& dir, const Vector3& normal) const
 			{
 				return Math::Dot(dir, normal) > 0.0f ? mpOutside : mpInside;
@@ -88,6 +101,19 @@ namespace EDX
 
 			bool IsMediumTransition() const { return mpInside != mpOutside; }
 
+		};
+
+		struct Reparameterizer
+		{
+		public:
+			static void Eval(const Color& diffuseReflectance, const Vector3& diffuseMeanFreePath, const float eta, Vector3* pSigmaS, Vector3* pSigmaA);
+
+		private:
+			const static int LUTSize = 1000;
+			static float ReducedAlbedoLUT[LUTSize];
+			static Vector3 DiffuseReflectance(const Color& diffuseReflectance, const Vector3& alpha, const float A);
+			static float InternalReflectParam(const float F_dr);
+			static float Fresnel_dr(const float eta);
 		};
 	}
 }

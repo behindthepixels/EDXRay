@@ -285,17 +285,16 @@ endfor
 			int channel = Math::Min(3.0f * u, 2);
 			u = u * 3.0f - channel;
 
-			auto ComputeFitting = [](const float A) -> float
+			auto DiffuseMeamFreePathFitting = [](const float A) -> float
 			{
-				const float tempTerm = Math::Abs(A - 0.8f);
-				const float tempTerm2 = tempTerm * tempTerm * tempTerm;
-				return 1.85f - A + 7 * tempTerm2;
+				const float tempTerm = A - 0.33f;
+				return 3.5f + 100.0f * tempTerm * tempTerm * tempTerm * tempTerm;
 			};
 
 			Vector3 scaling;
 			Color diffuseReflectance = mpBSDF->GetValue(mpBSDF->GetTexture().Ptr(), diffGeom);
 			for (auto ch = 0; ch < 3; ch++)
-				scaling[ch] = ComputeFitting(diffuseReflectance[ch]);
+				scaling[ch] = DiffuseMeamFreePathFitting(diffuseReflectance[ch]);
 
 			Vector3 D = mMeanFreePathLength / scaling;
 
