@@ -21,9 +21,9 @@ namespace EDX
 				float fDist = Math::Distance(pt1, pt2);
 				mRay = Ray(pt1, (pt2 - pt1) / fDist, nullptr, fDist, 0.0f, 0);
 			}
-			void SetRay(const Vector3 &pt, const Vector3 &vDir)
+			void SetRay(const Vector3 &pt, const Vector3 &vDir, const float maxLength = float(Math::EDX_INFINITY))
 			{
-				mRay = Ray(pt, vDir, nullptr, float(Math::EDX_INFINITY), 0.0f, 0);
+				mRay = Ray(pt, vDir, nullptr, maxLength, 0.0f, 0);
 			}
 			void SetMedium(const Medium* pMed)
 			{

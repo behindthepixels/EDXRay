@@ -128,7 +128,7 @@ namespace EDX
 						return Color::BLACK;
 
 					float phi = u * float(Math::EDX_TWO_PI);
-					phi = ApplyRotation(phi);
+					phi = ApplyRotation(phi, -1.0f);
 					float theta = v * float(Math::EDX_PI);
 					float sinTheta = Math::Sin(theta);
 					*pPdf = sinTheta != 0.0f ? *pPdf / (2.0f * float(Math::EDX_PI) * float(Math::EDX_PI) * sinTheta) : 0.0f;
@@ -158,7 +158,7 @@ namespace EDX
 					*pEmitPdfW = *pPdf * Sampling::ConcentricDiscPdf() / (radius * radius);
 				}
 				
-				pVisTest->SetSegment(pos, pos + 2.0f * radius * *pDir);
+				pVisTest->SetRay(pos, *pDir, 2.0f * radius);
 				pVisTest->SetMedium(scatter.mMediumInterface.GetMedium(*pDir, scatter.mNormal));
 
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
@@ -187,7 +187,7 @@ namespace EDX
 					}
 
 					float phi = u * float(Math::EDX_TWO_PI);
-					phi = ApplyRotation(phi);
+					phi = ApplyRotation(phi, -1.0f);
 					float theta = v * float(Math::EDX_PI);
 					sinTheta = Math::Sin(theta);
 					*pNormal = -Math::SphericalDirection(sinTheta,
@@ -351,10 +351,10 @@ namespace EDX
 				mpDistribution = new Sampling::Distribution2D(mLuminance.Data(), width, height);
 			}
 
-			inline float ApplyRotation(const float phi) const
+			inline float ApplyRotation(const float phi, const float scl = 1.0f) const
 			{
 				float ret = phi;
-				ret -= mRotation;
+				ret += scl * mRotation;
 				if (ret < 0.0f)
 					ret += float(Math::EDX_TWO_PI);
 				else if (ret > float(Math::EDX_TWO_PI))
