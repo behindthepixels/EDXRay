@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Core/Sampler.h"
+#include "RNG/Random.h"
 
 namespace EDX
 {
@@ -15,6 +16,7 @@ namespace EDX
 			uint64 mSobolIndex;
 			uint mDimension;
 			uint64 mScramble;
+			mutable RandomGen mRandom;
 
 		public:
 			SobolSampler(const int resX, const int resY)

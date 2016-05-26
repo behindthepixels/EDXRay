@@ -203,7 +203,7 @@ namespace EDX
 		void Primitive::SetMediumInterface(const int triId, const bool setNull)
 		{
 			auto& materialInterface = mMediumInterfaces[mpMaterialIndices[triId]];
-			materialInterface.SetInside(!setNull ? new HomogeneousMedium(Vector3(0.1f), Vector3(0.02f), 0.7f) : nullptr);
+			materialInterface.SetInside(!setNull ? new HomogeneousMedium(Vector3(0.1f), Vector3(0.02f), 0.0f) : nullptr);
 		}
 	}
 }

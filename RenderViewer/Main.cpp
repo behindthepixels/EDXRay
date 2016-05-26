@@ -42,7 +42,7 @@ void OnInit(Object* pSender, EventArgs args)
 	gpRenderer = new Renderer;
 
 	Scene* pScene = gpRenderer->GetScene().Ptr();
-	//Primitive* pMesh = new Primitive;
+	Primitive* pMesh = new Primitive;
 	Primitive* pMesh2 = new Primitive;
 	Primitive* pMesh3 = new Primitive;
 	Primitive* pMesh4 = new Primitive;
@@ -60,37 +60,37 @@ void OnInit(Object* pSender, EventArgs args)
 	//	MediumInterface(nullptr, nullptr), Vector3(0.15f));
 
 	float offset = 0.4f;
-	//pMesh->LoadMesh("../../Media/backdrop.obj", BSDFType::Diffuse, Color(0.35f), Vector3(20, 0, -25), 2.2f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	//pMesh2->LoadMesh("../../Media/EDXMaterialPreviewScenesEnvMap.obj", Vector3(0, 0, 0), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	pMesh->LoadMesh("../../Media/backdrop.obj", BSDFType::Diffuse, Color(0.35f), Vector3(20, 0, -25), 2.2f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	pMesh2->LoadMesh("../../Media/EDXMaterialPreviewScenesEnvMap.obj", Vector3(0, 0, 0), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh3->LoadMesh("../../Media/teapot.obj", BSDFType::RoughConductor, Color(0.99f, 0.79f, 0.39f), Vector3(-2.3f + offset, 0.0f, 1.2f - offset), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -150.0f, 0.0f), true);
 	//pMesh2->LoadMesh("../../Media/teapot.obj", BSDFType::Mirror, Color(0.9f, 0.9f, 0.9f), Vector3(0.7f - offset, 0.0f, -2.3f + offset), 0.3f * Vector3::UNIT_SCALE, Vector3(0.0f, -15.0f, 0.0f), true);
-	pMesh4->LoadSphere(1.33f, BSDFType::Glass, Color(0.2f, 0.46f, 0.3f), 256, 128, Vector3(2.02f - offset, 1.33f, 2.02f - offset), Vector3::UNIT_SCALE, Vector3::ZERO,
-		MediumInterface(nullptr, nullptr), Vector3(0.1f, 0.1f, 0.1f) * 0.7f);
+	//pMesh4->LoadSphere(1.33f, BSDFType::Glass, Color(0.2f, 0.46f, 0.3f), 256, 128, Vector3(2.02f - offset, 1.33f, 2.02f - offset), Vector3::UNIT_SCALE, Vector3::ZERO,
+	//	MediumInterface(nullptr, nullptr), Vector3(0.1f, 0.1f, 0.1f) * 0.7f);
 	//pMesh4->LoadMesh("../../Media/OceanMesh2.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3::ZERO, Vector3(1, 10, 1), Vector3(0.0f, 180.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/OceanMesh1.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3(-13000, -5, 0), Vector3(50, 500, 50), Vector3(0.0f, 180.0f, 0.0f));
 
-	Primitive* pPlane1 = new Primitive;
+	//Primitive* pPlane1 = new Primitive;
 	//Primitive* pPlane2 = new Primitive;
 	//Primitive* pPlane3 = new Primitive;
 	//Primitive* pPlane4 = new Primitive;
 	//Primitive* pPlane5 = new Primitive;
-	pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
+	//pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
 	//pPlane2->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 10.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(180.0f, 0.0f, 0.0f));
 	//pPlane3->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.6f, 0.6f), Vector3(5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
 	//pPlane4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.6f, 0.6f, 0.9f), Vector3(-5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
 	//pPlane5->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 5.0f, -5.0f), Vector3::UNIT_SCALE, Vector3(90.0f, 0.0f, 0.0f));
 
-	pScene->AddPrimitive(pPlane1);
+	//pScene->AddPrimitive(pPlane1);
 	//pScene->AddPrimitive(pPlane2);
 	//pScene->AddPrimitive(pPlane3);
 	//pScene->AddPrimitive(pPlane4);
 	//pScene->AddPrimitive(pPlane5);
 
-	//pScene->AddPrimitive(pMesh);
-	//pScene->AddPrimitive(pMesh2);
+	pScene->AddPrimitive(pMesh);
+	pScene->AddPrimitive(pMesh2);
 	//pScene->AddPrimitive(pMesh3);
-	pScene->AddPrimitive(pMesh4);
-	pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
+	//pScene->AddPrimitive(pMesh4);
+	pScene->AddLight(new EnvironmentLight("../../Media/well.hdr", pScene, 3.0f, -90.0f));
 	//pScene->AddLight(new EnvironmentLight(Color(3.0f), Color(0.2f), 40.0f, pScene, -60.0f));
 	//pScene->AddLight(new DirectionalLight(Vector3(10.0f, 60.0f, 10.0f), Color(2000.0f), pScene, 2.0f));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 7.9f, 0.0f), Color(200.0f)));
@@ -227,12 +227,13 @@ void OnRender(Object* pSender, EventArgs args)
 			EDXGui::CloseHeaderSection();
 		}
 
+		auto pEnvLight = dynamic_cast<const EnvironmentLight*>(gpRenderer->GetScene()->GetEnvironmentMap());
 		static bool showSceneSettings = true;
 		static bool useSkyLight = false;
 		static float turbidity = 3.0f;
 		static Color groundAlbedo = Color(0.2f);
-		static float envLightRotation = 0.0f;
-		static float envLightScale = 1.0f;
+		static float envLightRotation = pEnvLight ? pEnvLight->GetRotation() : 0.0f;
+		static float envLightScale = pEnvLight ? pEnvLight->GetScaling() : 1.0f;
 		if (EDXGui::CollapsingHeader("Scene", showSceneSettings))
 		{
 			if (EDXGui::Button("Environment Light"))
@@ -263,11 +264,11 @@ void OnRender(Object* pSender, EventArgs args)
 
 			if (EDXGui::Slider<float>("Env Light Rotation", &envLightRotation, -float(Math::EDX_PI), float(Math::EDX_PI)))
 			{
-				dynamic_cast<const EnvironmentLight*>(gpRenderer->GetScene()->GetEnvironmentMap())->SetRotation(envLightRotation);
+				pEnvLight->SetRotation(envLightRotation);
 			}
 			if (EDXGui::Slider<float>("Env Light Scaling", &envLightScale, 0.0f, 5.0f))
 			{
-				dynamic_cast<const EnvironmentLight*>(gpRenderer->GetScene()->GetEnvironmentMap())->SetScaling(envLightScale);
+				pEnvLight->SetScaling(envLightScale);
 			}
 
 			EDXGui::CloseHeaderSection();
@@ -433,13 +434,16 @@ void OnRender(Object* pSender, EventArgs args)
 						}
 					}
 
+					static float meanDiffPathScale = 1.0f;
 					if (subsurfaceMode == 0) // BSSRDF
 					{
 						EDXGui::Text("Mean Free Path:");
 						pBSSRDF = prim->GetBSSRDF(triId);
 						Color meanFreePath = Color(pBSSRDF->GetMeanFreePath());
 						EDXGui::ColorSlider(&meanFreePath);
-						pBSSRDF->SetMeanFreePath(Vector3(meanFreePath.r, meanFreePath.g, meanFreePath.b));
+
+						EDXGui::Slider("Scale", &meanDiffPathScale, 0.0f, 10.0f);
+						pBSSRDF->SetMeanFreePath(Vector3(meanFreePath.r, meanFreePath.g, meanFreePath.b), meanDiffPathScale);
 					}
 					else
 					{
@@ -457,7 +461,8 @@ void OnRender(Object* pSender, EventArgs args)
 						Parameter param = pBsdf->GetParameter("IOR");
 						float eta = param.Value;
 
-						pMedium->SetDiffReflectanceAndMeanFreePath(diffuseReflectance, Vector3(meanFreePath.r, meanFreePath.g, meanFreePath.b), eta);
+						EDXGui::Slider("Scale", &meanDiffPathScale, 0.0f, 10.0f);
+						pMedium->SetDiffReflectanceAndMeanFreePath(diffuseReflectance, Vector3(meanFreePath.r, meanFreePath.g, meanFreePath.b), eta, meanDiffPathScale);
 					}
 				}
 				else if (checked)

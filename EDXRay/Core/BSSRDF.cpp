@@ -247,7 +247,7 @@ endfor
 			float*					pPdf,
 			MemoryArena&			memory) const
 		{
-			if (mMeanFreePathLength == Vector3::ZERO)
+			if (mMeanFreePathLength == Vector3::ZERO || mScale == 0.0f)
 			{
 				*pPdf = 0.0f;
 				return Color::BLACK;
@@ -291,12 +291,12 @@ endfor
 				return 3.5f + 100.0f * tempTerm * tempTerm * tempTerm * tempTerm;
 			};
 
-			Vector3 scaling;
+			Vector3 S;
 			Color diffuseReflectance = mpBSDF->GetValue(mpBSDF->GetTexture().Ptr(), diffGeom);
 			for (auto ch = 0; ch < 3; ch++)
-				scaling[ch] = DiffuseMeamFreePathFitting(diffuseReflectance[ch]);
+				S[ch] = DiffuseMeamFreePathFitting(diffuseReflectance[ch]);
 
-			Vector3 D = mMeanFreePathLength / scaling;
+			Vector3 D = mMeanFreePathLength * mScale / S;
 
 			float d = D[channel];
 			float radius = SampleRadius(sample.u, d);

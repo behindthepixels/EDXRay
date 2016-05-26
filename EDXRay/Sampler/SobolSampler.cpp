@@ -3,7 +3,6 @@
 #include "SobolMatrices.h"
 
 #include "Math/Vec2.h"
-#include "RNG/Random.h"
 
 namespace EDX
 {
@@ -112,16 +111,20 @@ namespace EDX
 
 		float SobolSampler::SobolSample(const int64 index, const int dimension) const
 		{
-			assert(dimension < NumSobolDimensions);
-			uint32 v = mScramble;
-			int64 _index = index;
-			for (int i = dimension * SobolMatrixSize + SobolMatrixSize - 1; _index != 0; _index >>= 1, i--)
+			if (dimension < NumSobolDimensions)
 			{
-				if (_index & 1)
-					v ^= SobolMatrices32[i];
-			}
+				uint32 v = mScramble;
+				int64 _index = index;
+				for (int i = dimension * SobolMatrixSize + SobolMatrixSize - 1; _index != 0; _index >>= 1, i--)
+				{
+					if (_index & 1)
+						v ^= SobolMatrices32[i];
+				}
 
-			return v * 2.3283064365386963e-10f; /* 1 / 2^32 */
+				return v * 2.3283064365386963e-10f; /* 1 / 2^32 */
+			}
+			else
+				return mRandom.Float();
 		}
 	}
 }

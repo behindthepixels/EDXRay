@@ -41,6 +41,8 @@ namespace EDX
 			const BSDF* mpBSDF;
 			Vector3 mMeanFreePathLength;
 			RefPtr<BSSRDFAdapter> mAdapter;
+
+			float mScale = 1.0f;
 			float mEtai = 1.0f;
 			float mEtat = 1.5f;
 
@@ -68,9 +70,10 @@ namespace EDX
 				return mMeanFreePathLength;
 			}
 
-			void SetMeanFreePath(const Vector3& inMFP)
+			void SetMeanFreePath(const Vector3& inMFP, const float scale = 1.0f)
 			{
 				mMeanFreePathLength = inMFP;
+				mScale = scale;
 			}
 
 		private:

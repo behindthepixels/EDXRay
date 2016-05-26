@@ -49,11 +49,11 @@ namespace EDX
 				return mMeanFreePathLength;
 			}
 
-			void SetDiffReflectanceAndMeanFreePath(const Color& diffuseReflectance, const Vector3& meanFreePath, const float eta)
+			void SetDiffReflectanceAndMeanFreePath(const Color& diffuseReflectance, const Vector3& meanFreePath, const float eta, const float scale = 1.0f)
 			{
 				mDiffuseReflectance = diffuseReflectance;
 				mMeanFreePathLength = meanFreePath;
-				Reparameterizer::Eval(mDiffuseReflectance, mMeanFreePathLength, eta, &mSigmaS, &mSigmaA);
+				Reparameterizer::Eval(mDiffuseReflectance, mMeanFreePathLength * scale, eta, &mSigmaS, &mSigmaA);
 				mSigmaT = mSigmaS + mSigmaA;
 			}
 		};

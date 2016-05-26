@@ -325,6 +325,10 @@ namespace EDX
 			{
 				mRotation = rot;
 			}
+			float GetScaling() const
+			{
+				return mScale;
+			}
 			void SetScaling(const float scl) const
 			{
 				mScale = scl;

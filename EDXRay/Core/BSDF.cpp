@@ -493,7 +493,7 @@ namespace EDX
 					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_SPECULAR);
 				}
 
-				return fresnel * GetValue(mpTexture.Ptr(), diffGeom).Luminance() / BSDFCoordinate::AbsCosTheta(vWi);
+				return fresnel * Color::WHITE / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
@@ -523,7 +523,7 @@ namespace EDX
 					*pSampledTypes = ScatterType(BSDF_TRANSMISSION | BSDF_SPECULAR);
 				}
 
-				return (1.0f - fresnel) * GetValue(mpTexture.Ptr(), diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
+				return (1.0f - fresnel) * eta * eta * GetValue(mpTexture.Ptr(), diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 
 			return Color::BLACK;
