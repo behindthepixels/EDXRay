@@ -48,7 +48,7 @@ namespace EDX
 			case BSDFType::RoughConductor:
 				return new RoughConductor(pTex, pNormal, 0.3f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(pTex, pNormal, 0.5f);
+				return new RoughDielectric(pTex, pNormal, 0.3f);
 			case BSDFType::Disney:
 				return new Disney(pTex, pNormal);
 			}
@@ -69,7 +69,7 @@ namespace EDX
 			case BSDFType::RoughConductor:
 				return new RoughConductor(strTexPath, 0.3f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(strTexPath, 0.5f);
+				return new RoughDielectric(strTexPath, 0.3f);
 			case BSDFType::Disney:
 				return new Disney(strTexPath);
 			}
