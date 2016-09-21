@@ -2,11 +2,10 @@
 
 #include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
-
 #include "../Core/BSDF.h"
+#include "../Core/BSSRDF.h"
 #include "Medium.h"
 #include "Math/Vector.h"
-#include "Memory/RefPtr.h"
 
 namespace EDX
 {
@@ -17,15 +16,15 @@ namespace EDX
 		private:
 			friend class Scene;
 
-			RefPtr<TriangleMesh>	mpMesh;
+			UniquePtr<TriangleMesh>	mpMesh;
 
 			// Materials
-			vector<RefPtr<BSDF>>	mpBSDFs;
-			vector<RefPtr<BSSRDF>>	mpBSSRDFs;
+			Array<UniquePtr<BSDF>>	mpBSDFs;
+			Array<UniquePtr<BSSRDF>>	mpBSSRDFs;
 			const AreaLight*		mpAreaLight = nullptr;
 			uint*					mpMaterialIndices = nullptr;
 			// Medium
-			vector<MediumInterface>	mMediumInterfaces;
+			Array<MediumInterface>	mMediumInterfaces;
 
 		public:
 			Primitive()
@@ -84,7 +83,7 @@ namespace EDX
 
 			const TriangleMesh* GetMesh() const
 			{
-				return mpMesh.Ptr();
+				return mpMesh.Get();
 			}
 		};
 	}

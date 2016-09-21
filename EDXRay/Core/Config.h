@@ -42,7 +42,7 @@ namespace EDX
 			uint				ImageWidth, ImageHeight;
 			uint				SamplesPerPixel;
 			uint				MaxPathLength;
-			vector<string>		ModelPaths;
+			Array<String>		ModelPaths;
 
 			RenderJobDesc()
 			{

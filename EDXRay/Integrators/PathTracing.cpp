@@ -14,7 +14,7 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		Color PathTracingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryArena& memory) const
+		Color PathTracingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryPool& memory) const
 		{
 			Color L = Color::BLACK;
 			Color pathThroughput = Color::WHITE;
@@ -59,9 +59,9 @@ namespace EDX
 					if (!pBSDF->IsSpecular())
 					{
 						float lightIdxSample = pSampler->Get1D();
-						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
+						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().Size(), pScene->GetLights().Size() - 1);
 						L += pathThroughput *
-							Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler) * pScene->GetLights().size();
+							Integrator::EstimateDirectLighting(diffGeom, -pathRay.mDir, pScene->GetLights()[lightIdx].Get(), pScene, pSampler) * pScene->GetLights().Size();
 					}
 
 					const Vector3& pos = diffGeom.mPosition;
@@ -99,9 +99,9 @@ namespace EDX
 						// Account for the attenuated direct subsurface scattering
 						// component
 						float lightIdxSample = pSampler->Get1D();
-						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
+						auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().Size(), pScene->GetLights().Size() - 1);
 						L += pathThroughput *
-							Integrator::EstimateDirectLighting(subsurfDiffGeom, subsurfDiffGeom.mNormal, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler);
+							Integrator::EstimateDirectLighting(subsurfDiffGeom, subsurfDiffGeom.mNormal, pScene->GetLights()[lightIdx].Get(), pScene, pSampler);
 
 						// Account for the indirect subsurface scattering component
 						pBSDF = subsurfDiffGeom.mpBSDF;
@@ -117,9 +117,9 @@ namespace EDX
 				else // Sampled medium
 				{
 					float lightIdxSample = pSampler->Get1D();
-					auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().size(), pScene->GetLights().size() - 1);
+					auto lightIdx = Math::Min(lightIdxSample * pScene->GetLights().Size(), pScene->GetLights().Size() - 1);
 					L += pathThroughput *
-						Integrator::EstimateDirectLighting(mediumScatter, -pathRay.mDir, pScene->GetLights()[lightIdx].Ptr(), pScene, pSampler) * pScene->GetLights().size();
+						Integrator::EstimateDirectLighting(mediumScatter, -pathRay.mDir, pScene->GetLights()[lightIdx].Get(), pScene, pSampler) * pScene->GetLights().Size();
 
 					if (bounce >= mMaxDepth)
 						break;
@@ -150,7 +150,7 @@ namespace EDX
 
 		void PathTracingIntegrator::RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf)
 		{
-			assert(pSampleBuf);
+			Assert(pSampleBuf);
 
 			mpLightSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
 			mpBSDFSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);

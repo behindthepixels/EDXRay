@@ -17,7 +17,7 @@ namespace EDX
 			Vector3 wo = diffGeom.WorldToLocal(_wo), wi;
 
 			float microfacetPdf;
-			float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+			float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 			roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 			float sampleRough = roughness * roughness;
 			Vector3 wh = GGX_SampleVisibleNormal(wo, sample.u, sample.v, &microfacetPdf, sampleRough);
@@ -55,7 +55,7 @@ namespace EDX
 			float F = BSDF::FresnelConductor(Math::Dot(wo, wh), 0.4f, 1.6f);
 			float G = GGX_G(wo, wi, wh, sampleRough);
 
-			return GetValue(mpTexture.Ptr(), diffGeom) * F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
+			return GetValue(mpTexture.Get(), diffGeom) * F * D * G / (4.0f * BSDFCoordinate::AbsCosTheta(wi) * BSDFCoordinate::AbsCosTheta(wo));
 		}
 	}
 }

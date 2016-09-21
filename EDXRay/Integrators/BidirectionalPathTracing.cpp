@@ -44,7 +44,7 @@ namespace EDX
 			const Scene* pScene,
 			Sampler* pSampler,
 			RandomGen& random,
-			MemoryArena& memory) const
+			MemoryPool& memory) const
 		{
 			// Generate the light path
 			PathVertex* pLightPath = memory.Alloc<PathVertex>(mMaxDepth);
@@ -143,7 +143,7 @@ namespace EDX
 
 		void BidirPathTracingIntegrator::RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf)
 		{
-			assert(pSampleBuf);
+			Assert(pSampleBuf);
 
 			mLightIdSampleOffset = pSampleBuf->Request1DArray(1);
 			mLightEmitSampleOffsets = SampleOffsets(2, pSampleBuf);

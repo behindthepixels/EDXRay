@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Core/Sampler.h"
-#include "RNG/Random.h"
+#include "Core/Random.h"
 
 namespace EDX
 {
@@ -31,7 +31,7 @@ namespace EDX
 					);
 
 				mLogTwoResolution = Math::FloorLog2(mResolution);
-				assert(1 << mLogTwoResolution == mResolution);
+				Assert(1 << mLogTwoResolution == mResolution);
 			}
 
 			SobolSampler(const int resolution, const int log2Res, const uint64 scramble)

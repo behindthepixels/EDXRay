@@ -4,7 +4,7 @@
 
 #include "Config.h"
 #include "../ForwardDecl.h"
-#include "Memory/RefPtr.h"
+#include "Core/SmartPointer.h"
 #include "TaskSynchronizer.h"
 
 namespace EDX
@@ -14,30 +14,29 @@ namespace EDX
 		class Renderer
 		{
 		protected:
-			RefPtr<Camera>	mpCamera;
-			RefPtr<Scene>	mpScene;
-			RefPtr<Integrator> mpIntegrator;
-			RefPtr<Sampler>	mpSampler;
-			RefPtr<Film>	mpFilm;
-			RefPtr<SampleBuffer> mpSampleBuf;
+			UniquePtr<Camera>	mpCamera;
+			UniquePtr<Scene>	mpScene;
+			UniquePtr<Integrator> mpIntegrator;
+			UniquePtr<Sampler>	mpSampler;
+			UniquePtr<Film>	mpFilm;
+			UniquePtr<SampleBuffer> mpSampleBuf;
 
 			RenderJobDesc	mJobDesc;
 
 			// Tile-based multi-threading
 			TaskSynchronizer mTaskSync;
-			vector<RefPtr<RenderTask>> mTasks;
+			Array<UniquePtr<QueuedRenderTask>> mTasks;
 
 		public:
 			Renderer();
 			~Renderer();
 
-			void Initialize();
 			void InitComponent();
 
 			void Resize(int width, int height);
 
-			void RenderFrame(Sampler* pSampler, RandomGen& random, MemoryArena& memory);
-			void RenderImage(int threadId, RandomGen& random, MemoryArena& memory);
+			void RenderFrame(Sampler* pSampler, RandomGen& random, MemoryPool& memory);
+			void RenderImage(int threadId, RandomGen& random, MemoryPool& memory);
 
 			void BakeSamples();
 
@@ -46,8 +45,8 @@ namespace EDX
 
 			Film* GetFilm();
 			RenderJobDesc* GetJobDesc() { return &mJobDesc; }
-			RefPtr<Scene> GetScene() { return mpScene; }
-			RefPtr<Camera> GetCamera() { return mpCamera; }
+			Scene* GetScene() { return mpScene.Get(); }
+			Camera* GetCamera() { return mpCamera.Get(); }
 			void SetJobDesc(const RenderJobDesc& jobDesc);
 		};
 	}

@@ -1,7 +1,10 @@
 #include "DifferentialGeom.h"
+#include "Ray.h"
 #include "../Lights/AreaLight.h"
+#include "../Tracer/BVHBuildTask.h"
+
 #include "Graphics/Color.h"
-#include "../Core/Ray.h"
+#include "Graphics/ObjMesh.h"
 
 namespace EDX
 {

@@ -9,7 +9,7 @@ namespace EDX
 		class RoughDielectric : public BSDF
 		{
 		private:
-			RefPtr<Texture2D<float>> mRoughness;
+			UniquePtr<Texture2D<float>> mRoughness;
 			float mEtai, mEtat;
 
 			static const ScatterType ReflectScatter = ScatterType(BSDF_REFLECTION | BSDF_GLOSSY);
@@ -18,24 +18,24 @@ namespace EDX
 		public:
 			RoughDielectric(const Color& reflectance = Color::WHITE, float roughness = 0.06f, float etai = 1.0f, float etat = 1.5f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_GLOSSY), BSDFType::RoughDielectric, reflectance)
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 				, mEtai(etai)
 				, mEtat(etat)
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
-			RoughDielectric(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, float roughness = 0.06f, float etai = 1.0f, float etat = 1.5f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_GLOSSY), BSDFType::RoughDielectric, pTex, pNormal)
+			RoughDielectric(UniquePtr<Texture2D<Color>> pTex, UniquePtr<Texture2D<Color>> pNormal, float roughness = 0.06f, float etai = 1.0f, float etat = 1.5f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_GLOSSY), BSDFType::RoughDielectric, Move(pTex), Move(pNormal))
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 				, mEtai(etai)
 				, mEtat(etat)
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 			RoughDielectric(const char* pFile, float roughness = 0.05f, float etai = 1.0f, float etat = 1.5f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_GLOSSY), BSDFType::RoughDielectric, pFile)
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 				, mEtai(etai)
 				, mEtat(etat)
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 
 			Color SampleScattered(const Vector3& _wo,
@@ -86,7 +86,7 @@ namespace EDX
 
 					float etai = mEtai, etat = mEtat;
 					if (!entering)
-						swap(etai, etat);
+						Swap(etai, etat);
 
 					wh = -Math::Normalize(etai * wo + etat * wi);
 
@@ -97,7 +97,7 @@ namespace EDX
 
 				wh *= Math::Sign(BSDFCoordinate::CosTheta(wh));
 
-				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 				float whProb = GGX_Pdf_VisibleNormal(Math::Sign(BSDFCoordinate::CosTheta(wo)) * wo, wh, roughness * roughness);
 				if (sampleReflect && sampleRefract)
@@ -107,8 +107,8 @@ namespace EDX
 					whProb *= reflect ? F : 1.0f - F;
 				}
 
-				assert(Math::NumericValid(whProb));
-				assert(Math::NumericValid(dwh_dwi));
+				Assert(Math::NumericValid(whProb));
+				Assert(Math::NumericValid(dwh_dwi));
 				return Math::Abs(whProb * dwh_dwi);
 			}
 
@@ -117,7 +117,7 @@ namespace EDX
 				Vector3 vWo = diffGeom.WorldToLocal(vOut);
 				Vector3 vWi = diffGeom.WorldToLocal(vIn);
 
-				return GetValue(mpTexture.Ptr(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
+				return GetValue(mpTexture.Get(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
 			}
 
 			float EvalInner(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const override
@@ -132,7 +132,7 @@ namespace EDX
 
 				float etai = mEtai, etat = mEtat;
 				if (!entering)
-					swap(etai, etat);
+					Swap(etai, etat);
 
 				Vector3 wh;
 				if (reflect)
@@ -156,7 +156,7 @@ namespace EDX
 
 				wh *= Math::Sign(BSDFCoordinate::CosTheta(wh));
 
-				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 				float sampleRough = roughness * roughness;
 
@@ -182,7 +182,7 @@ namespace EDX
 					// TODO: Fix solid angle compression when tracing radiance
 					float factor = 1.0f;
 
-					assert(Math::NumericValid(value));
+					Assert(Math::NumericValid(value));
 					return Math::Abs(value * factor * factor);
 				}
 			}
@@ -193,7 +193,7 @@ namespace EDX
 				return BSDF::GetParameterCount() + 2;
 			}
 
-			string GetParameterName(const int idx) const
+			String GetParameterName(const int idx) const
 			{
 				if (idx < BSDF::GetParameterCount())
 					return BSDF::GetParameterName(idx);
@@ -207,7 +207,7 @@ namespace EDX
 				return "";
 			}
 
-			Parameter GetParameter(const string& name) const
+			Parameter GetParameter(const String& name) const
 			{
 				Parameter ret = BSDF::GetParameter(name);
 				if (ret.Type != Parameter::None)
@@ -235,7 +235,7 @@ namespace EDX
 				return ret;
 			}
 
-			void SetParameter(const string& name, const Parameter& param)
+			void SetParameter(const String& name, const Parameter& param)
 			{
 				BSDF::SetParameter(name, param);
 
@@ -246,10 +246,10 @@ namespace EDX
 						if (this->mRoughness->IsConstant())
 							this->mRoughness->SetValue(param.Value);
 						else
-							this->mRoughness = new ConstantTexture2D<float>(param.Value);
+							this->mRoughness.Reset(new ConstantTexture2D<float>(param.Value));
 					}
 					else if (param.Type == Parameter::TextureMap)
-						this->mRoughness = new ImageTexture<float, float>(param.TexPath, 1.0f);
+						this->mRoughness.Reset(new ImageTexture<float, float>(param.TexPath, 1.0f));
 				}
 				else if (name == "IOR")
 					this->mEtat = param.Value;

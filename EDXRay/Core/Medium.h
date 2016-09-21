@@ -2,8 +2,8 @@
 
 #include "EDXPrerequisites.h"
 #include "Math/Vector.h"
-#include "Memory/RefPtr.h"
-#include "Memory/Memory.h"
+#include "Core/SmartPointer.h"
+#include "Core/Memory.h"
 #include "../ForwardDecl.h"
 
 namespace EDX
@@ -34,12 +34,12 @@ namespace EDX
 		class Medium
 		{
 		protected:
-			RefPtr<PhaseFunctionHG> mpPhaseFunc;
+			UniquePtr<PhaseFunctionHG> mpPhaseFunc;
 
 		public:
 			Medium(const float g)
 			{
-				mpPhaseFunc = new PhaseFunctionHG(g);
+				mpPhaseFunc = MakeUnique<PhaseFunctionHG>(g);
 			}
 
 			virtual Color Transmittance(const Ray& ray, Sampler*pSampler) const = 0;
@@ -84,13 +84,13 @@ namespace EDX
 
 			void SetOutside(const Medium* pMedium)
 			{
-				SafeDelete(mpOutside);
+				Memory::SafeDelete(mpOutside);
 				mpOutside = pMedium;
 			}
 
 			void SetInside(const Medium* pMedium)
 			{
-				SafeDelete(mpInside);
+				Memory::SafeDelete(mpInside);
 				mpInside = pMedium;
 			}
 

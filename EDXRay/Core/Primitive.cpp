@@ -5,7 +5,7 @@
 #include "TriangleMesh.h"
 #include "DifferentialGeom.h"
 #include "Graphics/ObjMesh.h"
-#include "Memory/Memory.h"
+#include "Core/Memory.h"
 
 namespace EDX
 {
@@ -13,7 +13,7 @@ namespace EDX
 	{
 		Primitive::~Primitive()
 		{
-			SafeDeleteArray(mpMaterialIndices);
+			Memory::SafeDeleteArray(mpMaterialIndices);
 		}
 
 		void Primitive::LoadMesh(const char* path,
@@ -27,34 +27,32 @@ namespace EDX
 			ObjMesh* pObjMesh = new ObjMesh;
 			pObjMesh->LoadFromObj(pos, scl, rot, path, forceComputeNormal, true);
 
-			mpMesh = new TriangleMesh;
+			mpMesh = MakeUnique<TriangleMesh>();
 			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();
-			for (auto i = 0; i < materialInfo.size(); i++)
+			for (auto i = 0; i < materialInfo.Size(); i++)
 			{
-				BSDF* pBSDF;
 				if (materialInfo[i].strTexturePath[0])
 				{
-					pBSDF = BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].strTexturePath);
+					mpBSDFs.Add(BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].strTexturePath));
 				}
 				else
 				{
 					if (materialInfo[i].transColor != Color::BLACK)
-						pBSDF = BSDF::CreateBSDF(BSDFType::Glass, materialInfo[i].transColor);
+						mpBSDFs.Add(BSDF::CreateBSDF(BSDFType::Glass, materialInfo[i].transColor));
 					else if (materialInfo[i].specColor != Color::BLACK)
-						pBSDF = BSDF::CreateBSDF(BSDFType::Mirror, materialInfo[i].specColor);
+						mpBSDFs.Add(BSDF::CreateBSDF(BSDFType::Mirror, materialInfo[i].specColor));
 					else
-						pBSDF = BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].color);
+						mpBSDFs.Add(BSDF::CreateBSDF(BSDFType::Diffuse, materialInfo[i].color));
 				}
 
-				mpBSDFs.push_back(pBSDF);
-				mMediumInterfaces.push_back(mediumInterface);
+				mMediumInterfaces.Add(mediumInterface);
 				if (meanFreePath != Vector3::ZERO)
-					mpBSSRDFs.push_back(new BSSRDF(pBSDF, meanFreePath));
+					mpBSSRDFs.Add(MakeUnique<BSSRDF>(mpBSDFs.Top().Get(), meanFreePath));
 				else
-					mpBSSRDFs.push_back(nullptr);
+					mpBSSRDFs.Add(nullptr);
 			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
@@ -75,20 +73,19 @@ namespace EDX
 			ObjMesh* pObjMesh = new ObjMesh;
 			pObjMesh->LoadFromObj(pos, scl, rot, path, forceComputeNormal, true);
 
-			mpMesh = new TriangleMesh;
+			mpMesh = MakeUnique<TriangleMesh>();
 			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
 			const auto& materialInfo = pObjMesh->GetMaterialInfo();
-			for (auto i = 0; i < materialInfo.size(); i++)
+			for (auto i = 0; i < materialInfo.Size(); i++)
 			{
-				BSDF* pBSDF = BSDF::CreateBSDF(bsdfType, reflectance);
-				mpBSDFs.push_back(pBSDF);
-				mMediumInterfaces.push_back(mediumInterface);
+				mpBSDFs.Add(BSDF::CreateBSDF(bsdfType, reflectance));
+				mMediumInterfaces.Add(mediumInterface);
 				if (meanFreePath != Vector3::ZERO)
-					mpBSSRDFs.push_back(new BSSRDF(pBSDF, meanFreePath));
+					mpBSSRDFs.Add(MakeUnique<BSSRDF>(mpBSDFs.Top().Get(), meanFreePath));
 				else
-					mpBSSRDFs.push_back(nullptr);
+					mpBSSRDFs.Add(nullptr);
 			}
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
@@ -110,17 +107,16 @@ namespace EDX
 			ObjMesh* pObjMesh = new ObjMesh;
 			pObjMesh->LoadSphere(pos, scl, rot, radius, slices, stacks);
 
-			mpMesh = new TriangleMesh;
+			mpMesh = MakeUnique<TriangleMesh>();
 			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
-			BSDF* pBSDF = BSDF::CreateBSDF(bsdfType, reflectance);
-			mpBSDFs.push_back(pBSDF);
-			mMediumInterfaces.push_back(mediumInterface);
+			mpBSDFs.Add(BSDF::CreateBSDF(bsdfType, reflectance));
+			mMediumInterfaces.Add(mediumInterface);
 			if (meanFreePath != Vector3::ZERO)
-				mpBSSRDFs.push_back(new BSSRDF(pBSDF, meanFreePath));
+				mpBSSRDFs.Add(MakeUnique<BSSRDF>(mpBSDFs.Top().Get(), meanFreePath));
 			else
-				mpBSSRDFs.push_back(nullptr);
+				mpBSSRDFs.Add(nullptr);
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
 			for (auto i = 0; i < mpMesh->GetTriangleCount(); i++)
@@ -139,17 +135,16 @@ namespace EDX
 			ObjMesh* pObjMesh = new ObjMesh;
 			pObjMesh->LoadPlane(pos, scl, rot, length);
 
-			mpMesh = new TriangleMesh;
+			mpMesh = MakeUnique<TriangleMesh>();
 			mpMesh->LoadMesh(pObjMesh);
 
 			// Initialize materials
-			BSDF* pBSDF = BSDF::CreateBSDF(bsdfType, reflectance);
-			mpBSDFs.push_back(pBSDF);
-			mMediumInterfaces.push_back(mediumInterface);
+			mpBSDFs.Add(BSDF::CreateBSDF(bsdfType, reflectance));
+			mMediumInterfaces.Add(mediumInterface);
 			if (meanFreePath != Vector3::ZERO)
-				mpBSSRDFs.push_back(new BSSRDF(pBSDF, meanFreePath));
+				mpBSSRDFs.Add(MakeUnique<BSSRDF>(mpBSDFs.Top().Get(), meanFreePath));
 			else
-				mpBSSRDFs.push_back(nullptr);
+				mpBSSRDFs.Add(nullptr);
 
 			mpMaterialIndices = new uint[mpMesh->GetTriangleCount()];
 			for (auto i = 0; i < mpMesh->GetTriangleCount(); i++)
@@ -158,8 +153,8 @@ namespace EDX
 
 		void Primitive::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
 		{
-			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
-			pDiffGeom->mpBSSRDF = mpBSSRDFs[mpMaterialIndices[pDiffGeom->mTriId]].Ptr();
+			pDiffGeom->mpBSDF = mpBSDFs[mpMaterialIndices[pDiffGeom->mTriId]].Get();
+			pDiffGeom->mpBSSRDF = mpBSSRDFs[mpMaterialIndices[pDiffGeom->mTriId]].Get();
 			pDiffGeom->mpAreaLight = this->mpAreaLight;
 			pDiffGeom->mMediumInterface = this->mMediumInterfaces[mpMaterialIndices[pDiffGeom->mTriId]];
 			mpMesh->PostIntersect(ray, pDiffGeom);
@@ -167,12 +162,12 @@ namespace EDX
 
 		BSDF* Primitive::GetBSDF(const uint triId)
 		{
-			return mpBSDFs[mpMaterialIndices[triId]].Ptr();
+			return mpBSDFs[mpMaterialIndices[triId]].Get();
 		}
 
 		BSSRDF* Primitive::GetBSSRDF(const uint triId)
 		{
-			return mpBSSRDFs[mpMaterialIndices[triId]].Ptr();
+			return mpBSSRDFs[mpMaterialIndices[triId]].Get();
 		}
 
 		MediumInterface* Primitive::GetMediumInterface(const uint triId)
@@ -182,22 +177,22 @@ namespace EDX
 
 		BSDF* Primitive::GetBSDF_FromIdx(const uint idx) const
 		{
-			return mpBSDFs[idx].Ptr();
+			return mpBSDFs[idx].Get();
 		}
 
 		void Primitive::SetBSDF(const BSDFType type, const int triId)
 		{
 			auto& bsdf = mpBSDFs[mpMaterialIndices[triId]];
-			auto newBsdf = BSDF::CreateBSDF(type, bsdf->GetTexture(), bsdf->GetNormalMap());
-			bsdf = newBsdf;
+			auto newBsdf = BSDF::CreateBSDF(type, bsdf.Get());
+			bsdf = Move(newBsdf);
 		}
 
 		void Primitive::SetBSSRDF(const int triId, const bool setNull)
 		{
 			auto& bsdf = mpBSDFs[mpMaterialIndices[triId]];
 			auto& bssrdf = mpBSSRDFs[mpMaterialIndices[triId]];
-			auto newBssrdf = !setNull ? new BSSRDF(bsdf.Ptr(), Vector3(0.05f)) : nullptr;
-			bssrdf = newBssrdf;
+			auto newBssrdf = !setNull ? MakeUnique<BSSRDF>(bsdf.Get(), Vector3(0.05f)) : nullptr;
+			bssrdf = Move(newBssrdf);
 		}
 
 		void Primitive::SetMediumInterface(const int triId, const bool setNull)

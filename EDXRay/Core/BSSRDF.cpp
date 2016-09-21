@@ -245,7 +245,7 @@ endfor
 			const Scene*			pScene,
 			DifferentialGeom*		pSampledDiffGeom,
 			float*					pPdf,
-			MemoryArena&			memory) const
+			MemoryPool&			memory) const
 		{
 			if (mMeanFreePathLength == Vector3::ZERO || mScale == 0.0f)
 			{
@@ -292,7 +292,7 @@ endfor
 			};
 
 			Vector3 S;
-			Color diffuseReflectance = mpBSDF->GetValue(mpBSDF->GetTexture().Ptr(), diffGeom);
+			Color diffuseReflectance = mpBSDF->GetValue(mpBSDF->GetTexture(), diffGeom);
 			for (auto ch = 0; ch < 3; ch++)
 				S[ch] = DiffuseMeamFreePathFitting(diffuseReflectance[ch]);
 
@@ -358,7 +358,7 @@ endfor
 			*pSampledDiffGeom = pChain->diffGeom;
 
 			*pPdf = Pdf_Sample(radius, D, diffGeom, *pSampledDiffGeom) / float(numIsect);
-			pSampledDiffGeom->mpBSDF = mAdapter.Ptr();
+			pSampledDiffGeom->mpBSDF = mAdapter.Get();
 
 			float actualDist = Math::Distance(diffGeom.mPosition, pSampledDiffGeom->mPosition);
 			return Color(actualDist * NormalizeDiffusion(actualDist, D) * float(Math::EDX_INV_PI));
@@ -412,7 +412,7 @@ endfor
 					pdf += Pdf_Radius(projRadius[axis], D[ch]) * localDotN[axis] * chProb * axisProb[axis] * float(Math::EDX_INV_2PI);
 			}
 
-			assert(Math::NumericValid(pdf));
+			Assert(Math::NumericValid(pdf));
 
 			return pdf;
 		}
@@ -467,7 +467,7 @@ endfor
 				*pSampledTypes = mScatterType;
 			}
 
-			return GetValue(mpTexture.Ptr(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
+			return GetValue(mpTexture.Get(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
 		}
 	}
 }

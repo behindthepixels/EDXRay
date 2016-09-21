@@ -1,11 +1,14 @@
 #include "Scene.h"
 #include "Primitive.h"
 #include "../Tracer/BVH.h"
+#include "../Tracer/BVHBuildTask.h"
 #include "TriangleMesh.h"
 #include "Light.h"
 #include "../Lights/AreaLight.h"
 #include "DifferentialGeom.h"
 #include "Medium.h"
+
+#include "Graphics/ObjMesh.h"
 
 namespace EDX
 {
@@ -29,7 +32,7 @@ namespace EDX
 
 		void Scene::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
 		{
-			assert(pDiffGeom);
+			Assert(pDiffGeom);
 			mPrimitives[pDiffGeom->mPrimId]->PostIntersect(ray, pDiffGeom);
 		}
 
@@ -40,14 +43,7 @@ namespace EDX
 
 		void Scene::AddPrimitive(Primitive* pPrim)
 		{
-			mPrimitives.push_back(pPrim);
-			for (const auto& it : pPrim->mMediumInterfaces)
-			{
-				if (auto ptr = it.GetInside())
-					mMedia.push_back(ptr);
-				if (auto ptr = it.GetOutside())
-					mMedia.push_back(ptr);
-			}
+			mPrimitives.Add(UniquePtr<Primitive>(pPrim));
 			mDirty = true;
 		}
 
@@ -61,29 +57,37 @@ namespace EDX
 					if (it->IsEnvironmentLight())
 					{
 						foundEnvLight = true;
-						it = pLight;
+						it.Reset(pLight);
 					}
 				}
 				if (!foundEnvLight)
-					mLights.push_back(pLight);
+					mLights.Add(UniquePtr<Light>(pLight));
 
 				mEnvMap = pLight;
 			}
 			else if (pLight->IsAreaLight())
 			{
-				mPrimitives.push_back(((AreaLight*)pLight)->GetPrimitive());
-				mLights.push_back(pLight);
+				mPrimitives.Add(UniquePtr<Primitive>(((AreaLight*)pLight)->GetPrimitive()));
+				mLights.Add(UniquePtr<Light>(pLight));
 			}
 			else
-				mLights.push_back(pLight);
+				mLights.Add(UniquePtr<Light>(pLight));
 		}
 
 		void Scene::InitAccelerator()
 		{
 			if (mDirty)
 			{
-				mAccel = new BVH2();
-				mAccel->Construct(mPrimitives);
+				mAccel = MakeUnique<BVH2>();
+
+				Array<Primitive*> primArray;
+				for (const auto& it : mPrimitives)
+				{
+					primArray.Add(it.Get());
+				}
+
+
+				mAccel->Construct(primArray);
 
 				mDirty = false;
 			}

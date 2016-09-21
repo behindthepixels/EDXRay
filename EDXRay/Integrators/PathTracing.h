@@ -27,7 +27,7 @@ namespace EDX
 			}
 
 		public:
-			Color Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryArena& memory) const;
+			Color Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryPool& memory) const;
 			void RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf);
 		};
 	}

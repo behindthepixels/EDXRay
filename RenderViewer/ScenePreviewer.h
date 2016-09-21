@@ -3,7 +3,6 @@
 #include "EDXPrerequisites.h"
 #include "Graphics/OpenGL.h"
 #include "Graphics/ObjMesh.h"
-#include "Memory/Memory.h"
 
 #include "Core/Camera.h"
 #include "Core/Scene.h"
@@ -19,14 +18,14 @@ namespace EDX
 		struct GLMesh
 		{
 			ObjMesh* mpMesh;
-			RefPtr<OpenGL::VertexBuffer> mpVBO;
-			RefPtr<OpenGL::IndexBuffer> mpIBO;
-			vector<RefPtr<OpenGL::Texture2D>> mTextures;
+			UniquePtr<OpenGL::VertexBuffer> mpVBO;
+			UniquePtr<OpenGL::IndexBuffer> mpIBO;
+			Array<UniquePtr<OpenGL::Texture2D>> mTextures;
 
 			void SetTexture(int triId, const char* filePath)
 			{
 				if (filePath)
-					mTextures[mpMesh->GetMaterialIdx(triId)] = OpenGL::Texture2D::Create(filePath);
+					mTextures[mpMesh->GetMaterialIdx(triId)].Reset(OpenGL::Texture2D::Create(filePath));
 				else
 					mTextures[mpMesh->GetMaterialIdx(triId)] = nullptr;
 			}
@@ -67,8 +66,8 @@ namespace EDX
 		class Previewer
 		{
 		private:
-			RefPtr<Camera> mpCamera;
-			vector<RefPtr<GLMesh>> mMeshes;
+			Camera* mpCamera;
+			Array<UniquePtr<GLMesh>> mMeshes;
 			OpenGL::Texture2D mEnvMap;
 			const Scene* mpScene;
 			const EnvironmentLight* mpCachedEnvLight;
@@ -84,10 +83,10 @@ namespace EDX
 			bool mLockCameraMovement;
 
 		public:
-			void Initialize(const Scene& scene, const RefPtr<Camera>& pCamera)
+			void Initialize(const Scene& scene, const Camera* pCamera)
 			{
 				mpScene = &scene;
-				mpCamera = pCamera;
+				mpCamera = const_cast<Camera*>(pCamera);
 				mPickedPrimIdx = -1;
 				mSetFocusDistance = false;
 				mLockCameraMovement = false;
@@ -99,18 +98,18 @@ namespace EDX
 					GLMesh* glMesh = new GLMesh;
 					glMesh->mpMesh = const_cast<ObjMesh*>(pMesh);
 
-					glMesh->mpVBO = new OpenGL::VertexBuffer;
+					glMesh->mpVBO = MakeUnique<OpenGL::VertexBuffer>();
 					glMesh->mpVBO->SetData(pMesh->GetVertexCount() * sizeof(MeshVertex), (void*)&pMesh->GetVertexAt(0));
-					glMesh->mpIBO = new OpenGL::IndexBuffer;
+					glMesh->mpIBO = MakeUnique<OpenGL::IndexBuffer>();
 					glMesh->mpIBO->SetData(3 * pMesh->GetTriangleCount() * sizeof(uint), (void*)pMesh->GetIndexAt(0));
 
 					const auto& materialInfo = pMesh->GetMaterialInfo();
-					glMesh->mTextures.resize(materialInfo.size());
-					for (auto i = 0; i < materialInfo.size(); i++)
+					glMesh->mTextures.Resize(materialInfo.Size());
+					for (auto i = 0; i < materialInfo.Size(); i++)
 					{
 						if (materialInfo[i].strTexturePath[0])
 						{
-							glMesh->mTextures[i] = OpenGL::Texture2D::Create(materialInfo[i].strTexturePath);
+							glMesh->mTextures[i].Reset(OpenGL::Texture2D::Create(materialInfo[i].strTexturePath));
 						}
 						else
 						{
@@ -118,7 +117,7 @@ namespace EDX
 						}
 					}
 
-					mMeshes.push_back(glMesh);
+					mMeshes.Add(UniquePtr<GLMesh>(glMesh));
 				}
 
 				mScreenQuadVertexShader.Load(ShaderType::VertexShader, ScreenQuadVertShaderSource);
@@ -294,7 +293,7 @@ namespace EDX
 
 			void Pick(const int x, const int y)
 			{
-				CameraSample camSample = { x, y, 0, 0, 0.0f };
+				CameraSample camSample = { x, y, 0.0f, 0.0f, 0.0f };
 
 				Ray ray;
 				mpCamera->GenerateRay(camSample, &ray, true);
@@ -339,7 +338,7 @@ namespace EDX
 
 			GLMesh* GetMesh(int meshId) const
 			{
-				return mMeshes[meshId].Ptr();
+				return mMeshes[meshId].Get();
 			}
 
 			int GetPickedPrimId() const

@@ -9,6 +9,13 @@ namespace EDX
 	{
 		float LensSettings::CalcFieldOfView() const
 		{
+			// Convert focal length to FOV,
+			// 
+			// fov = 2 * atan(d/(2*f))
+			// where,
+			//   d = sensor dimension (APS-C 24.576 mm)
+			//   f = focal length
+
 			return Math::ToDegrees(
 				2.0f * Math::Atan2(0.5f * FullFrameSensorSize, FocalLengthMilliMeters)
 				);

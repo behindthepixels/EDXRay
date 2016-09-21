@@ -3,7 +3,7 @@
 #include "../Core/Ray.h"
 #include "Graphics/ObjMesh.h"
 #include "DifferentialGeom.h"
-#include "Memory/Memory.h"
+#include "Core/Memory.h"
 
 #include "BSDF.h"
 
@@ -13,7 +13,7 @@ namespace EDX
 	{
 		void TriangleMesh::LoadMesh(const ObjMesh* pObjMesh)
 		{
-			mpObjMesh = pObjMesh;
+			mpObjMesh.Reset(pObjMesh);
 
 			// Init vertex buffer data
 			mVertexCount = pObjMesh->GetVertexCount();
@@ -31,14 +31,14 @@ namespace EDX
 			// Init index buffer data
 			mTriangleCount = pObjMesh->GetTriangleCount();
 			mpIndexBuffer = new uint[3 * mTriangleCount];
-			memcpy(mpIndexBuffer, pObjMesh->GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
+			Memory::Memcpy(mpIndexBuffer, pObjMesh->GetIndexAt(0), 3 * mTriangleCount * sizeof(uint));
 
 			mTextured = mpObjMesh->IsTextured();
 		}
 
 		void TriangleMesh::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
 		{
-			assert(pDiffGeom);
+			Assert(pDiffGeom);
 
 			const uint vId1 = 3 * pDiffGeom->mTriId;
 			const uint vId2 = 3 * pDiffGeom->mTriId + 1;
@@ -94,7 +94,7 @@ namespace EDX
 
 				pDiffGeom->ComputeDifferentials(ray);
 
-				auto pNormalMap = pDiffGeom->mpBSDF->GetNormalMap().Ptr();
+				auto pNormalMap = pDiffGeom->mpBSDF->GetNormalMap();
 				if (det != 0.0f && pNormalMap)
 				{
 					pDiffGeom->mShadingFrame = Frame(Math::Normalize(pDiffGeom->mDpdu),
@@ -121,34 +121,34 @@ namespace EDX
 
 		const Vector3& TriangleMesh::GetPositionAt(uint idx) const
 		{
-			assert(idx < 3 * mTriangleCount);
-			assert(mpIndexBuffer);
-			assert(mpPositionBuffer);
+			Assert(idx < 3 * mTriangleCount);
+			Assert(mpIndexBuffer);
+			Assert(mpPositionBuffer);
 			return mpPositionBuffer[mpIndexBuffer[idx]];
 		}
 
 		const Vector3& TriangleMesh::GetNormalAt(uint idx) const
 		{
-			assert(idx < 3 * mTriangleCount);
-			assert(mpIndexBuffer);
-			assert(mpPositionBuffer);
+			Assert(idx < 3 * mTriangleCount);
+			Assert(mpIndexBuffer);
+			Assert(mpPositionBuffer);
 			return mpNormalBuffer[mpIndexBuffer[idx]];
 		}
 
 		const Vector2& TriangleMesh::GetTexCoordAt(uint idx) const
 		{
-			assert(idx < 3 * mTriangleCount);
-			assert(mpIndexBuffer);
-			assert(mpPositionBuffer);
+			Assert(idx < 3 * mTriangleCount);
+			Assert(mpIndexBuffer);
+			Assert(mpPositionBuffer);
 			return mpTexcoordBuffer[mpIndexBuffer[idx]];
 		}
 
 		void TriangleMesh::Release()
 		{
-			SafeDeleteArray(mpPositionBuffer);
-			SafeDeleteArray(mpNormalBuffer);
-			SafeDeleteArray(mpTexcoordBuffer);
-			SafeDeleteArray(mpIndexBuffer);
+			Memory::SafeDeleteArray(mpPositionBuffer);
+			Memory::SafeDeleteArray(mpNormalBuffer);
+			Memory::SafeDeleteArray(mpTexcoordBuffer);
+			Memory::SafeDeleteArray(mpIndexBuffer);
 			mVertexCount = 0;
 			mTriangleCount = 0;
 		}

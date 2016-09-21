@@ -4,7 +4,6 @@
 
 #include "Math/BoundingBox.h"
 #include "../ForwardDecl.h"
-#include "Memory/RefPtr.h"
 
 namespace EDX
 {
@@ -13,12 +12,12 @@ namespace EDX
 		class Scene
 		{
 		private:
-			vector<RefPtr<Primitive>>	mPrimitives;
-			vector<RefPtr<Light>>		mLights;
-			Light*						mEnvMap;
-			RefPtr<BVH2>				mAccel;
-			bool						mDirty;
-			vector<RefPtr<const Medium>> mMedia;
+			Array<UniquePtr<Primitive>>	mPrimitives;
+			Array<UniquePtr<Light>>		mLights;
+			Light*							mEnvMap;
+			UniquePtr<BVH2>				mAccel;
+			bool							mDirty;
+			Array<UniquePtr<const Medium>> mMedia;
 
 		public:
 			Scene();
@@ -35,15 +34,15 @@ namespace EDX
 			void AddLight(Light* pLight);
 
 			// Scene elements getter
-			const vector<RefPtr<Primitive>>& GetPrimitives() const { return mPrimitives; }
-			const vector<RefPtr<Light>>& GetLights() const { return mLights; }
-			const Light* GetLight(const uint id) const { return mLights[id].Ptr(); }
+			const Array<UniquePtr<Primitive>>& GetPrimitives() const { return mPrimitives; }
+			const Array<UniquePtr<Light>>& GetLights() const { return mLights; }
+			const Light* GetLight(const uint id) const { return mLights[id].Get(); }
 			const Light* GetEnvironmentMap() const { return mEnvMap; }
-			uint GetNumLight() const { return mLights.size(); }
+			uint GetNumLight() const { return mLights.Size(); }
 
 			const Light* ChooseLightSource(const float lightIdSample, float* pPdf) const
 			{
-				auto lightCount = mLights.size();
+				auto lightCount = mLights.Size();
 				auto lightId = Math::FloorToInt(lightIdSample * lightCount);
 				if (lightId == lightCount)
 					lightId = lightCount - 1;
@@ -55,7 +54,7 @@ namespace EDX
 			}
 			float LightPdf(const Light* pLight) const
 			{
-				return 1.0f / float(mLights.size());
+				return 1.0f / float(mLights.Size());
 			}
 
 			void InitAccelerator();

@@ -14,7 +14,7 @@ namespace EDX
 			SampleBuffer* pSamples,
 			RandomGen& random)
 		{
-			assert(pSamples);
+			Assert(pSamples);
 
 			pSamples->imageX = SobolSample(mSobolIndex, mDimension++) * mResolution - pixelX;
 			pSamples->imageY = SobolSample(mSobolIndex, mDimension++) * mResolution - pixelY;

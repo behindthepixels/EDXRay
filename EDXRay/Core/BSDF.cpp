@@ -14,85 +14,88 @@ namespace EDX
 		// -----------------------------------------------------------------------------------------------------------------------
 		// BSDF interface implementation
 		// -----------------------------------------------------------------------------------------------------------------------
-		BSDF* BSDF::CreateBSDF(const BSDFType type, const Color& color)
+		UniquePtr<BSDF> BSDF::CreateBSDF(const BSDFType type, const Color& color)
 		{
 			switch (type)
 			{
 			case BSDFType::Diffuse:
-				return new LambertianDiffuse(color);
+				return MakeUnique<LambertianDiffuse>(color);
 			case BSDFType::Mirror:
-				return new Mirror(color);
+				return MakeUnique<Mirror>(color);
 			case BSDFType::Glass:
-				return new Glass(color);
+				return MakeUnique<Glass>(color);
 			case BSDFType::RoughConductor:
-				return new RoughConductor(color, 0.3f);
+				return MakeUnique<RoughConductor>(color, 0.3f);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(color, 0.5f);
+				return MakeUnique<RoughDielectric>(color, 0.5f);
 			case BSDFType::Disney:
-				return new Disney(color);
+				return MakeUnique<Disney>(color);
 			}
 
-			assert(0);
-			return NULL;
+			AssertNoEntry();
+			return nullptr;
 		}
-		BSDF* BSDF::CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal)
+		UniquePtr<BSDF> BSDF::CreateBSDF(const BSDFType type, BSDF* pBSDF)
 		{
 			switch (type)
 			{
 			case BSDFType::Diffuse:
-				return new LambertianDiffuse(pTex, pNormal);
+				return MakeUnique<LambertianDiffuse>(pBSDF->MoveTexture(), pBSDF->MoveNormalMap());
 			case BSDFType::Mirror:
-				return new Mirror(pTex, pNormal);
+				return MakeUnique<Mirror>(pBSDF->MoveTexture(), pBSDF->MoveNormalMap());
 			case BSDFType::Glass:
-				return new Glass(pTex, pNormal);
+				return MakeUnique<Glass>(pBSDF->MoveTexture(), pBSDF->MoveNormalMap());
 			case BSDFType::RoughConductor:
-				return new RoughConductor(pTex, pNormal, 0.3f);
+				return MakeUnique<RoughConductor>(pBSDF->MoveTexture(), pBSDF->MoveNormalMap());
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(pTex, pNormal, 0.3f);
+				return MakeUnique<RoughDielectric>(pBSDF->MoveTexture(), pBSDF->MoveNormalMap());
 			case BSDFType::Disney:
-				return new Disney(pTex, pNormal);
+				return MakeUnique<Disney>(pBSDF->MoveTexture(), pBSDF->MoveNormalMap());
 			}
 
-			assert(0);
-			return NULL;
+			AssertNoEntry();
+			return nullptr;
 		}
-		BSDF* BSDF::CreateBSDF(const BSDFType type, const char* strTexPath)
+		UniquePtr<BSDF> BSDF::CreateBSDF(const BSDFType type, const char* strTexPath)
 		{
 			switch (type)
 			{
 			case BSDFType::Diffuse:
-				return new LambertianDiffuse(strTexPath);
+				return MakeUnique<LambertianDiffuse>(strTexPath);
 			case BSDFType::Mirror:
-				return new Mirror(strTexPath);
+				return MakeUnique<Mirror>(strTexPath);
 			case BSDFType::Glass:
-				return new Glass(strTexPath);
+				return MakeUnique<Glass>(strTexPath);
 			case BSDFType::RoughConductor:
-				return new RoughConductor(strTexPath, 0.3f);
+				return MakeUnique<RoughConductor>(strTexPath);
 			case BSDFType::RoughDielectric:
-				return new RoughDielectric(strTexPath, 0.3f);
+				return MakeUnique<RoughDielectric>(strTexPath);
 			case BSDFType::Disney:
-				return new Disney(strTexPath);
+				return MakeUnique<Disney>(strTexPath);
 			}
 
-			assert(0);
-			return NULL;
+			AssertNoEntry();
+			return nullptr;
 		}
 
 		BSDF::BSDF(ScatterType t, BSDFType t2, const Color& color)
-			: mScatterType(t), mBSDFType(t2)
+			: mScatterType(t)
+			, mBSDFType(t2)
+			, mpTexture(new ConstantTexture2D<Color>(color))
 		{
-			mpTexture = new ConstantTexture2D<Color>(color);
 		}
-		BSDF::BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal)
-			: mScatterType(t), mBSDFType(t2)
+		BSDF::BSDF(ScatterType t, BSDFType t2, UniquePtr<Texture2D<Color>> pTex, UniquePtr<Texture2D<Color>> pNormal)
+			: mScatterType(t)
+			, mBSDFType(t2)
+			, mpTexture(Move(pTex))
+			, mpNormalMap(Move(pNormal))
 		{
-			mpTexture = pTex;
-			mpNormalMap = pNormal;
 		}
 		BSDF::BSDF(ScatterType t, BSDFType t2, const char* pFile)
-			: mScatterType(t), mBSDFType(t2)
+			: mScatterType(t)
+			, mBSDFType(t2)
+			, mpTexture(new ImageTexture<Color, Color4b>(pFile))
 		{
-			mpTexture = new ImageTexture<Color, Color4b>(pFile);
 		}
 
 
@@ -111,7 +114,7 @@ namespace EDX
 			Vector3 vWo = diffGeom.WorldToLocal(vOut);
 			Vector3 vWi = diffGeom.WorldToLocal(vIn);
 
-			return GetValue(mpTexture.Ptr(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
+			return GetValue(mpTexture.Get(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
 		}
 
 		float BSDF::Pdf(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types /* = BSDF_ALL */) const
@@ -139,7 +142,7 @@ namespace EDX
 			bool entering = cosi > 0.0f;
 			float ei = etai, et = etat;
 			if (!entering)
-				swap(ei, et);
+				Swap(ei, et);
 
 			float sint = ei / et * Math::Sqrt(Math::Max(0.0f, 1.0f - cosi * cosi));
 
@@ -244,7 +247,7 @@ namespace EDX
 			// Precomputations
 			float TanThetaI = tan(thetaI);
 			float a = 1 / TanThetaI;
-			float G1 = 2.0f / (1.0f + sqrt(max(1.0f + 1.0f / (a*a), 0.0f)));
+			float G1 = 2.0f / (1.0f + Math::Sqrt(Math::Max(1.0f + 1.0f / (a*a), 0.0f)));
 
 			// Simulate X component
 			float A = 2.0f * u1 / G1 - 1.0f;
@@ -253,7 +256,7 @@ namespace EDX
 
 			float Temp = 1.0f / (A*A - 1.0f);
 			float B = TanThetaI;
-			float D = sqrt(max(B*B*Temp*Temp - (A*A - B*B) * Temp, 0.0f));
+			float D = Math::Sqrt(Math::Max(B*B*Temp*Temp - (A*A - B*B) * Temp, 0.0f));
 			float Slope_x_1 = B * Temp - D;
 			float Slope_x_2 = B * Temp + D;
 			Slope.x = (A < 0.0f || Slope_x_2 > 1.0f / TanThetaI) ? Slope_x_1 : Slope_x_2;
@@ -394,7 +397,7 @@ namespace EDX
 				*pSampledTypes = mScatterType;
 			}
 
-			return GetValue(mpTexture.Ptr(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
+			return GetValue(mpTexture.Get(), diffGeom) * EvalInner(vWo, vWi, diffGeom, types);
 		}
 
 		// -----------------------------------------------------------------------------------------------------------------------
@@ -438,7 +441,7 @@ namespace EDX
 				*pSampledTypes = mScatterType;
 			}
 
-			return GetValue(mpTexture.Ptr(), diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
+			return GetValue(mpTexture.Get(), diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
 		}
 
 		// -----------------------------------------------------------------------------------------------------------------------
@@ -500,7 +503,7 @@ namespace EDX
 				bool entering = BSDFCoordinate::CosTheta(vWo) > 0.0f;
 				float etai = mEtai, etat = mEtat;
 				if (!entering)
-					swap(etai, etat);
+					Swap(etai, etat);
 
 				float sini2 = BSDFCoordinate::SinTheta2(vWo);
 				float eta = etai / etat;
@@ -523,7 +526,7 @@ namespace EDX
 					*pSampledTypes = ScatterType(BSDF_TRANSMISSION | BSDF_SPECULAR);
 				}
 
-				return (1.0f - fresnel) * eta * eta * GetValue(mpTexture.Ptr(), diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
+				return (1.0f - fresnel) * eta * eta * GetValue(mpTexture.Get(), diffGeom) / BSDFCoordinate::AbsCosTheta(vWi);
 			}
 
 			return Color::BLACK;

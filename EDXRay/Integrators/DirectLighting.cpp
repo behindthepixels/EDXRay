@@ -5,13 +5,13 @@
 #include "../Core/Sampler.h"
 #include "../Core/Ray.h"
 #include "Graphics/Color.h"
-#include "Memory/Memory.h"
+#include "Core/Memory.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
-		Color DirectLightingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryArena& memory) const
+		Color DirectLightingIntegrator::Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryPool& memory) const
 		{
 			DifferentialGeom diffGeom;
 			Color L;
@@ -19,11 +19,11 @@ namespace EDX
 			{
 				pScene->PostIntersect(ray, &diffGeom);
 
-				auto numLights = pScene->GetLights().size();
+				auto numLights = pScene->GetLights().Size();
 
-				for (auto i = 0; i < pScene->GetLights().size(); i++)
+				for (auto i = 0; i < pScene->GetLights().Size(); i++)
 				{
-					auto pLight = pScene->GetLights()[i].Ptr();
+					auto pLight = pScene->GetLights()[i].Get();
 					L += Integrator::EstimateDirectLighting(diffGeom, -ray.mDir, pLight, pScene, pSampler);
 				}
 
@@ -44,9 +44,9 @@ namespace EDX
 
 		void DirectLightingIntegrator::RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf)
 		{
-			assert(pSampleBuf);
+			Assert(pSampleBuf);
 
-			auto numLights = pScene->GetLights().size();
+			auto numLights = pScene->GetLights().Size();
 			mpLightSampleOffsets = new SampleOffsets[numLights];
 			mpBSDFSampleOffsets = new SampleOffsets[numLights];
 
@@ -59,8 +59,8 @@ namespace EDX
 
 		DirectLightingIntegrator::~DirectLightingIntegrator()
 		{
-			SafeDeleteArray(mpLightSampleOffsets);
-			SafeDeleteArray(mpBSDFSampleOffsets);
+			Memory::SafeDeleteArray(mpLightSampleOffsets);
+			Memory::SafeDeleteArray(mpBSDFSampleOffsets);
 		}
 	}
 }

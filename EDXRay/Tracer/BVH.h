@@ -1,11 +1,10 @@
 #pragma once
 
 #include "EDXPrerequisites.h"
-#include "Memory/RefPtr.h"
-#include "Memory/Memory.h"
+#include "Core/Memory.h"
 #include "Math/BoundingBox.h"
 #include "SIMD/SSE.h"
-#include "Windows/Thread.h"
+#include "Windows/Threading.h"
 #include "../ForwardDecl.h"
 
 #include <atomic>
@@ -109,15 +108,15 @@ namespace EDX
 			BuildTriangle*	mpBuildIndices;
 			uint mBuildVertexCount;
 			uint mBuildTriangleCount;
-			vector<RefPtr<Primitive>>* mpRefPrims;
+			Array<Primitive*> mRefPrims;
 
 			BoundingBox mBounds;
 
 			const uint MaxDepth;
 
-			vector<RefPtr<BuildTask>> mBuildTasks;
-			EDXLock mMemLock;
-			EDXLock mTaskLock;
+			Array<UniquePtr<QueuedBuildTask>> mBuildTasks;
+			CriticalSection mMemLock;
+			CriticalSection mTaskLock;
 
 		public:
 			BVH2()
@@ -126,7 +125,6 @@ namespace EDX
 				, mBuildVertexCount(0)
 				, mBuildTriangleCount(0)
 				, MaxDepth(128)
-				, mpRefPrims(nullptr)
 			{
 			}
 			~BVH2()
@@ -134,13 +132,13 @@ namespace EDX
 				Destroy();
 			}
 
-			void Construct(const vector<RefPtr<Primitive>>& prims);
+			void Construct(const Array<Primitive*>& prims);
 			void RecursiveBuildNode(BuildNode* pBuildNode,
-				vector<TriangleInfo>& buildInfo,
+				Array<TriangleInfo>& buildInfo,
 				const int startIdx,
 				const int endIdx,
 				const int depth,
-				MemoryArena& memory);
+				MemoryPool& memory);
 
 			bool Intersect(const Ray& ray, Intersection* pIsect) const;
 			bool Occluded(const Ray& ray) const;
@@ -151,14 +149,14 @@ namespace EDX
 
 		private:
 
-			void ExtractGeometry(const vector<RefPtr<Primitive>>& prims);
+			void ExtractGeometry(const Array<Primitive*>& prims);
 			uint LinearizeNodes(const BuildNode* pNode, uint* piOffset);
 
 			void Destroy()
 			{
-				SafeDeleteArray(mpBuildVertices);
-				SafeDeleteArray(mpBuildIndices);
-				FreeAligned(mpRoot);
+				Memory::SafeDeleteArray(mpBuildVertices);
+				Memory::SafeDeleteArray(mpBuildIndices);
+				Memory::Free(mpRoot);
 			}
 		};
 	}

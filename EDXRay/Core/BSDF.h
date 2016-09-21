@@ -5,7 +5,6 @@
 #include "Math/Vector.h"
 #include "Graphics/Texture.h"
 #include "Graphics/Color.h"
-#include "Memory/RefPtr.h"
 
 namespace EDX
 {
@@ -57,9 +56,9 @@ namespace EDX
 		{
 		public:
 			virtual int GetParameterCount() const = 0;
-			virtual string GetParameterName(const int idx) const = 0;
-			virtual Parameter GetParameter(const string& name) const = 0;
-			virtual void SetParameter(const string& name, const Parameter& param) = 0;
+			virtual String GetParameterName(const int idx) const = 0;
+			virtual Parameter GetParameter(const String& name) const = 0;
+			virtual void SetParameter(const String& name, const Parameter& param) = 0;
 		};
 
 		class BSDF : public IEditable
@@ -67,12 +66,12 @@ namespace EDX
 		protected:
 			const ScatterType mScatterType;
 			const BSDFType mBSDFType;
-			RefPtr<Texture2D<Color>> mpTexture;
-			RefPtr<Texture2D<Color>> mpNormalMap;
+			UniquePtr<Texture2D<Color>> mpTexture;
+			UniquePtr<Texture2D<Color>> mpNormalMap;
 
 		public:
 			BSDF(ScatterType t, BSDFType t2, const Color& color);
-			BSDF(ScatterType t, BSDFType t2, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal);
+			BSDF(ScatterType t, BSDFType t2, UniquePtr<Texture2D<Color>> pTex, UniquePtr<Texture2D<Color>> pNormal);
 			BSDF(ScatterType t, BSDFType t2, const char* pFile);
 			virtual ~BSDF() {}
 
@@ -85,7 +84,7 @@ namespace EDX
 				ScatterType types = BSDF_ALL, ScatterType* pSampledTypes = NULL) const = 0;
 
 			template<typename T>
-			__forceinline const T GetValue(Texture2D<T>* pTex,
+			__forceinline const T GetValue(const Texture2D<T>* pTex,
 				const DifferentialGeom& diffGeom,
 				const TextureFilter filter = TextureFilter::TriLinear) const
 			{
@@ -98,8 +97,12 @@ namespace EDX
 
 			const ScatterType GetScatterType() const { return mScatterType; }
 			const BSDFType GetBSDFType() const { return mBSDFType; }
-			const RefPtr<Texture2D<Color>>& GetTexture() const { return mpTexture; }
-			const RefPtr<Texture2D<Color>>& GetNormalMap() const { return mpNormalMap; }
+
+			const Texture2D<Color>* GetTexture() const { return mpTexture.Get(); }
+			const Texture2D<Color>* GetNormalMap() const { return mpNormalMap.Get(); }
+
+			UniquePtr<Texture2D<Color>> MoveTexture() { return Move(mpTexture); }
+			UniquePtr<Texture2D<Color>> MoveNormalMap() { return Move(mpNormalMap); }
 
 		protected:
 			virtual float EvalInner(const Vector3& vOut, const Vector3& vIn, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const = 0;
@@ -111,9 +114,9 @@ namespace EDX
 				return 2;
 			}
 
-			virtual string GetParameterName(const int idx) const
+			virtual String GetParameterName(const int idx) const
 			{
-				assert(idx < 2);
+				Assert(idx < 2);
 				switch (idx)
 				{
 				case 0:
@@ -130,7 +133,7 @@ namespace EDX
 				}
 			}
 
-			virtual Parameter GetParameter(const string& name) const
+			virtual Parameter GetParameter(const String& name) const
 			{
 				Parameter ret;
 
@@ -161,25 +164,25 @@ namespace EDX
 				}
 			}
 
-			virtual void SetParameter(const string& name, const Parameter& param)
+			virtual void SetParameter(const String& name, const Parameter& param)
 			{
 				if (name == "TextureMap")
 				{
-					mpTexture = new ImageTexture<Color, Color4b>(param.TexPath);
+					mpTexture.Reset(new ImageTexture<Color, Color4b>(param.TexPath));
 					return;
 				}
 				else if (name == "Color")
 				{
 					if (!mpTexture->IsConstant())
 					{
-						mpTexture = new ConstantTexture2D<Color>(Color(param.R, param.G, param.B));
+						mpTexture.Reset(new ConstantTexture2D<Color>(Color(param.R, param.G, param.B)));
 					}
 					else
 						mpTexture->SetValue(Color(param.R, param.G, param.B));
 				}
 				else if (name == "NormalMap")
 				{
-					mpNormalMap = new ImageTexture<Color, Color4b>(param.TexPath, 1.0f);
+					mpNormalMap.Reset(new ImageTexture<Color, Color4b>(param.TexPath, 1.0f));
 					return;
 				}
 
@@ -187,9 +190,9 @@ namespace EDX
 			}
 
 		public:
-			static BSDF* CreateBSDF(const BSDFType type, const Color& color);
-			static BSDF* CreateBSDF(const BSDFType type, const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal);
-			static BSDF* CreateBSDF(const BSDFType type, const char* strTexPath);
+			static UniquePtr<BSDF> CreateBSDF(const BSDFType type, const Color& color);
+			static UniquePtr<BSDF> CreateBSDF(const BSDFType type, BSDF* pBSDF);
+			static UniquePtr<BSDF> CreateBSDF(const BSDFType type, const char* strTexPath);
 
 			static float FresnelDielectric(float cosi, float etai, float etat);
 			static float FresnelConductor(float cosi, const float& eta, const float k);
@@ -213,8 +216,8 @@ namespace EDX
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, cColor)
 			{
 			}
-			LambertianDiffuse(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, pTex, pNormal)
+			LambertianDiffuse(UniquePtr<Texture2D<Color>> pTex, UniquePtr<Texture2D<Color>> pNormal)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE), BSDFType::Diffuse, Move(pTex), Move(pNormal))
 			{
 			}
 			LambertianDiffuse(const char* pFile)
@@ -237,8 +240,8 @@ namespace EDX
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, cColor)
 			{
 			}
-			Mirror(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, pTex, pNormal)
+			Mirror(UniquePtr<Texture2D<Color>> pTex, UniquePtr<Texture2D<Color>> pNormal)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_SPECULAR), BSDFType::Mirror, Move(pTex), Move(pNormal))
 			{
 			}
 			Mirror(const char* strTexPath)
@@ -268,8 +271,8 @@ namespace EDX
 				, mEtat(etat)
 			{
 			}
-			Glass(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, float etai = 1.0f, float etat = 1.5f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, pTex, pNormal)
+			Glass(UniquePtr<Texture2D<Color>> pTex, UniquePtr<Texture2D<Color>> pNormal, float etai = 1.0f, float etat = 1.5f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_SPECULAR), BSDFType::Glass, Move(pTex), Move(pNormal))
 				, mEtai(etai)
 				, mEtat(etat)
 			{
@@ -292,7 +295,7 @@ namespace EDX
 				return BSDF::GetParameterCount() + 1;
 			}
 
-			string GetParameterName(const int idx) const
+			String GetParameterName(const int idx) const
 			{
 				if (idx < BSDF::GetParameterCount())
 					return BSDF::GetParameterName(idx);
@@ -303,7 +306,7 @@ namespace EDX
 				return "";
 			}
 
-			Parameter GetParameter(const string& name) const
+			Parameter GetParameter(const String& name) const
 			{
 				Parameter ret = BSDF::GetParameter(name);
 				if (ret.Type != Parameter::None)
@@ -322,7 +325,7 @@ namespace EDX
 				return ret;
 			}
 			
-			void SetParameter(const string& name, const Parameter& param)
+			void SetParameter(const String& name, const Parameter& param)
 			{
 				BSDF::SetParameter(name, param);
 
@@ -342,7 +345,7 @@ namespace EDX
 			inline float CosTheta(const Vector3& vec) { return vec.z; }
 			inline float CosTheta2(const Vector3& vec) { return vec.z * vec.z; }
 			inline float AbsCosTheta(const Vector3& vec) { return Math::Abs(vec.z); }
-			inline float SinTheta2(const Vector3& vec) { return max(0.0f, 1.0f - CosTheta(vec) * CosTheta(vec)); }
+			inline float SinTheta2(const Vector3& vec) { return Math::Max(0.0f, 1.0f - CosTheta(vec) * CosTheta(vec)); }
 			inline float SinTheta(const Vector3& vec) { return Math::Sqrt(SinTheta2(vec)); }
 			inline float CosPhi(const Vector3& vec)
 			{

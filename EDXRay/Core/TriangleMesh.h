@@ -1,8 +1,8 @@
 #pragma once
 
+#include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
 #include "Math/Vector.h"
-#include "Memory/RefPtr.h"
 
 namespace EDX
 {
@@ -20,7 +20,7 @@ namespace EDX
 			uint		mTriangleCount;
 			bool		mTextured;
 
-			RefPtr<const ObjMesh>	mpObjMesh;
+			UniquePtr<const ObjMesh>	mpObjMesh;
 
 		public:
 			TriangleMesh()
@@ -47,8 +47,8 @@ namespace EDX
 			const Vector2& GetTexCoordAt(uint idx) const;
 			const uint* GetIndexAt(uint triIdx) const
 			{
-				assert(triIdx < 3 * mTriangleCount);
-				assert(mpIndexBuffer);
+				Assert(triIdx < 3 * mTriangleCount);
+				Assert(mpIndexBuffer);
 				return &mpIndexBuffer[3 * triIdx];
 			}
 
@@ -80,7 +80,7 @@ namespace EDX
 			}
 			const ObjMesh* GetObjMeshHandle() const
 			{
-				return mpObjMesh.Ptr();
+				return mpObjMesh.Get();
 			}
 
 			void Release();

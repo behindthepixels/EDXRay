@@ -9,7 +9,7 @@ namespace EDX
 		class Disney : public BSDF
 		{
 		private:
-			RefPtr<Texture2D<float>> mRoughness;
+			UniquePtr<Texture2D<float>> mRoughness;
 			float mSpecular;
 			float mMetallic;
 			float mSpecularTint;
@@ -31,6 +31,7 @@ namespace EDX
 				float clearCoat = 0.0f,
 				float clearCoatGloss = 0.0f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, reflectance)
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
@@ -40,10 +41,10 @@ namespace EDX
 				, mClearCoat(clearCoat)
 				, mClearCoatGloss(clearCoatGloss)
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
-			Disney(const RefPtr<Texture2D<Color>>& pTex,
-				const RefPtr<Texture2D<Color>>& pNormal,
+
+			Disney(UniquePtr<Texture2D<Color>> pTex,
+				UniquePtr<Texture2D<Color>> pNormal,
 				float roughness = 0.1f,
 				float specular = 0.5f,
 				float matellic = 0.0f,
@@ -53,7 +54,8 @@ namespace EDX
 				float subsurface = 0.0f,
 				float clearCoat = 0.0f,
 				float clearCoatGloss = 0.0f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pTex, pNormal)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, Move(pTex), Move(pNormal))
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
@@ -63,7 +65,6 @@ namespace EDX
 				, mClearCoat(clearCoat)
 				, mClearCoatGloss(clearCoatGloss)
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 			Disney(const char* pFile,
 				float roughness = 0.1f,
@@ -76,6 +77,7 @@ namespace EDX
 				float clearCoat = 0.0f,
 				float clearCoatGloss = 0.0f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_DIFFUSE | BSDF_GLOSSY), BSDFType::Disney, pFile)
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 				, mSpecular(specular)
 				, mMetallic(matellic)
 				, mSpecularTint(specTint)
@@ -85,7 +87,6 @@ namespace EDX
 				, mClearCoat(clearCoat)
 				, mClearCoatGloss(clearCoatGloss)
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 
 			Color SampleScattered(const Vector3& _wo,
@@ -103,7 +104,7 @@ namespace EDX
 				if (wh == Vector3::ZERO)
 					return 0.0f;
 
-				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 
 				float microfacetPdf = GGX_Pdf_VisibleNormal(wo, wh, roughness * roughness);
@@ -116,7 +117,7 @@ namespace EDX
 
 				if (mClearCoat > 0.0f)
 				{
-					Color albedo = GetValue(mpTexture.Ptr(), diffGeom);
+					Color albedo = GetValue(mpTexture.Get(), diffGeom);
 					float coatWeight = mClearCoat / (mClearCoat + albedo.Luminance());
 					float FresnelCoat = Fresnel_Schlick_Coat(BSDFCoordinate::AbsCosTheta(wo));
 					float probCoat = (FresnelCoat * coatWeight) /
@@ -153,8 +154,8 @@ namespace EDX
 
 			Color EvalTransformed(const Vector3& wo, const Vector3& wi, const DifferentialGeom& diffGeom, ScatterType types = BSDF_ALL) const
 			{
-				Color albedo = GetValue(mpTexture.Ptr(), diffGeom);
-				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				Color albedo = GetValue(mpTexture.Get(), diffGeom);
+				float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 				Color UntintedSpecAlbedo = albedo.Luminance();
 				Color specAlbedo = Math::Lerp(Math::Lerp(albedo, UntintedSpecAlbedo, 1.0f - mSpecularTint), albedo, mMetallic);
@@ -284,7 +285,7 @@ namespace EDX
 				return BSDF::GetParameterCount() + 9;
 			}
 
-			string GetParameterName(const int idx) const
+			String GetParameterName(const int idx) const
 			{
 				if (idx < BSDF::GetParameterCount())
 					return BSDF::GetParameterName(idx);
@@ -312,7 +313,7 @@ namespace EDX
 				return "";
 			}
 
-			Parameter GetParameter(const string& name) const
+			Parameter GetParameter(const String& name) const
 			{
 				Parameter ret = BSDF::GetParameter(name);
 				if (ret.Type != Parameter::None)
@@ -403,7 +404,7 @@ namespace EDX
 				return ret;
 			}
 
-			void SetParameter(const string& name, const Parameter& param)
+			void SetParameter(const String& name, const Parameter& param)
 			{
 				BSDF::SetParameter(name, param);
 
@@ -414,10 +415,10 @@ namespace EDX
 						if (this->mRoughness->IsConstant())
 							this->mRoughness->SetValue(param.Value);
 						else
-							this->mRoughness = new ConstantTexture2D<float>(param.Value);
+							this->mRoughness.Reset(new ConstantTexture2D<float>(param.Value));
 					}
 					else if (param.Type == Parameter::TextureMap)
-						this->mRoughness = new ImageTexture<float, float>(param.TexPath, 1.0f);
+						this->mRoughness.Reset(new ImageTexture<float, float>(param.TexPath, 1.0f));
 				}
 				else if (name == "Specular")
 					this->mSpecular = param.Value;

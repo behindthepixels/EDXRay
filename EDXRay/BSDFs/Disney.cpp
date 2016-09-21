@@ -27,7 +27,7 @@ namespace EDX
 
 			if (mClearCoat > 0.0f)
 			{
-				Color albedo = GetValue(mpTexture.Ptr(), diffGeom);
+				Color albedo = GetValue(mpTexture.Get(), diffGeom);
 				float coatWeight = mClearCoat / (mClearCoat + albedo.Luminance());
 				float FresnelCoat = Fresnel_Schlick_Coat(BSDFCoordinate::AbsCosTheta(wo));
 				float probCoat = (FresnelCoat * coatWeight) /
@@ -62,7 +62,7 @@ namespace EDX
 				if (remappedSample.w <= probSpec)
 				{
 					float microfacetPdf;
-					float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+					float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 					roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 
 					wh = GGX_SampleVisibleNormal(wo, remappedSample.u, remappedSample.v, &microfacetPdf, roughness * roughness);

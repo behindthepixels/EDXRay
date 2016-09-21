@@ -143,7 +143,7 @@ namespace EDX
 			const RayDifferential& ray,
 			const DifferentialGeom& diffGeom,
 			RandomGen& random,
-			MemoryArena& memory)
+			MemoryPool& memory)
 		{
 			const Vector3& position = diffGeom.mPosition;
 			const Vector3& normal = diffGeom.mNormal;
@@ -191,7 +191,7 @@ namespace EDX
 			const RayDifferential& ray,
 			const DifferentialGeom& diffGeom,
 			RandomGen& random,
-			MemoryArena& memory)
+			MemoryPool& memory)
 		{
 			const Vector3& position = diffGeom.mPosition;
 			const Vector3& normal = diffGeom.mNormal;

@@ -40,12 +40,14 @@ namespace EDX
 		class BVH4;
 		class Triangle4;
 		class RenderTask;
+		class QueuedRenderTask;
 		class BuildTask;
+		class QueuedBuildTask;
 		enum class BSDFType;
 	}
 
 	class RandomGen;
-	class MemoryArena;
+	class MemoryPool;
 	class Color;
 	class Ray;
 	class ObjMesh;

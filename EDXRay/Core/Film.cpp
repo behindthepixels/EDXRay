@@ -14,7 +14,7 @@ namespace EDX
 		void Film::Init(int width, int height, Filter* pFilter)
 		{
 			Resize(width, height);
-			mpFilter = pFilter;
+			mpFilter.Reset(pFilter);
 		}
 
 		void Film::Resize(int width, int height)
@@ -31,8 +31,8 @@ namespace EDX
 
 		void Film::Release()
 		{
-			mPixelBuffer.Free();
-			mAccumulateBuffer.Free();
+			//mPixelBuffer.Free();
+			//mAccumulateBuffer.Free();
 		}
 
 		void Film::Clear()
@@ -192,8 +192,8 @@ namespace EDX
 
 		void FilmRHF::Denoise()
 		{
-			Array<2, Color> scaledImage;
-			Array<2, Color> prevImage;
+			DimensionalArray<2, Color> scaledImage;
+			DimensionalArray<2, Color> prevImage;
 			Histogram scaledHistogram;
 
 			float totalWeight = 0.0f;
@@ -233,13 +233,13 @@ namespace EDX
 
 				if (s < mScale - 1)
 				{
-					Array<2, Color> posTerm;
+					DimensionalArray<2, Color> posTerm;
 					posTerm.Init(scaledImage.Size());
 					BicubicInterpolation(prevImage, posTerm);
 
-					Array<2, Color> negTermD;
+					DimensionalArray<2, Color> negTermD;
 					GaussianDownSample(scaledImage, negTermD, 0.5f);
-					Array<2, Color> negTerm;
+					DimensionalArray<2, Color> negTerm;
 					negTerm.Init(scaledImage.Size());
 					BicubicInterpolation(negTermD, negTerm);
 
@@ -253,11 +253,11 @@ namespace EDX
 			mPixelBuffer = scaledImage;
 		}
 
-		void FilmRHF::HistogramFusion(Array<2, Color>& input, const Histogram& histogram)
+		void FilmRHF::HistogramFusion(DimensionalArray<2, Color>& input, const Histogram& histogram)
 		{
-			Array<2, Color> mDenoisedPixelBuffer;
+			DimensionalArray<2, Color> mDenoisedPixelBuffer;
 			mDenoisedPixelBuffer.Init(input.Size());
-			Array<2, int> mRHFSampleCount;
+			DimensionalArray<2, int> mRHFSampleCount;
 			mRHFSampleCount.Init(input.Size());
 
 			const int width = input.Size(0);
@@ -276,7 +276,7 @@ namespace EDX
 					const auto maxY = Math::Min(y + mHalfWindowSize, height - 1 - halfPatchSize);
 
 					auto num = 0;
-					memset(tempPatchBuffer, 0, sizeof(Color) * MAX_PATCH_SIZE * MAX_PATCH_SIZE);
+					Memory::Memset(tempPatchBuffer, 0, sizeof(Color) * MAX_PATCH_SIZE * MAX_PATCH_SIZE);
 					for (auto i = minY; i <= maxY; i++)
 					{
 						for (auto j = minX; j <= maxX; j++)
@@ -295,7 +295,7 @@ namespace EDX
 
 					if (num > 0)
 					{
-						EDXLockApply lock(mRHFLock);
+						ScopeLock lock(&mRHFLock);
 						for (auto h = -halfPatchSize; h <= halfPatchSize; h++)
 						{
 							for (auto w = -halfPatchSize; w <= halfPatchSize; w++)
@@ -371,7 +371,7 @@ namespace EDX
 		}
 
 		template<typename T>
-		void FilmRHF::GaussianDownSample(const Array<2, T>& input, Array<2, T>& output, float scale)
+		void FilmRHF::GaussianDownSample(const DimensionalArray<2, T>& input, DimensionalArray<2, T>& output, float scale)
 		{
 			static const float SIGMA_SCALE = 0.55f;
 			float sigma = scale < 1.0 ? SIGMA_SCALE * Math::Sqrt(1 / (scale * scale) - 1) : SIGMA_SCALE;
@@ -379,8 +379,8 @@ namespace EDX
 			const float prec = 2.0f;
 			const int halfSize = Math::CeilToInt(sigma * Math::Sqrt(2.0f * prec * logf(10.0f)));
 			const int kernelSize = 1 + 2 * halfSize;
-
-			RefPtr<float, PtrType::Array> pKernel = new float[kernelSize];
+			
+			float* pKernel = new float[kernelSize];
 
 			const auto dimX = input.Size(0);
 			const auto dimY = input.Size(1);
@@ -406,7 +406,7 @@ namespace EDX
 				}
 			};
 
-			Array<2, T> auxBuf;
+			DimensionalArray<2, T> auxBuf;
 			auxBuf.Init(Vector2i(scaledDimX, dimY));
 
 			for (auto x = 0; x < scaledDimX; x++)
@@ -452,9 +452,11 @@ namespace EDX
 					output[Vector2i(x, y)] = sum;
 				}
 			}
+
+			Memory::SafeDeleteArray(pKernel);
 		}
 
-		void FilmRHF::BicubicInterpolation(const Array<2, Color>& input, Array<2, Color>& output)
+		void FilmRHF::BicubicInterpolation(const DimensionalArray<2, Color>& input, DimensionalArray<2, Color>& output)
 		{
 			const auto dimX = input.Size(0);
 			const auto dimY = input.Size(1);
@@ -464,7 +466,7 @@ namespace EDX
 			float scaleX = scaledDimX / float(dimX);
 			float scaleY = scaledDimY / float(dimY);
 
-			Array<2, Color> auxBuf;
+			DimensionalArray<2, Color> auxBuf;
 			auxBuf.Init(scaledDimX, dimY);
 
 			float weights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };

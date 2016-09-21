@@ -1,10 +1,4 @@
 
-#include "Windows/Window.h"
-#include "Windows/Application.h"
-#include "Memory/Memory.h"
-
-#include "Graphics/OpenGL.h"
-
 #include "Core/Renderer.h"
 #include "Core/Film.h"
 #include "Core/Scene.h"
@@ -18,10 +12,15 @@
 #include "BSDFs/RoughDielectric.h"
 #include "Core/BSSRDF.h"
 #include "Media/Homogeneous.h"
+#include "Tracer/BVHBuildTask.h"
 
 #include "ScenePreviewer.h"
 
+#include "Core/Memory.h"
+#include "Graphics/OpenGL.h"
 #include "Graphics/EDXGui.h"
+#include "Windows/Window.h"
+#include "Windows/Application.h"
 #include "Windows/Bitmap.h"
 
 using namespace EDX;
@@ -33,19 +32,17 @@ Previewer*	gpPreview = nullptr;
 bool gRendering = false;
 Color gCursorColor;
 
-void GUIEvent(Object* pObject, EventArgs args);
-
 void OnInit(Object* pSender, EventArgs args)
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	gpRenderer = new Renderer;
 
-	Scene* pScene = gpRenderer->GetScene().Ptr();
+	Scene* pScene = gpRenderer->GetScene();
 	Primitive* pMesh = new Primitive;
 	Primitive* pMesh2 = new Primitive;
-	Primitive* pMesh3 = new Primitive;
-	Primitive* pMesh4 = new Primitive;
+	//Primitive* pMesh3 = new Primitive;
+	//Primitive* pMesh4 = new Primitive;
 	//pMesh->LoadMesh("../../Media/sponza/sponza.obj", Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
 	//pMesh->LoadMesh("../../Media/crytek-sponza/sponza.obj", Vector3(0, 0, 0), 0.01f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
@@ -168,7 +165,7 @@ void OnRender(Object* pSender, EventArgs args)
 			char name[256];
 			char directory[MAX_PATH];
 			sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
-			sprintf_s(name, "%sEDXRay_%i.bmp", directory, time(0));
+			sprintf_s(name, "%sEDXRay_%i.bmp", directory, int(time(0)));
 			Bitmap::SaveBitmapFile(name, (float*)gpRenderer->GetFilm()->GetPixelBuffer(), pJobDesc->ImageWidth, pJobDesc->ImageHeight);
 		}
 
@@ -244,13 +241,13 @@ void OnRender(Object* pSender, EventArgs args)
 					sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
 					if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
 					{
-						gpRenderer->GetScene()->AddLight(new EnvironmentLight(filePath, gpRenderer->GetScene().Ptr(), 1.0f, envLightRotation));
+						gpRenderer->GetScene()->AddLight(new EnvironmentLight(filePath, gpRenderer->GetScene(), 1.0f, envLightRotation));
 					}
 				}
 				else
 				{
 					gpRenderer->GetScene()->AddLight(new EnvironmentLight(Color(turbidity), groundAlbedo, 40.0f,
-						gpRenderer->GetScene().Ptr(), envLightRotation));
+						gpRenderer->GetScene(), envLightRotation));
 				}
 			}
 
@@ -307,7 +304,7 @@ void OnRender(Object* pSender, EventArgs args)
 
 			const auto primId = gpPreview->GetPickedPrimId();
 			const auto triId = gpPreview->GetPickedTriangleId();
-			auto prim = gpRenderer->GetScene()->GetPrimitives()[primId].Ptr();
+			auto prim = gpRenderer->GetScene()->GetPrimitives()[primId].Get();
 			auto previewMesh = gpPreview->GetMesh(primId);
 
 			static BSDFType bsdfType;
@@ -323,13 +320,13 @@ void OnRender(Object* pSender, EventArgs args)
 
 			for (auto i = 0; i < pBsdf->GetParameterCount(); i++)
 			{
-				string name = pBsdf->GetParameterName(i);
+				String name = pBsdf->GetParameterName(i);
 				Parameter param = pBsdf->GetParameter(name);
 				switch (param.Type)
 				{
 				case Parameter::Float:
 				{
-					if (EDXGui::Slider(name.c_str(), &param.Value, param.Min, param.Max))
+					if (EDXGui::Slider(*name, &param.Value, param.Min, param.Max))
 						pBsdf->SetParameter(name, param);
 					if (name == "Roughness" && EDXGui::Button("Roughness Map"))
 					{
@@ -338,7 +335,7 @@ void OnRender(Object* pSender, EventArgs args)
 						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
 						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
 						{
-							strcpy_s(param.TexPath, MAX_PATH, filePath);
+							CStringUtil::Strcpy(param.TexPath, MAX_PATH, filePath);
 							param.Type = Parameter::TextureMap;
 							pBsdf->SetParameter("Roughness", param);
 						}
@@ -355,7 +352,7 @@ void OnRender(Object* pSender, EventArgs args)
 						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
 						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
 						{
-							strcpy_s(param.TexPath, MAX_PATH, filePath);
+							CStringUtil::Strcpy(param.TexPath, MAX_PATH, filePath);
 							pBsdf->SetParameter("TextureMap", param);
 							previewMesh->SetTexture(triId, param.TexPath);
 						}
@@ -380,7 +377,7 @@ void OnRender(Object* pSender, EventArgs args)
 						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
 						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
 						{
-							strcpy_s(param.TexPath, MAX_PATH, filePath);
+							CStringUtil::Strcpy(param.TexPath, MAX_PATH, filePath);
 							pBsdf->SetParameter("TextureMap", param);
 							previewMesh->SetTexture(triId, param.TexPath);
 						}
@@ -400,7 +397,7 @@ void OnRender(Object* pSender, EventArgs args)
 						sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
 						if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
 						{
-							strcpy_s(param.TexPath, MAX_PATH, filePath);
+							CStringUtil::Strcpy(param.TexPath, MAX_PATH, filePath);
 							pBsdf->SetParameter("NormalMap", param);
 						}
 					}
@@ -533,8 +530,8 @@ void OnRelease(Object* pSender, EventArgs args)
 {
 	gpRenderer->StopRenderTasks();
 
-	SafeDelete(gpRenderer);
-	SafeDelete(gpPreview);
+	Memory::SafeDelete(gpRenderer);
+	Memory::SafeDelete(gpPreview);
 	EDXGui::Release();
 }
 

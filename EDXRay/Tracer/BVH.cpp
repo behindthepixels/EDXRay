@@ -5,20 +5,21 @@
 #include "../Core/DifferentialGeom.h"
 #include "Triangle4.h"
 
-#include "Memory/Memory.h"
+#include "Core/MemoryPool.h"
+#include "Graphics/ObjMesh.h"
 
 namespace EDX
 {
 	namespace RayTracer
 	{
-		void BVH2::Construct(const vector<RefPtr<Primitive>>& prims)
+		void BVH2::Construct(const Array<Primitive*>& prims)
 		{
-			mpRefPrims = &const_cast<vector<RefPtr<Primitive>>&>(prims);
+			mRefPrims = prims;
 			ExtractGeometry(prims);
 
 			// Init build bounding box and index info
-			vector<TriangleInfo> buildInfo;
-			buildInfo.reserve(mBuildTriangleCount);
+			Array<TriangleInfo> buildInfo;
+			buildInfo.Reserve(mBuildTriangleCount);
 			for (auto i = 0; i < mBuildTriangleCount; i++)
 			{
 				BoundingBox box;
@@ -26,32 +27,32 @@ namespace EDX
 				box = Math::Union(box, mpBuildVertices[mpBuildIndices[i].idx2].pos);
 				box = Math::Union(box, mpBuildVertices[mpBuildIndices[i].idx3].pos);
 
-				buildInfo.push_back(TriangleInfo(i, box));
+				buildInfo.Add(TriangleInfo(i, box));
 				mBounds = Math::Union(mBounds, box);
 			}
 
-			MemoryArena memory;
+			MemoryPool memory;
 
 			// Alloc space for the root BuildNode
 			BuildNode* pBuildRoot = memory.Alloc<BuildNode>();
 
 			RecursiveBuildNode(pBuildRoot, buildInfo, 0, mBuildTriangleCount, 0, memory);
-			ThreadScheduler::Instance()->JoinAllTasks();
+			QueuedThreadPool::Instance()->JoinAllThreads();
 
-			mpRoot = AllocAligned<Node>(mTreeBufSize, 64);
-			memset(mpRoot, 0, mTreeBufSize * sizeof(Node));
+			mpRoot = Memory::AlignedAlloc<Node>(mTreeBufSize, 64);
+			Memory::Memset(mpRoot, 0, mTreeBufSize * sizeof(Node));
 
 			uint offset = 0;
 			LinearizeNodes(pBuildRoot, &offset);
-			assert(offset == mTreeBufSize);
+			Assert(offset == mTreeBufSize);
 		}
 
 		void BVH2::RecursiveBuildNode(BuildNode* pNode,
-			vector<TriangleInfo>& buildInfo,
+			Array<TriangleInfo>& buildInfo,
 			const int startIdx,
 			const int endIdx,
 			const int depth,
-			MemoryArena& memory)
+			MemoryPool& memory)
 		{
 			*pNode = BuildNode();
 			auto numTriangles = endIdx - startIdx;
@@ -212,7 +213,7 @@ namespace EDX
 				int mid = 0;
 				if (bestSplitCost < IntersectCost * packedCount || packedCount > 6)
 				{
-					TriangleInfo* pMid = std::partition(&buildInfo[startIdx], &buildInfo[endIdx - 1] + 1,
+					mid = Algorithm::Partition(&buildInfo[startIdx], endIdx - startIdx,
 						[&](const TriangleInfo& par) -> bool
 					{
 						int binIdx = numBins * (par.centroid[bestSplitDim] - centroidBounds.mMin[bestSplitDim]) /
@@ -222,7 +223,7 @@ namespace EDX
 						return binIdx < bestSplitPos;
 					});
 
-					mid = pMid - &buildInfo[0];
+					mid = mid + startIdx;
 				}
 				else
 				{
@@ -251,15 +252,15 @@ namespace EDX
 				}
 				else
 				{
-					BuildTask* pTaskLeft = new BuildTask(this, pLeft, buildInfo, startIdx, mid, depth + 1, memory);
-					BuildTask* pTaskRight = new BuildTask(this, pRight, buildInfo, mid, endIdx, depth + 1, memory);
+					QueuedBuildTask* pTaskLeft = new QueuedBuildTask(this, pLeft, buildInfo, startIdx, mid, depth + 1, memory);
+					QueuedBuildTask* pTaskRight = new QueuedBuildTask(this, pRight, buildInfo, mid, endIdx, depth + 1, memory);
 					{
-						EDXLockApply lock(mTaskLock);
-						mBuildTasks.push_back(pTaskLeft);
-						mBuildTasks.push_back(pTaskRight);
+						ScopeLock lock(&mTaskLock);
+						mBuildTasks.Add(UniquePtr<QueuedBuildTask>(pTaskLeft));
+						mBuildTasks.Add(UniquePtr<QueuedBuildTask>(pTaskRight));
 					}
-					ThreadScheduler::Instance()->AddTasks(Task((Task::TaskFunc)&BuildTask::_Run, pTaskLeft));
-					ThreadScheduler::Instance()->AddTasks(Task((Task::TaskFunc)&BuildTask::_Run, pTaskRight));
+					QueuedThreadPool::Instance()->AddQueuedWork(pTaskLeft);
+					QueuedThreadPool::Instance()->AddQueuedWork(pTaskRight);
 				}
 
 				mTreeBufSize += 1;
@@ -279,7 +280,7 @@ namespace EDX
 				for (auto i = 0; i < pBuildNode->primCount; i++)
 				{
 					pLeafNode[i].triangleCount = pBuildNode->primCount - i;
-					memcpy(&pLeafNode[i].tri4, &pBuildNode->pTriangles[i], sizeof(Triangle4));
+					Memory::Memcpy(&pLeafNode[i].tri4, &pBuildNode->pTriangles[i], sizeof(Triangle4));
 				}
 
 				(*pOffset) += 4 * pBuildNode->primCount;
@@ -310,12 +311,12 @@ namespace EDX
 			return currOffset;
 		}
 
-		void BVH2::ExtractGeometry(const vector<RefPtr<Primitive>>& prims)
+		void BVH2::ExtractGeometry(const Array<Primitive*>& prims)
 		{
 			// Get sizes of build buffer
 			uint vertexBufSize = 0;
 			uint triangleBufSize = 0;
-			for (auto i = 0; i < prims.size(); i++)
+			for (auto i = 0; i < prims.Size(); i++)
 			{
 				auto pMesh = prims[i]->GetMesh();
 
@@ -329,7 +330,7 @@ namespace EDX
 
 			// Fill build buffers
 			mBuildVertexCount = mBuildTriangleCount = 0;
-			for (auto i = 0; i < prims.size(); i++)
+			for (auto i = 0; i < prims.Size(); i++)
 			{
 				auto pMesh = prims[i]->GetMesh();
 
@@ -353,8 +354,8 @@ namespace EDX
 				}
 			}
 
-			assert(mBuildVertexCount == vertexBufSize);
-			assert(mBuildTriangleCount == triangleBufSize);
+			Assert(mBuildVertexCount == vertexBufSize);
+			Assert(mBuildTriangleCount == triangleBufSize);
 		}
 
 		bool BVH2::Intersect(const Ray& ray, Intersection* pIsect) const
@@ -433,7 +434,7 @@ namespace EDX
 					Triangle4Node* pLeafNode = (Triangle4Node*)pNode;
 					for (auto i = 0; i < pLeafNode->triangleCount; i++)
 					{
-						if (pLeafNode[i].tri4.Intersect(ray, pIsect, mpRefPrims))
+						if (pLeafNode[i].tri4.Intersect(ray, pIsect, mRefPrims))
 							hit = true;
 					}
 					nearFar = SSE::Shuffle<0, 1, 2, 3>(nearFar, -pIsect->mDist);
@@ -515,7 +516,7 @@ namespace EDX
 					Triangle4Node* pLeafNode = (Triangle4Node*)pNode;
 					for (auto i = 0; i < pLeafNode->triangleCount; i++)
 					{
-						if (pLeafNode[i].tri4.Occluded(ray, mpRefPrims))
+						if (pLeafNode[i].tri4.Occluded(ray, mRefPrims))
 							return true;
 					}
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Core/Sampler.h"
-#include "RNG/Random.h"
+#include "Core/Random.h"
 
 namespace EDX
 {

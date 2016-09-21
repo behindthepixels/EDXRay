@@ -2,9 +2,8 @@
 
 #include "Math/Vector.h"
 #include "Math/EDXMath.h"
-#include "RNG/Random.h"
-#include "Memory/Array.h"
-#include "Memory/RefPtr.h"
+#include "Core/Random.h"
+#include "Containers/DimensionalArray.h"
 
 namespace EDX
 {
@@ -24,8 +23,8 @@ namespace EDX
 			public:
 				Distribution1D(const float* pFunc, int size)
 				{
-					assert(pFunc);
-					assert(size > 0);
+					Assert(pFunc);
+					Assert(size > 0);
 
 					mSize = size;
 					mPDF.Init(size);
@@ -55,8 +54,8 @@ namespace EDX
 
 				float SampleContinuous(float u, float* pPdf, int* pOffset = nullptr) const
 				{
-					const float *ptr = std::upper_bound(mCDF.Data(), mCDF.Data() + mCDF.LinearSize(), u);
-					int offset = Math::Clamp(int(ptr - mCDF.Data() - 1), 0, mSize - 1);
+					const int index = Algorithm::UpperBound(mCDF.Data(), int(mCDF.LinearSize()), u);
+					int offset = Math::Clamp(index - 1, 0, mSize - 1);
 					if (pPdf)
 						*pPdf = mPDF[offset] / mIntegralVal;
 					if (pOffset)
@@ -69,8 +68,8 @@ namespace EDX
 
 				int SampleDiscrete(float u, float* pPdf) const
 				{
-					const float *ptr = std::upper_bound(mCDF.Data(), mCDF.Data() + mCDF.LinearSize(), u);
-					int offset = Math::Max(0, int(ptr - mCDF.Data() - 1));
+					const int index = Algorithm::UpperBound(mCDF.Data(), int(mCDF.LinearSize()), u);
+					int offset = Math::Max(0, index - 1);
 					if (pPdf)
 						*pPdf = mPDF[offset] / (mIntegralVal * mSize);
 
@@ -81,24 +80,26 @@ namespace EDX
 			class Distribution2D
 			{
 			private:
-				vector<RefPtr<Distribution1D>>	mConditional;
-				RefPtr<Distribution1D>			mpMarginal;
+				Array<UniquePtr<Distribution1D>>	mConditional;
+				UniquePtr<Distribution1D>			mpMarginal;
 
 			public:
 				Distribution2D(const float* pFunc, int sizeX, int sizeY)
 				{
-					assert(pFunc);
-					assert(sizeX > 0);
-					assert(sizeY > 0);
+					Assert(pFunc);
+					Assert(sizeX > 0);
+					Assert(sizeY > 0);
 
-					mConditional.reserve(sizeY);
+					mConditional.Reserve(sizeY);
 					for (auto i = 0; i < sizeY; i++)
-						mConditional.push_back(new Distribution1D(&pFunc[i * sizeX], sizeX));
+						mConditional.Add(MakeUnique<Distribution1D>(&pFunc[i * sizeX], sizeX));
 
-					RefPtr<float, PtrType::Array> pMarginalFunc = new float[sizeY];
+					float* pMarginalFunc = new float[sizeY];
 					for (auto i = 0; i < sizeY; i++)
 						pMarginalFunc[i] = mConditional[i]->mIntegralVal;
-					mpMarginal = new Distribution1D(pMarginalFunc.Ptr(), sizeY);
+					mpMarginal = MakeUnique<Distribution1D>(pMarginalFunc, sizeY);
+
+					Memory::SafeDeleteArray(pMarginalFunc);
 				}
 
 				void SampleContinuous(float u, float v, float* pSampledU, float* pSampledV, float* pPdf) const
@@ -108,7 +109,7 @@ namespace EDX
 					*pSampledV = mpMarginal->SampleContinuous(v, &pdfs[1], &iv);
 					*pSampledU = mConditional[iv]->SampleContinuous(u, &pdfs[0]);
 					*pPdf = pdfs[0] * pdfs[1];
-					assert(Math::NumericValid(*pPdf));
+					Assert(Math::NumericValid(*pPdf));
 				}
 				float Pdf(float u, float v) const
 				{
@@ -164,19 +165,19 @@ namespace EDX
 			inline Vector3 UniformSampleSphere(float u1, float u2)
 			{
 				float z = 1.f - 2.f * u1;
-				float r = sqrtf(max(0.f, 1.f - z*z));
+				float r = Math::Sqrt(Math::Max(0.f, 1.f - z*z));
 				float phi = 2.0f * float(Math::EDX_PI) * u2;
-				float x = r * cosf(phi);
-				float y = r * sinf(phi);
+				float x = r * Math::Cos(phi);
+				float y = r * Math::Sin(phi);
 				return Vector3(x, y, z);
 			}
 			inline Vector3 UniformSampleCone(float u1, float u2, float costhetamax,
 				const Vector3 &x, const Vector3 &y, const Vector3 &z)
 			{
 				float costheta = Math::Lerp(costhetamax, 1.0f, u1);
-				float sintheta = sqrtf(1.f - costheta * costheta);
+				float sintheta = Math::Sqrt(1.f - costheta * costheta);
 				float phi = 2.0f * float(Math::EDX_PI) * u2;
-				return cosf(phi) * sintheta * x + sinf(phi) * sintheta * y +
+				return Math::Cos(phi) * sintheta * x + Math::Sin(phi) * sintheta * y +
 					costheta * z;
 			}
 			inline float UniformSpherePDF()

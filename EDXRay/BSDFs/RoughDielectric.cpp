@@ -20,7 +20,7 @@ namespace EDX
 			bool sampleBoth = sampleReflect == sampleRefract;
 			const Vector3 wo = diffGeom.WorldToLocal(_wo);
 
-			float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+			float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 			roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 			float sampleRough = roughness * roughness;
 
@@ -58,7 +58,7 @@ namespace EDX
 					*pSampledTypes = ReflectScatter;
 
 
-				return GetValue(mpTexture.Ptr(), diffGeom) * Math::Abs(F * D * G / (4.0f * BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo)));
+				return GetValue(mpTexture.Get(), diffGeom) * Math::Abs(F * D * G / (4.0f * BSDFCoordinate::CosTheta(wi) * BSDFCoordinate::CosTheta(wo)));
 			}
 			else if (sample.w > prob && sampleBoth || (sampleRefract && !sampleBoth)) // Sample refraction
 			{
@@ -75,7 +75,7 @@ namespace EDX
 				bool entering = BSDFCoordinate::CosTheta(wo) > 0.0f;
 				float etai = mEtai, etat = mEtat;
 				if (!entering)
-					swap(etai, etat);
+					Swap(etai, etat);
 
 				const float ODotH = Math::Dot(wo, wh), IDotH = Math::Dot(wi, wh);
 				float sqrtDenom = etai * ODotH + etat * IDotH;
@@ -99,7 +99,7 @@ namespace EDX
 				// TODO: Fix solid angle compression when tracing radiance
 				float factor = 1.0f;
 
-				return GetValue(mpTexture.Ptr(), diffGeom) * Math::Abs(value * factor * factor);
+				return GetValue(mpTexture.Get(), diffGeom) * Math::Abs(value * factor * factor);
 			}
 
 			return Color::BLACK;

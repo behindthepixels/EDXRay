@@ -1,17 +1,24 @@
 #include "Renderer.h"
 #include "Camera.h"
 #include "Scene.h"
-#include "../Core/Ray.h"
+#include "Primitive.h"
+#include "TriangleMesh.h"
+#include "Light.h"
+#include "Ray.h"
 #include "../Integrators/DirectLighting.h"
 #include "../Integrators/PathTracing.h"
 #include "../Integrators/BidirectionalPathTracing.h"
 #include "../Sampler/RandomSampler.h"
 #include "../Sampler/SobolSampler.h"
+#include "../Tracer/BVH.h"
+#include "../Tracer/BVHBuildTask.h"
 #include "Film.h"
 #include "DifferentialGeom.h"
 #include "Graphics/Color.h"
 #include "RenderTask.h"
 #include "Config.h"
+
+#include "Graphics/ObjMesh.h"
 
 namespace EDX
 {
@@ -20,14 +27,14 @@ namespace EDX
 		Renderer::Renderer()
 		{
 			// Initialize scene
-			mpCamera = new Camera();
-			mpScene = new Scene;
-			ThreadScheduler::Instance()->InitAndLaunchThreads();
+			mpCamera.Reset(new Camera());
+			mpScene.Reset(new Scene);
+			QueuedThreadPool::Instance()->Create(GetNumberOfCores());
 		}
 
 		Renderer::~Renderer()
 		{
-			ThreadScheduler::DeleteInstance();
+			QueuedThreadPool::DeleteInstance();
 		}
 
 		void Renderer::InitComponent()
@@ -60,38 +67,38 @@ namespace EDX
 				break;
 			}
 
-			mpFilm = mJobDesc.UseRHF ? new FilmRHF : new Film;
+			mpFilm.Reset(new Film);
 			mpFilm->Init(mJobDesc.ImageWidth, mJobDesc.ImageHeight, pFilter);
 
 			switch (mJobDesc.SamplerType)
 			{
 			case ESamplerType::Random:
-				mpSampler = new RandomSampler;
+				mpSampler.Reset(new RandomSampler);
 				break;
 			case ESamplerType::Sobol:
-				mpSampler = new SobolSampler(mJobDesc.ImageWidth, mJobDesc.ImageHeight);
+				mpSampler.Reset(new SobolSampler(mJobDesc.ImageWidth, mJobDesc.ImageHeight));
 				break;
 			case ESamplerType::Metropolis:
-				mpSampler = new RandomSampler;
+				mpSampler.Reset(new RandomSampler);
 				break;
 			}
 
 			switch (mJobDesc.IntegratorType)
 			{
 			case EIntegratorType::DirectLighting:
-				mpIntegrator = new DirectLightingIntegrator(mJobDesc.MaxPathLength);
+				mpIntegrator.Reset(new DirectLightingIntegrator(mJobDesc.MaxPathLength));
 				break;
 			case EIntegratorType::PathTracing:
-				mpIntegrator = new PathTracingIntegrator(mJobDesc.MaxPathLength);
+				mpIntegrator.Reset(new PathTracingIntegrator(mJobDesc.MaxPathLength));
 				break;
 			case EIntegratorType::BidirectionalPathTracing:
-				mpIntegrator = new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Ptr(), mpFilm.Ptr());
+				mpIntegrator.Reset(new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Get(), mpFilm.Get()));
 				break;
 			case EIntegratorType::MultiplexedMLT:
-				mpIntegrator = new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Ptr(), mpFilm.Ptr());
+				mpIntegrator.Reset(new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Get(), mpFilm.Get()));
 				break;
 			case EIntegratorType::StochasticPPM:
-				mpIntegrator = new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Ptr(), mpFilm.Ptr());
+				mpIntegrator.Reset(new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Get(), mpFilm.Get()));
 				break;
 			}
 
@@ -114,7 +121,7 @@ namespace EDX
 			mTaskSync.Init(width, height);
 		}
 
-		void Renderer::RenderFrame(Sampler* pSampler, RandomGen& random, MemoryArena& memory)
+		void Renderer::RenderFrame(Sampler* pSampler, RandomGen& random, MemoryPool& memory)
 		{
 			RenderTile* pTask;
 			auto pSampleBuf = &pSampler->GetSampleBuffer();
@@ -135,7 +142,7 @@ namespace EDX
 						RayDifferential ray;
 						mpCamera->GenRayDifferential(*pSampleBuf, &ray);
 
-						Color L = mpIntegrator->Li(ray, mpScene.Ptr(), pSampler, random, memory);
+						Color L = mpIntegrator->Li(ray, mpScene.Get(), pSampler, random, memory);
 
 						mpFilm->AddSample(pSampleBuf->imageX, pSampleBuf->imageY, L);
 						memory.FreeAll();
@@ -144,16 +151,16 @@ namespace EDX
 			}
 		}
 
-		void Renderer::RenderImage(int threadId, RandomGen& random, MemoryArena& memory)
+		void Renderer::RenderImage(int threadId, RandomGen& random, MemoryPool& memory)
 		{
-			RefPtr<Sampler> pTileSampler = mpSampler->Clone();
+			UniquePtr<Sampler> pTileSampler(mpSampler->Clone());
 
 			for (auto i = 0; i < mJobDesc.SamplesPerPixel; i++)
 			{
 				// Sync barrier before render
 				mTaskSync.SyncThreadsPreRender(threadId);
 
-				RenderFrame(pTileSampler.Ptr(), random, memory);
+				RenderFrame(pTileSampler.Get(), random, memory);
 
 				// Sync barrier after render
 				mTaskSync.SyncThreadsPostRender(threadId);
@@ -175,7 +182,7 @@ namespace EDX
 
 		void Renderer::BakeSamples()
 		{
-			mpIntegrator->RequestSamples(mpScene.Ptr(), &mpSampler->GetSampleBuffer());
+			mpIntegrator->RequestSamples(mpScene.Get(), &mpSampler->GetSampleBuffer());
 		}
 
 		void Renderer::QueueRenderTasks()
@@ -183,17 +190,17 @@ namespace EDX
 			mpFilm->Clear();
 			mTaskSync.SetAbort(false);
 
-			for (auto i = 0; i < ThreadScheduler::Instance()->GetThreadCount(); i++)
+			for (auto i = 0; i < QueuedThreadPool::Instance()->GetNumThreads(); i++)
 			{
-				mTasks.push_back(new RenderTask(this));
-				ThreadScheduler::Instance()->AddTasks(Task((Task::TaskFunc)&RenderTask::_Render, mTasks[i]));
+				mTasks.Add(MakeUnique<QueuedRenderTask>(this, i));
+				QueuedThreadPool::Instance()->AddQueuedWork(mTasks[i].Get());
 			}
 		}
 
 		void Renderer::StopRenderTasks()
 		{
 			mTaskSync.SetAbort(true);
-			ThreadScheduler::Instance()->JoinAllTasks();
+			QueuedThreadPool::Instance()->JoinAllThreads();
 		}
 
 		void Renderer::SetJobDesc(const RenderJobDesc& jobDesc)
@@ -214,7 +221,7 @@ namespace EDX
 
 		Film* Renderer::GetFilm()
 		{
-			return mpFilm.Ptr();
+			return mpFilm.Get();
 		}
 	}
 }

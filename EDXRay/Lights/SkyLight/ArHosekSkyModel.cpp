@@ -101,7 +101,7 @@ All instructions on how to use this code are in the accompanying header file.
 #include "ArHosekSkyModelData_Spectral.h"
 #include "ArHosekSkyModelData_CIEXYZ.h"
 #include "ArHosekSkyModelData_RGB.h"
-#include <assert.h>
+#include <Assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -691,12 +691,12 @@ double arhosekskymodel_solar_radiance_internal2(
         double                  gamma
         )
 {
-    assert(
-           wavelength >= 320.0
-        && wavelength <= 720.0
-        && state->turbidity >= 1.0
-        && state->turbidity <= 10.0
-        );
+    //Assert(
+    //       wavelength >= 320.0
+    //    && wavelength <= 720.0
+    //    && state->turbidity >= 1.0
+    //    && state->turbidity <= 10.0
+    //    );
             
     
     int     turb_low  = (int) state->turbidity - 1;

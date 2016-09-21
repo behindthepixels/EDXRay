@@ -2,7 +2,7 @@
 #include "RandomSampler.h"
 
 #include "Math/Vec2.h"
-#include "RNG/Random.h"
+#include "Core/Random.h"
 
 namespace EDX
 {
@@ -14,7 +14,7 @@ namespace EDX
 			SampleBuffer* pSamples,
 			RandomGen& random)
 		{
-			assert(pSamples);
+			Assert(pSamples);
 
 			pSamples->imageX = random.Float();
 			pSamples->imageY = random.Float();

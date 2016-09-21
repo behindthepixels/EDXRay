@@ -18,11 +18,11 @@ namespace EDX
 		class AreaLight : public Light
 		{
 		private:
-			RefPtr<Primitive> mpPrim;
-			Color			mIntensity;
-			uint			mTriangleCount;
-			float			mArea, mInvArea;
-			RefPtr<BVH2>	mLightBVH;
+			Primitive*			mpPrim;
+			Color				mIntensity;
+			uint				mTriangleCount;
+			float				mArea, mInvArea;
+			UniquePtr<BVH2>	mLightBVH;
 
 		public:
 			AreaLight(
@@ -45,8 +45,9 @@ namespace EDX
 
 				mpPrim->SetAreaLight(this);
 
-				vector<RefPtr<Primitive>> primitives = { mpPrim };
-				mLightBVH = new BVH2;
+				Array<Primitive*> primitives;
+				primitives.Add(mpPrim);
+				mLightBVH = MakeUnique<BVH2>();
 				mLightBVH->Construct(primitives);
 			}
 
@@ -177,7 +178,7 @@ namespace EDX
 				return true;
 			}
 
-			RefPtr<Primitive> GetPrimitive()
+			Primitive* GetPrimitive()
 			{
 				return mpPrim;
 			}

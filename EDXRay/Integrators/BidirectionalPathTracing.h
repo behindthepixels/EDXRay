@@ -46,7 +46,7 @@ namespace EDX
 				const Scene* pScene,
 				Sampler* pSampler,
 				RandomGen& random,
-				MemoryArena& memory) const override;
+				MemoryPool& memory) const override;
 			void RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf) override;
 
 		private:

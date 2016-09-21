@@ -17,13 +17,13 @@ namespace EDX
 		class EnvironmentLight : public Light
 		{
 		private:
-			RefPtr<Texture2D<Color>>			mpMap;
-			RefPtr<Sampling::Distribution2D>	mpDistribution;
-			Array2f								mLuminance;
-			const Scene*						mpScene;
-			bool								mIsTexture;
-			mutable float						mScale;
-			mutable float						mRotation;
+			UniquePtr<Texture2D<Color>>			mpMap;
+			UniquePtr<Sampling::Distribution2D>	mpDistribution;
+			Array2f									mLuminance;
+			const Scene*							mpScene;
+			bool									mIsTexture;
+			mutable float							mScale;
+			mutable float							mRotation;
 
 		public:
 			EnvironmentLight(const Color& intens,
@@ -34,7 +34,7 @@ namespace EDX
 				mpScene = scene;
 				mIsTexture = false;
 				mScale = 1.0f;
-				mpMap = new ConstantTexture2D<Color>(intens);
+				mpMap = MakeUnique<ConstantTexture2D<Color>>(intens);
 			}
 
 			EnvironmentLight(const char* path,
@@ -48,7 +48,7 @@ namespace EDX
 				mIsTexture = true;
 				mScale = scale;
 				mRotation = Math::ToRadians(rotate);
-				mpMap = new ImageTexture<Color, Color>(path, 1.0f);
+				mpMap = MakeUnique<ImageTexture<Color, Color>>(path, 1.0f);
 
 				CalcLuminanceDistribution();
 			}
@@ -76,7 +76,7 @@ namespace EDX
 					skyModelState[i] = arhosek_rgb_skymodelstate_alloc_init(turbidity[i], groundAlbedo[i], sunElevationRad);
 
 				const float sunZenith = float(Math::EDX_PI_2) - sunElevationRad;
-				Array<2, Color> skyRadiance;
+				DimensionalArray<2, Color> skyRadiance;
 				skyRadiance.Init(Vector2i(resX, resY));
 				for (auto y = 0; y < resY * 0.5f; y++)
 				{
@@ -95,7 +95,7 @@ namespace EDX
 						for (auto i = 0; i < NUM_CHANNELS; i++)
 						{
 							float r = arhosek_tristim_skymodel_radiance(skyModelState[i], theta, gamma, i);
-							assert(Math::NumericValid(r));
+							Assert(Math::NumericValid(r));
 							skyRadiance[Vector2i(x, y)][i] = r * 0.025f;
 							if (gamma < 0.02)
 								skyRadiance[Vector2i(x, y)][i] = 3000.0f;
@@ -106,7 +106,7 @@ namespace EDX
 				for (auto i = 0; i < NUM_CHANNELS; i++)
 					arhosekskymodelstate_free(skyModelState[i]);
 
-				mpMap = new ImageTexture<Color, Color>(skyRadiance.Data(), resX, resY);
+				mpMap = MakeUnique<ImageTexture<Color, Color>>(skyRadiance.Data(), resX, resY);
 
 				CalcLuminanceDistribution();
 			}
@@ -223,7 +223,7 @@ namespace EDX
 				if (pDirectPdf)
 					*pDirectPdf = pdfW;
 
-				//assert(*pPdf > 0.0f);
+				//Assert(*pPdf > 0.0f);
 				
 				Vector2 diff[2] = { Vector2::ZERO, Vector2::ZERO };
 				return mpMap->Sample(Vector2(u, v), diff, TextureFilter::Linear) * mScale;
@@ -311,7 +311,7 @@ namespace EDX
 			}
 			Texture2D<Color>* GetTexture() const
 			{
-				return mpMap.Ptr();
+				return mpMap.Get();
 			}
 			bool IsTexture() const
 			{
@@ -352,7 +352,7 @@ namespace EDX
 					}
 				}
 
-				mpDistribution = new Sampling::Distribution2D(mLuminance.Data(), width, height);
+				mpDistribution = MakeUnique<Sampling::Distribution2D>(mLuminance.Data(), width, height);
 			}
 
 			inline float ApplyRotation(const float phi, const float scl = 1.0f) const

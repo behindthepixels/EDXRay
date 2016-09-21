@@ -40,7 +40,7 @@ namespace EDX
 
 			const BSDF* mpBSDF;
 			Vector3 mMeanFreePathLength;
-			RefPtr<BSSRDFAdapter> mAdapter;
+			UniquePtr<BSSRDFAdapter> mAdapter;
 
 			float mScale = 1.0f;
 			float mEtai = 1.0f;
@@ -51,7 +51,7 @@ namespace EDX
 				: mpBSDF(pBSDF)
 				, mMeanFreePathLength(meanFreePath)
 			{
-				mAdapter = new BSSRDFAdapter(this);
+				mAdapter = MakeUnique<BSSRDFAdapter>(this);
 			}
 
 			Color SampleSubsurfaceScattered(
@@ -61,7 +61,7 @@ namespace EDX
 				const Scene*			pScene,
 				DifferentialGeom*		pSampledDiffGeom,
 				float*					pPdf,
-				MemoryArena&			memory) const;
+				MemoryPool&				memory) const;
 
 			float EvalWi(const Vector3& wi) const;
 

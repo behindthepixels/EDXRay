@@ -33,7 +33,7 @@ namespace EDX
 
 			void Pack(const BuildVertex tris[4][3], const BuildTriangle indices[4], const size_t count)
 			{
-				assert(count <= 4);
+				Assert(count <= 4);
 
 				for (auto i = 0; i < count; i++)
 				{
@@ -66,7 +66,7 @@ namespace EDX
 				}
 			}
 
-			__forceinline bool Intersect(const Ray& ray, Intersection* pIsect, const vector<RefPtr<Primitive>>* pPrims) const
+			__forceinline bool Intersect(const Ray& ray, Intersection* pIsect, const Array<Primitive*>& prims) const
 			{
 				// Calculate determinant
 				const Vec3f_SSE vOrgs = Vec3f_SSE(ray.mOrg);
@@ -98,7 +98,7 @@ namespace EDX
 				float baryCentricU = u[idx], baryCentricV = v[idx];
 				if (mHasAlpha[idx])
 				{
-					const auto prim = (*pPrims)[mMeshIds[idx]].Ptr();
+					const auto prim = prims[mMeshIds[idx]];
 					const auto mesh = prim->GetMesh();
 					const Vector2& texcoord1 = mesh->GetTexCoordAt(3 * mTriIds[idx]);
 					const Vector2& texcoord2 = mesh->GetTexCoordAt(3 * mTriIds[idx] + 1);
@@ -124,7 +124,7 @@ namespace EDX
 				return true;
 			}
 
-			__forceinline bool Occluded(const Ray& ray, const vector<RefPtr<Primitive>>* pPrims) const
+			__forceinline bool Occluded(const Ray& ray, const Array<Primitive*> prims) const
 			{
 				// Calculate determinant
 				const Vec3f_SSE vOrgs = Vec3f_SSE(ray.mOrg);
@@ -159,7 +159,7 @@ namespace EDX
 					const size_t idx = SSE::SelectMin(valid, t);
 					float baryCentricU = u[idx], baryCentricV = v[idx];
 
-					const auto prim = (*pPrims)[mMeshIds[idx]].Ptr();
+					const auto prim = prims[mMeshIds[idx]];
 					const auto mesh = prim->GetMesh();
 					const Vector2& texcoord1 = mesh->GetTexCoordAt(3 * mTriIds[idx]);
 					const Vector2& texcoord2 = mesh->GetTexCoordAt(3 * mTriIds[idx] + 1);

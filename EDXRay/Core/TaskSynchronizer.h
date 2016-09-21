@@ -2,8 +2,7 @@
 
 #include "EDXPrerequisites.h"
 #include "../ForwardDecl.h"
-#include "Windows/Thread.h"
-#include <atomic>
+#include "Windows/Threading.h"
 
 namespace EDX
 {
@@ -26,21 +25,21 @@ namespace EDX
 		class TaskSynchronizer
 		{
 		private:
-			vector<RenderTile> mTiles;
+			Array<RenderTile> mTiles;
 			uint mCurrentTileIdx;
-			EDXLock mLock;
+			CriticalSection mLock;
 
 			uint mThreadCount;
-			std::atomic_int mPreRenderSyncedCount, mPostRenderSyncedCount;
-			vector<HANDLE>	mPreRenderEvent;
-			vector<HANDLE>	mPostRenderEvent;
+			AtomicCounter mPreRenderSyncedCount, mPostRenderSyncedCount;
+			Array<HANDLE>	mPreRenderEvent;
+			Array<HANDLE>	mPostRenderEvent;
 			bool mAllTaskFinished;
 			bool mAbort;
 
 		public:
 			void Init(const int x, const int y)
 			{
-				mTiles.clear();
+				mTiles.Clear();
 				mCurrentTileIdx = 0;
 
 				for (int i = 0; i < y; i += RenderTile::TILE_SIZE)
@@ -52,13 +51,13 @@ namespace EDX
 						maxX = maxX <= x ? maxX : x;
 						maxY = maxY <= y ? maxY : y;
 
-						mTiles.push_back(RenderTile(minX, minY, maxX, maxY));
+						mTiles.Emplace(minX, minY, maxX, maxY);
 					}
 				}
 
-				mThreadCount = DetectCPUCount();
-				mPreRenderEvent.resize(mThreadCount);
-				mPostRenderEvent.resize(mThreadCount);
+				mThreadCount = GetNumberOfCores();
+				mPreRenderEvent.Resize(mThreadCount);
+				mPostRenderEvent.Resize(mThreadCount);
 				for (auto& it : mPreRenderEvent)
 				{
 					it = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -74,9 +73,9 @@ namespace EDX
 
 			bool GetNextTask(RenderTile*& pTask)
 			{
-				EDXLockApply cs(mLock);
+				ScopeLock cs(&mLock);
 
-				if (mCurrentTileIdx < mTiles.size())
+				if (mCurrentTileIdx < mTiles.Size())
 					pTask = &mTiles[mCurrentTileIdx];
 				else
 					return false;
@@ -89,17 +88,17 @@ namespace EDX
 			void SyncThreadsPreRender(int threadId)
 			{
 				SetEvent(mPreRenderEvent[threadId]);
-				while (WaitForMultipleObjects(mThreadCount, mPreRenderEvent.data(), true, 20) == WAIT_TIMEOUT)
+				while (WaitForMultipleObjects(mThreadCount, mPreRenderEvent.Data(), true, 20) == WAIT_TIMEOUT)
 				{
 					if (mAbort)
 						return;
 				}
 
-				mPreRenderSyncedCount++;
+				mPreRenderSyncedCount.Increment();
 
-				if (mPreRenderSyncedCount == mThreadCount)
+				if (mPreRenderSyncedCount.GetValue() == mThreadCount)
 				{
-					mPreRenderSyncedCount = 0;
+					mPreRenderSyncedCount.Set(0);
 					for (auto& it : mPreRenderEvent)
 					{
 						ResetEvent(it);
@@ -110,17 +109,17 @@ namespace EDX
 			void SyncThreadsPostRender(int threadId)
 			{
 				SetEvent(mPostRenderEvent[threadId]);
-				while (WaitForMultipleObjects(mThreadCount, mPostRenderEvent.data(), true, 20) == WAIT_TIMEOUT)
+				while (WaitForMultipleObjects(mThreadCount, mPostRenderEvent.Data(), true, 20) == WAIT_TIMEOUT)
 				{
 					if (mAbort)
 						return;
 				}
 
-				mPostRenderSyncedCount++;
+				mPostRenderSyncedCount.Increment();
 
-				if (mPostRenderSyncedCount == mThreadCount)
+				if (mPostRenderSyncedCount.GetValue() == mThreadCount)
 				{
-					mPostRenderSyncedCount = 0;
+					mPostRenderSyncedCount.Set(0);
 					for (auto& it : mPostRenderEvent)
 					{
 						ResetEvent(it);

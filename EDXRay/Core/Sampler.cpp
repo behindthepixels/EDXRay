@@ -1,7 +1,7 @@
 #include "Sampler.h"
 
-#include "Memory/Memory.h"
-#include "RNG/Random.h"
+#include "Core/Memory.h"
+#include "Core/Random.h"
 
 namespace EDX
 {
@@ -9,8 +9,8 @@ namespace EDX
 	{
 		SampleBuffer::~SampleBuffer()
 		{
-			SafeDeleteArray(p1D);
-			SafeDeleteArray(p2D);
+			Memory::SafeDeleteArray(p1D);
+			Memory::SafeDeleteArray(p2D);
 		}
 
 		SampleBuffer* SampleBuffer::Duplicate(uint count) const
@@ -29,8 +29,8 @@ namespace EDX
 
 		void SampleBuffer::Validate()
 		{
-			SafeDeleteArray(p1D);
-			SafeDeleteArray(p2D);
+			Memory::SafeDeleteArray(p1D);
+			Memory::SafeDeleteArray(p2D);
 
 			if (count1D > 0)
 				p1D = new float[count1D];

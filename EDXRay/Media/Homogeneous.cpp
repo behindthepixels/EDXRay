@@ -24,7 +24,7 @@ namespace EDX
 			bool sampledMedium = sampledDist < ray.mMax;
 
 			if (sampledMedium)
-				*pMS = MediumScatter(ray.CalcPoint(dist), mpPhaseFunc.Ptr(), MediumInterface(ray.mpMedium));
+				*pMS = MediumScatter(ray.CalcPoint(dist), mpPhaseFunc.Get(), MediumInterface(ray.mpMedium));
 
 			Vector3 transmittance = Math::Exp((-1.0f * mSigmaT) * dist);
 			Vector3 density = sampledMedium ? (mSigmaT * transmittance) : transmittance;

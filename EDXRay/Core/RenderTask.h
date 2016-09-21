@@ -3,10 +3,7 @@
 #include "EDXPrerequisites.h"
 #include "Renderer.h"
 
-#include "Windows/Thread.h"
-#include "Memory/RefPtr.h"
-#include "Memory/Memory.h"
-#include "RNG/Random.h"
+#include "Windows/Threading.h"
 
 #include "../ForwardDecl.h"
 
@@ -37,7 +34,34 @@ namespace EDX
 			Renderer*	mpRenderer;
 
 		private:
-			MemoryArena mMemory;
+			MemoryPool mMemory;
+			RandomGen	mRandom;
+		};
+
+		class QueuedRenderTask : public QueuedWork
+		{
+		public:
+			QueuedRenderTask(Renderer* pRenderer, const int idx)
+				: mpRenderer(pRenderer)
+				, mIndex(idx)
+			{
+			}
+
+			void DoThreadedWork()
+			{
+				mpRenderer->RenderImage(mIndex, mRandom, mMemory);
+			}
+
+			void Abandon()
+			{
+
+			}
+
+		private:
+			Renderer*	mpRenderer;
+			int			mIndex;
+
+			MemoryPool	mMemory;
 			RandomGen	mRandom;
 		};
 	}

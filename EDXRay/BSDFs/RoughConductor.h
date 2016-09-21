@@ -9,23 +9,23 @@ namespace EDX
 		class RoughConductor : public BSDF
 		{
 		private:
-			RefPtr<Texture2D<float>> mRoughness;
+			UniquePtr<Texture2D<float>> mRoughness;
 
 		public:
 			RoughConductor(const Color& reflectance = Color::WHITE, float roughness = 0.3f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, reflectance)
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
-			RoughConductor(const RefPtr<Texture2D<Color>>& pTex, const RefPtr<Texture2D<Color>>& pNormal, float roughness = 0.3f)
-				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, pTex, pNormal)
+			RoughConductor(UniquePtr<Texture2D<Color>> pTex, UniquePtr<Texture2D<Color>> pNormal, float roughness = 0.3f)
+				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, Move(pTex), Move(pNormal))
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 			RoughConductor(const char* pFile, float roughness = 1.0f)
 				: BSDF(ScatterType(BSDF_REFLECTION | BSDF_GLOSSY), BSDFType::RoughConductor, pFile)
+				, mRoughness(new ConstantTexture2D<float>(roughness))
 			{
-				mRoughness = new ConstantTexture2D<float>(roughness);
 			}
 
 			Color SampleScattered(const Vector3& _wo,
@@ -46,7 +46,7 @@ namespace EDX
 				if (BSDFCoordinate::CosTheta(wh) < 0.0f)
 					wh *= -1.0f;
 
-				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 
 				float dwh_dwi = 1.0f / (4.0f * Math::Dot(wi, wh));
@@ -62,7 +62,7 @@ namespace EDX
 
 				Vector3 wh = Math::Normalize(wo + wi);
 
-				float roughness = GetValue(mRoughness.Ptr(), diffGeom, TextureFilter::Linear);
+				float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
 				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
 				float sampleRough = roughness * roughness;
 				float D = GGX_D(wh, sampleRough);
@@ -81,7 +81,7 @@ namespace EDX
 				return BSDF::GetParameterCount() + 1;
 			}
 
-			string GetParameterName(const int idx) const
+			String GetParameterName(const int idx) const
 			{
 				if (idx < BSDF::GetParameterCount())
 					return BSDF::GetParameterName(idx);
@@ -92,7 +92,7 @@ namespace EDX
 				return "";
 			}
 
-			Parameter GetParameter(const string& name) const
+			Parameter GetParameter(const String& name) const
 			{
 				Parameter ret = BSDF::GetParameter(name);
 				if (ret.Type != Parameter::None)
@@ -111,7 +111,7 @@ namespace EDX
 				return ret;
 			}
 
-			void SetParameter(const string& name, const Parameter& param)
+			void SetParameter(const String& name, const Parameter& param)
 			{
 				BSDF::SetParameter(name, param);
 
@@ -122,10 +122,10 @@ namespace EDX
 						if (this->mRoughness->IsConstant())
 							this->mRoughness->SetValue(param.Value);
 						else
-							this->mRoughness = new ConstantTexture2D<float>(param.Value);
+							this->mRoughness.Reset(new ConstantTexture2D<float>(param.Value));
 					}
 					else if (param.Type == Parameter::TextureMap)
-						this->mRoughness = new ImageTexture<float, float>(param.TexPath, 1.0f);
+						this->mRoughness.Reset(new ImageTexture<float, float>(param.TexPath, 1.0f));
 				}
 
 				return;
