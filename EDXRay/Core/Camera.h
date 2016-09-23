@@ -14,7 +14,7 @@ namespace EDX
 			float FStop;
 
 			float CalcFieldOfView() const;
-			float CalcLensRadius() const;
+			float CalcLensRadius(const float focalPlaneDist) const;
 		};
 
 		struct CameraParameters

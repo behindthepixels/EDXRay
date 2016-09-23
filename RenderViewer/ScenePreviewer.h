@@ -307,7 +307,9 @@ namespace EDX
 						mPickedTriIdx = isect.mTriId;
 					}
 					else
+					{
 						mpCamera->mFocalPlaneDist = isect.mDist;
+					}
 				}
 				else
 				{

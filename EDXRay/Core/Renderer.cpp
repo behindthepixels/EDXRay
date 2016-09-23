@@ -215,7 +215,7 @@ namespace EDX
 				mJobDesc.CameraParams.mLensSettings.CalcFieldOfView(),
 				mJobDesc.CameraParams.NearClip,
 				mJobDesc.CameraParams.FarClip,
-				mJobDesc.CameraParams.mLensSettings.CalcLensRadius(),
+				mJobDesc.CameraParams.mLensSettings.CalcLensRadius(mJobDesc.CameraParams.FocusPlaneDist),
 				mJobDesc.CameraParams.FocusPlaneDist);
 		}
 

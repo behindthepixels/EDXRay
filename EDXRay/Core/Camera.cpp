@@ -21,12 +21,23 @@ namespace EDX
 				);
 		}
 
-		float LensSettings::CalcLensRadius() const
+		float LensSettings::CalcLensRadius(const float focalPlaneDist) const
 		{
 			if (FStop == 22.0f)
 				return 0.0f;
 
-			return 0.005f * FocalLengthMilliMeters / FStop; // Convert to meters
+
+			// Convert f-stop, focal length, and focal distance to
+			// projected circle of confusion size at infinity in mm.
+			//
+			// coc = f * f / (n * (d - f))
+			// where,
+			//   f = focal length
+			//   d = focal distance
+			//   n = fstop (where n is the "n" in "f/n")
+			float Diameter = Math::Square(FocalLengthMilliMeters) / (FStop * (1000.0f * focalPlaneDist - FocalLengthMilliMeters));
+
+			return 0.0005f * Diameter; // Convert to meters
 		}
 
 		void Camera::Init(const Vector3& pos,
