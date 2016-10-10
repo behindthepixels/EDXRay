@@ -152,6 +152,10 @@ void OnRender(Object* pSender, EventArgs args)
 			gRendering = !gRendering;
 			if (gRendering)
 			{
+				pJobDesc->CameraParams.Pos = gpPreview->GetCamera().mPos;
+				pJobDesc->CameraParams.Target = gpPreview->GetCamera().mTarget;
+				pJobDesc->CameraParams.Up = gpPreview->GetCamera().mUp;
+				pJobDesc->CameraParams.FocusPlaneDist = gpPreview->GetCamera().mFocalPlaneDist;
 				gpRenderer->InitComponent();
 				gpRenderer->QueueRenderTasks();
 			}
@@ -208,15 +212,13 @@ void OnRender(Object* pSender, EventArgs args)
 		static bool showCameraSettings = true;
 		if (EDXGui::CollapsingHeader("Camera Settings", showCameraSettings))
 		{
-			if (EDXGui::Slider<float>("Focal Length", &pJobDesc->CameraParams.mLensSettings.FocalLengthMilliMeters, 14, 240.0f))
+			if (EDXGui::Slider<int>("Focal Length", &pJobDesc->CameraParams.FocalLengthMilliMeters, 14, 240))
 			{
-				gpPreview->GetCamera().mFOV = pJobDesc->CameraParams.mLensSettings.CalcFieldOfView();
+				gpPreview->GetCamera().mFOV = pJobDesc->CameraParams.CalcFieldOfView();
 				gpPreview->GetCamera().Resize(pJobDesc->ImageWidth, pJobDesc->ImageHeight);
 			}
-			if (EDXGui::Slider<float>("F-Stop", &gpRenderer->GetJobDesc()->CameraParams.mLensSettings.FStop, 1.0f, 22.0f))
-			{
-				gpPreview->GetCamera().mLensRadius = pJobDesc->CameraParams.mLensSettings.CalcLensRadius();
-			}
+			EDXGui::Slider<float>("F-Stop", &pJobDesc->CameraParams.FStop, 1.0f, 22.0f);
+			EDXGui::Text("Focus Distance: %.2fm", gpPreview->GetCamera().GetFocusDistance());
 			EDXGui::CheckBox("Set Focus Distance", gpPreview->mSetFocusDistance);
 			EDXGui::CheckBox("Lock Camera", gpPreview->mLockCameraMovement);
 

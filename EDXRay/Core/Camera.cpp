@@ -7,37 +7,30 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		float LensSettings::CalcFieldOfView() const
+		// Convert focal length to FOV,
+		// 
+		// fov = 2 * atan(d/(2*f))
+		// where,
+		//   d = sensor dimension (full frame sensor 36x24mm)
+		//   f = focal length
+		float CameraParameters::CalcFieldOfView() const
 		{
-			// Convert focal length to FOV,
-			// 
-			// fov = 2 * atan(d/(2*f))
-			// where,
-			//   d = sensor dimension (APS-C 24.576 mm)
-			//   f = focal length
-
 			return Math::ToDegrees(
 				2.0f * Math::Atan2(0.5f * FullFrameSensorSize, FocalLengthMilliMeters)
-				);
+			);
 		}
 
-		float LensSettings::CalcLensRadius(const float focalPlaneDist) const
+
+		// Convert f-stop, focal length, and focal distance to
+		// projected circle of confusion size at infinity in mm.
+		float CameraParameters::CalcCircleOfConfusionRadius() const
 		{
 			if (FStop == 22.0f)
 				return 0.0f;
 
-
-			// Convert f-stop, focal length, and focal distance to
-			// projected circle of confusion size at infinity in mm.
-			//
-			// coc = f * f / (n * (d - f))
-			// where,
-			//   f = focal length
-			//   d = focal distance
-			//   n = fstop (where n is the "n" in "f/n")
-			float Diameter = Math::Square(FocalLengthMilliMeters) / (FStop * (1000.0f * focalPlaneDist - FocalLengthMilliMeters));
-
-			return 0.0005f * Diameter; // Convert to meters
+			const float Infinity = 1e8f;
+			return 0.5f * Math::Abs(FocalLengthMilliMeters /
+				FStop * (1.0f - (FocusPlaneDist * (1000.0f * Infinity - FocalLengthMilliMeters)) / (Infinity * (1000.0f * FocusPlaneDist - FocalLengthMilliMeters))));
 		}
 
 		void Camera::Init(const Vector3& pos,
@@ -48,12 +41,12 @@ namespace EDX
 			const float FOV,
 			const float nearClip,
 			const float farClip,
-			const float lensR,
+			const float blurRadius,
 			const float focalDist)
 		{
 			EDX::Camera::Init(pos, tar, up, resX, resY, FOV, nearClip, farClip);
 
-			mLensRadius = lensR;
+			mBlurRadius = blurRadius;
 			mFocalPlaneDist = focalDist;
 
 			float tanHalfAngle = Math::Tan(Math::ToRadians(mFOV * 0.5f));
@@ -78,15 +71,18 @@ namespace EDX
 			pRay->mOrg = Vector3::ZERO;
 			pRay->mDir = Math::Normalize(camCoord);
 
-			if (mLensRadius > 0.0f && !forcePinHole)
+			if (mBlurRadius > 0.0f && !forcePinHole)
 			{
+				float blurFOV = mBlurRadius / float(24.0f) * mFOV;
+				float radiusInWorld = mFocalPlaneDist * Math::Tan(Math::ToRadians(blurFOV));
+
 				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
 
 				float fU, fV;
 				Sampling::ConcentricSampleDisk(sample.lensU, sample.lensV, &fU, &fV);
-				fU *= mLensRadius;
-				fV *= mLensRadius;
+				fU *= radiusInWorld;
+				fV *= radiusInWorld;
 
 				pRay->mOrg = Vector3(fU, fV, 0.0f);
 				pRay->mDir = Math::Normalize(ptFocal - pRay->mOrg);
@@ -104,15 +100,18 @@ namespace EDX
 			pRay->mOrg = Vector3::ZERO;
 			pRay->mDir = Math::Normalize(camCoord);
 
-			if (mLensRadius > 0.0f)
+			if (mBlurRadius > 0.0f)
 			{
+				float blurFOV = mBlurRadius / float(24.0f) * mFOV;
+				float radiusInWorld = mFocalPlaneDist * Math::Tan(Math::ToRadians(blurFOV));
+
 				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
 
 				float u, v;
 				Sampling::ConcentricSampleDisk(sample.lensU, sample.lensV, &u, &v);
-				u *= mLensRadius;
-				v *= mLensRadius;
+				u *= radiusInWorld;
+				v *= radiusInWorld;
 
 				pRay->mOrg = Vector3(u, v, 0.0f);
 				pRay->mDir = Math::Normalize(ptFocal - pRay->mOrg);

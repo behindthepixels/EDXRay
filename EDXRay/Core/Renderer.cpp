@@ -39,16 +39,16 @@ namespace EDX
 
 		void Renderer::InitComponent()
 		{
-			//mpCamera->Init(mJobDesc.CameraParams.Pos,
-			//	mJobDesc.CameraParams.Target,
-			//	mJobDesc.CameraParams.Up,
-			//	mJobDesc.ImageWidth,
-			//	mJobDesc.ImageHeight,
-			//	mJobDesc.CameraParams.mLensSettings.CalcFieldOfView(),
-			//	mJobDesc.CameraParams.NearClip,
-			//	mJobDesc.CameraParams.FarClip,
-			//	mJobDesc.CameraParams.mLensSettings.CalcLensRadius(),
-			//	mJobDesc.CameraParams.FocusPlaneDist);
+			mpCamera->Init(mJobDesc.CameraParams.Pos,
+				mJobDesc.CameraParams.Target,
+				mJobDesc.CameraParams.Up,
+				mJobDesc.ImageWidth,
+				mJobDesc.ImageHeight,
+				mJobDesc.CameraParams.CalcFieldOfView(),
+				mJobDesc.CameraParams.NearClip,
+				mJobDesc.CameraParams.FarClip,
+				mJobDesc.CameraParams.CalcCircleOfConfusionRadius(),
+				mJobDesc.CameraParams.FocusPlaneDist);
 
 			Filter* pFilter;
 			switch (mJobDesc.FilterType)
@@ -212,10 +212,10 @@ namespace EDX
 				mJobDesc.CameraParams.Up,
 				mJobDesc.ImageWidth,
 				mJobDesc.ImageHeight,
-				mJobDesc.CameraParams.mLensSettings.CalcFieldOfView(),
+				mJobDesc.CameraParams.CalcFieldOfView(),
 				mJobDesc.CameraParams.NearClip,
 				mJobDesc.CameraParams.FarClip,
-				mJobDesc.CameraParams.mLensSettings.CalcLensRadius(mJobDesc.CameraParams.FocusPlaneDist),
+				mJobDesc.CameraParams.CalcCircleOfConfusionRadius(),
 				mJobDesc.CameraParams.FocusPlaneDist);
 		}
 
