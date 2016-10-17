@@ -29,8 +29,12 @@ namespace EDX
 				return 0.0f;
 
 			const float Infinity = 1e8f;
-			return 0.5f * Math::Abs(FocalLengthMilliMeters /
+			float blurRadius = 0.5f * Math::Abs(FocalLengthMilliMeters /
 				FStop * (1.0f - (FocusPlaneDist * (1000.0f * Infinity - FocalLengthMilliMeters)) / (Infinity * (1000.0f * FocusPlaneDist - FocalLengthMilliMeters))));
+
+			float blurFOV = blurRadius / float(24.0f) * CalcFieldOfView();
+
+			return FocusPlaneDist * Math::Tan(Math::ToRadians(blurFOV));
 		}
 
 		void Camera::Init(const Vector3& pos,
@@ -46,7 +50,7 @@ namespace EDX
 		{
 			EDX::Camera::Init(pos, tar, up, resX, resY, FOV, nearClip, farClip);
 
-			mBlurRadius = blurRadius;
+			mCoCRadius = blurRadius;
 			mFocalPlaneDist = focalDist;
 
 			float tanHalfAngle = Math::Tan(Math::ToRadians(mFOV * 0.5f));
@@ -71,18 +75,15 @@ namespace EDX
 			pRay->mOrg = Vector3::ZERO;
 			pRay->mDir = Math::Normalize(camCoord);
 
-			if (mBlurRadius > 0.0f && !forcePinHole)
+			if (mCoCRadius > 0.0f && !forcePinHole)
 			{
-				float blurFOV = mBlurRadius / float(24.0f) * mFOV;
-				float radiusInWorld = mFocalPlaneDist * Math::Tan(Math::ToRadians(blurFOV));
-
 				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
 
 				float fU, fV;
 				Sampling::ConcentricSampleDisk(sample.lensU, sample.lensV, &fU, &fV);
-				fU *= radiusInWorld;
-				fV *= radiusInWorld;
+				fU *= mCoCRadius;
+				fV *= mCoCRadius;
 
 				pRay->mOrg = Vector3(fU, fV, 0.0f);
 				pRay->mDir = Math::Normalize(ptFocal - pRay->mOrg);
@@ -100,18 +101,15 @@ namespace EDX
 			pRay->mOrg = Vector3::ZERO;
 			pRay->mDir = Math::Normalize(camCoord);
 
-			if (mBlurRadius > 0.0f)
+			if (mCoCRadius > 0.0f)
 			{
-				float blurFOV = mBlurRadius / float(24.0f) * mFOV;
-				float radiusInWorld = mFocalPlaneDist * Math::Tan(Math::ToRadians(blurFOV));
-
 				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
 
 				float u, v;
 				Sampling::ConcentricSampleDisk(sample.lensU, sample.lensV, &u, &v);
-				u *= radiusInWorld;
-				v *= radiusInWorld;
+				u *= mCoCRadius;
+				v *= mCoCRadius;
 
 				pRay->mOrg = Vector3(u, v, 0.0f);
 				pRay->mDir = Math::Normalize(ptFocal - pRay->mOrg);

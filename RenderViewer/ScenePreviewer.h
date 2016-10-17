@@ -129,6 +129,8 @@ namespace EDX
 
 			void OnRender()
 			{
+				mpCamera->Transform();
+
 				RenderEnvMap();
 
 				glMatrixMode(GL_PROJECTION);
@@ -145,6 +147,7 @@ namespace EDX
 				GLfloat mat_shininess[] = { 50.0 };
 				GLfloat light_position[] = { 1.0, 1.0, -1.0, 0.0 };
 				glShadeModel(GL_SMOOTH);
+				glEnable(GL_NORMALIZE);
 
 				glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
 				glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
@@ -153,8 +156,8 @@ namespace EDX
 				glLightfv(GL_LIGHT0, GL_AMBIENT, mat_specular);
 
 				glMatrixMode(GL_MODELVIEW);
-				const Matrix& mView = mpCamera->GetViewMatrix();
-				glLoadTransposeMatrixf((float*)&mView);
+				const Matrix mModelView = mpCamera->GetViewMatrix() * mpScene->GetScaleMatrix();
+				glLoadTransposeMatrixf((float*)&mModelView);
 
 				glMatrixMode(GL_PROJECTION);
 				const Matrix& mProj = mpCamera->GetProjMatrix();

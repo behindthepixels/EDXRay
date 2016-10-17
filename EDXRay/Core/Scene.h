@@ -3,6 +3,7 @@
 #include "EDXPrerequisites.h"
 
 #include "Math/BoundingBox.h"
+#include "Math/Matrix.h"
 #include "../ForwardDecl.h"
 
 namespace EDX
@@ -14,10 +15,13 @@ namespace EDX
 		private:
 			Array<UniquePtr<Primitive>>	mPrimitives;
 			Array<UniquePtr<Light>>		mLights;
-			Light*							mEnvMap;
+			Light*						mEnvMap;
 			UniquePtr<BVH2>				mAccel;
-			bool							mDirty;
+			bool						mDirty;
 			Array<UniquePtr<const Medium>> mMedia;
+
+			Matrix						mSceneScale;
+			Matrix						mSceneScaleInv;
 
 		public:
 			Scene();
@@ -58,6 +62,12 @@ namespace EDX
 			}
 
 			void InitAccelerator();
+
+			void SetScale(const float scale);
+			const Matrix& GetScaleMatrix() const
+			{
+				return mSceneScale;
+			}
 		};
 	}
 }

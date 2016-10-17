@@ -26,7 +26,7 @@ namespace EDX
 		class Camera : public EDX::Camera
 		{
 		public:
-			float mBlurRadius, mFocalPlaneDist;
+			float mCoCRadius, mFocalPlaneDist;
 			float mImagePlaneDist;
 
 			// Differential
@@ -49,9 +49,9 @@ namespace EDX
 			void GenerateRay(const CameraSample& sample, Ray* pRay, const bool forcePinHole = false) const;
 			void GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const;
 
-			float GetLensRadius() const
+			float GetCircleOfConfusionRadius() const
 			{
-				return mBlurRadius;
+				return mCoCRadius;
 			}
 			float GetFocusDistance() const
 			{

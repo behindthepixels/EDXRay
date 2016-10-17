@@ -22,23 +22,42 @@ namespace EDX
 
 		bool Scene::Intersect(const Ray& ray, Intersection* pIsect) const
 		{
-			return mAccel->Intersect(ray, pIsect);
+			Ray transformedRay = TransformRay(ray, mSceneScaleInv);
+
+			if (!mAccel->Intersect(transformedRay, pIsect))
+				return false;
+
+			ray.mMax = pIsect->mDist;
+
+			return true;
 		}
 
 		bool Scene::Occluded(const Ray& ray) const
 		{
-			return mAccel->Occluded(ray);
+			Ray transformedRay = TransformRay(ray, mSceneScaleInv);
+
+			return mAccel->Occluded(transformedRay);
 		}
 
 		void Scene::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
 		{
 			Assert(pDiffGeom);
 			mPrimitives[pDiffGeom->mPrimId]->PostIntersect(ray, pDiffGeom);
+
+			pDiffGeom->mPosition = Matrix::TransformPoint(pDiffGeom->mPosition, mSceneScale);
+			pDiffGeom->mNormal = Math::Normalize(Matrix::TransformNormal(pDiffGeom->mNormal, mSceneScaleInv));
+			pDiffGeom->mGeomNormal = Math::Normalize(Matrix::TransformNormal(pDiffGeom->mGeomNormal, mSceneScaleInv));
+			pDiffGeom->mShadingFrame = Frame(pDiffGeom->mNormal);
+
+			pDiffGeom->mDpdu = Matrix::TransformVector(pDiffGeom->mDpdu, mSceneScale);
+			pDiffGeom->mDpdv = Matrix::TransformVector(pDiffGeom->mDpdv, mSceneScale);
+			pDiffGeom->mDndu = Matrix::TransformVector(pDiffGeom->mDndu, mSceneScale);
+			pDiffGeom->mDndv = Matrix::TransformVector(pDiffGeom->mDndv, mSceneScale);
 		}
 
 		BoundingBox Scene::WorldBounds() const
 		{
-			return mAccel->WorldBounds();
+			return Matrix::TransformBBox(mAccel->WorldBounds(), mSceneScale);
 		}
 
 		void Scene::AddPrimitive(Primitive* pPrim)
@@ -91,6 +110,14 @@ namespace EDX
 
 				mDirty = false;
 			}
+		}
+
+		void Scene::SetScale(const float scale)
+		{
+			mSceneScale = Matrix::Scale(scale, scale, scale);
+
+			const float invScale = 1.0f / scale;
+			mSceneScaleInv = Matrix::Scale(invScale, invScale, invScale);
 		}
 	}
 }

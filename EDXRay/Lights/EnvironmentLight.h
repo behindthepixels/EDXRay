@@ -234,7 +234,7 @@ namespace EDX
 				float* pPdf = nullptr,
 				float* pDirectPdf = nullptr) const override
 			{
-				Vector3 negDir = -dir;
+				Vector3 negDir = Math::Normalize(-dir);
 				float phi = Math::SphericalPhi(negDir);
 				phi = ApplyRotation(phi);
 				float s = phi * float(Math::EDX_INV_2PI);
@@ -286,8 +286,9 @@ namespace EDX
 			{
 				if (mIsTexture)
 				{
-					float theta = Math::SphericalTheta(dir);
-					float phi = Math::SphericalPhi(dir);
+					Vector3 normalizedDir = Math::Normalize(dir);
+					float theta = Math::SphericalTheta(normalizedDir);
+					float phi = Math::SphericalPhi(normalizedDir);
 					phi = ApplyRotation(phi);
 					float sinTheta = Math::Sin(theta);
 					return mpDistribution->Pdf(phi * float(Math::EDX_INV_2PI), theta * float(Math::EDX_INV_PI)) /

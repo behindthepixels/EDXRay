@@ -276,7 +276,7 @@ namespace EDX
 			Vector3 ptImage;
 			Vector3 dirToCamera;
 
-			if (!mConnectToCamera || mpCamera->GetLensRadius() == 0.0f)
+			if (!mConnectToCamera || mpCamera->GetCircleOfConfusionRadius() == 0.0f)
 			{
 				ptImage = mpCamera->WorldToRaster(diffGeom.mPosition);
 				dirToCamera = camPos - diffGeom.mPosition;
@@ -284,12 +284,12 @@ namespace EDX
 
 			if (mConnectToCamera)
 			{
-				if (mpCamera->GetLensRadius() > 0.0f)
+				if (mpCamera->GetCircleOfConfusionRadius() > 0.0f)
 				{
 					float U, V;
 					Sampling::ConcentricSampleDisk(random.Float(), random.Float(), &U, &V);
-					U *= mpCamera->GetLensRadius();
-					V *= mpCamera->GetLensRadius();
+					U *= mpCamera->GetCircleOfConfusionRadius();
+					V *= mpCamera->GetCircleOfConfusionRadius();
 
 					Ray ray;
 					ray.mOrg = Vector3(U, V, 0.0f);

@@ -227,6 +227,7 @@ void OnRender(Object* pSender, EventArgs args)
 
 		auto pEnvLight = dynamic_cast<const EnvironmentLight*>(gpRenderer->GetScene()->GetEnvironmentMap());
 		static bool showSceneSettings = true;
+		static float sceneScale = 1.0f;
 		static bool useSkyLight = false;
 		static float turbidity = 3.0f;
 		static Color groundAlbedo = Color(0.2f);
@@ -234,6 +235,14 @@ void OnRender(Object* pSender, EventArgs args)
 		static float envLightScale = pEnvLight ? pEnvLight->GetScaling() : 1.0f;
 		if (EDXGui::CollapsingHeader("Scene", showSceneSettings))
 		{
+			Vector3 center;
+			float radius;
+			gpRenderer->GetScene()->WorldBounds().BoundingSphere(&center, &radius);
+			EDXGui::Text("Scene Size: %.2fm", 2.0f * radius);
+			if (EDXGui::Slider<float>("Scene Scale", &sceneScale, 0.0f, 10.0f))
+			{
+				gpRenderer->GetScene()->SetScale(sceneScale);
+			}
 			if (EDXGui::Button("Environment Light"))
 			{
 				if (!useSkyLight)

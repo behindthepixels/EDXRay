@@ -56,7 +56,7 @@ namespace EDX
 			const float v = pDiffGeom->mV;
 			const float w = 1.0f - u - v;
 
-			pDiffGeom->mPosition = ray.CalcPoint(pDiffGeom->mDist);
+			pDiffGeom->mPosition = w * vt1 + u * vt2 + v * vt3;
 			pDiffGeom->mNormal = w * normal1 + u * normal2 + v * normal3;
 
 			Vector3 e1 = vt1 - vt2;
