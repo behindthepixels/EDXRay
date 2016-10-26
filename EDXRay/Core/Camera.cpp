@@ -2,6 +2,7 @@
 #include "Sampler.h"
 #include "Sampling.h"
 #include "../Core/Ray.h"
+#include "Windows/Bitmap.h"
 
 namespace EDX
 {
@@ -37,6 +38,26 @@ namespace EDX
 			return FocusPlaneDist * Math::Tan(Math::ToRadians(blurFOV));
 		}
 
+		Camera::Camera()
+		{
+			const int ApertureSize = 128;
+			Array2f apetureFunc(ApertureSize, ApertureSize);
+
+			for (int i = 0; i < ApertureSize; i++)
+			{
+				float y = 2.0f * i / float(ApertureSize) - 1.0f;
+
+				for (int j = 0; j < ApertureSize; j++)
+				{
+					float x = 2.0f * j / float(ApertureSize) - 1.0f;
+
+					apetureFunc[Vector2i(i, j)] = Math::Length(Vector2(x, y)) < 1.0f ? 1.0f : 0.0f;
+				}
+			}
+
+			mpApertureDistribution = MakeUnique<Sampling::Distribution2D>(apetureFunc.Data(), ApertureSize, ApertureSize);
+		}
+
 		void Camera::Init(const Vector3& pos,
 			const Vector3& tar,
 			const Vector3& up,
@@ -46,15 +67,18 @@ namespace EDX
 			const float nearClip,
 			const float farClip,
 			const float blurRadius,
-			const float focalDist)
+			const float focalDist,
+			const float vignette)
 		{
 			EDX::Camera::Init(pos, tar, up, resX, resY, FOV, nearClip, farClip);
 
 			mCoCRadius = blurRadius;
 			mFocalPlaneDist = focalDist;
+			mVignetteFactor = 3.0f - vignette;
 
 			float tanHalfAngle = Math::Tan(Math::ToRadians(mFOV * 0.5f));
 			mImagePlaneDist = mFilmResY * 0.5f / tanHalfAngle;
+
 		}
 
 		void Camera::Resize(int width, int height)
@@ -68,7 +92,7 @@ namespace EDX
 			mImagePlaneDist = mFilmResY * 0.5f / tanHalfAngle;
 		}
 
-		void Camera::GenerateRay(const CameraSample& sample, Ray* pRay, const bool forcePinHole) const
+		bool Camera::GenerateRay(const CameraSample& sample, Ray* pRay, const bool forcePinHole) const
 		{
 			Vector3 camCoord = Matrix::TransformPoint(Vector3(sample.imageX, sample.imageY, 0.0f), mRasterToCamera);
 
@@ -80,8 +104,18 @@ namespace EDX
 				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
 
-				float fU, fV;
-				Sampling::ConcentricSampleDisk(sample.lensU, sample.lensV, &fU, &fV);
+				Vector2 screenCoord = 2.0f * Vector2(sample.imageX, sample.imageY) / Vector2(mFilmResX, mFilmResY) - Vector2::UNIT_SCALE;
+				screenCoord.x *= mRatio;
+				screenCoord.y *= -1.0f;
+
+				float fU, fV, pdf;
+				mpApertureDistribution->SampleContinuous(sample.lensU, sample.lensV, &fU, &fV, &pdf);
+				fU = 2.0f * fU - 1.0f;
+				fV = 2.0f * fV - 1.0f;
+
+				if (Math::Length(Vector2(screenCoord.x + fU, screenCoord.y + fV)) > mVignetteFactor)
+					return false;
+
 				fU *= mCoCRadius;
 				fV *= mCoCRadius;
 
@@ -92,9 +126,11 @@ namespace EDX
 			*pRay = TransformRay(*pRay, mViewInv);
 			pRay->mMin = float(Math::EDX_EPSILON);
 			pRay->mMax = float(Math::EDX_INFINITY);
+
+			return true;
 		}
 
-		void Camera::GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const
+		bool Camera::GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const
 		{
 			Vector3 camCoord = Matrix::TransformPoint(Vector3(sample.imageX, sample.imageY, 0.0f), mRasterToCamera);
 
@@ -106,12 +142,22 @@ namespace EDX
 				float fFocalHit = mFocalPlaneDist / pRay->mDir.z;
 				Vector3 ptFocal = pRay->CalcPoint(fFocalHit);
 
-				float u, v;
-				Sampling::ConcentricSampleDisk(sample.lensU, sample.lensV, &u, &v);
-				u *= mCoCRadius;
-				v *= mCoCRadius;
+				Vector2 screenCoord = 2.0f * Vector2(sample.imageX, sample.imageY) / Vector2(mFilmResX, mFilmResY) - Vector2::UNIT_SCALE;
+				screenCoord.x *= mRatio;
+				screenCoord.y *= -1.0f;
 
-				pRay->mOrg = Vector3(u, v, 0.0f);
+				float fU, fV, pdf;
+				mpApertureDistribution->SampleContinuous(sample.lensU, sample.lensV, &fU, &fV, &pdf);
+				fU = 2.0f * fU - 1.0f;
+				fV = 2.0f * fV - 1.0f;
+
+				if (Math::Length(Vector2(screenCoord.x + fU, screenCoord.y + fV)) > mVignetteFactor)
+					return false;
+
+				fU *= mCoCRadius;
+				fV *= mCoCRadius;
+
+				pRay->mOrg = Vector3(fU, fV, 0.0f);
 				pRay->mDir = Math::Normalize(ptFocal - pRay->mOrg);
 			}
 
@@ -123,6 +169,17 @@ namespace EDX
 			*pRay = TransformRayDiff(*pRay, mViewInv);
 			pRay->mMin = float(Math::EDX_EPSILON);
 			pRay->mMax = float(Math::EDX_INFINITY);
+
+			return true;
+		}
+
+		void Camera::SetApertureFunc(const char* path)
+		{
+			int ApertureWidth, AperturaHeight, Channel;
+			float* pFunc = Bitmap::ReadFromFile<float>(path, &ApertureWidth, &AperturaHeight, &Channel);
+
+			mpApertureDistribution = MakeUnique<Sampling::Distribution2D>(pFunc, ApertureWidth, AperturaHeight);
+			Memory::SafeDeleteArray(pFunc);
 		}
 	}
 }

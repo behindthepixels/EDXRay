@@ -3,6 +3,8 @@
 #include "Graphics/Camera.h"
 #include "../ForwardDecl.h"
 
+#include "Core/SmartPointer.h"
+
 namespace EDX
 {
 	namespace RayTracer
@@ -18,6 +20,7 @@ namespace EDX
 			static const int FullFrameSensorSize = 24; // full frame sensor 36x24mm
 			int FocalLengthMilliMeters;
 			float FStop;
+			float Vignette;
 
 			float CalcFieldOfView() const;
 			float CalcCircleOfConfusionRadius() const; // In millimeters
@@ -28,12 +31,18 @@ namespace EDX
 		public:
 			float mCoCRadius, mFocalPlaneDist;
 			float mImagePlaneDist;
+			float mVignetteFactor;
 
 			// Differential
 			Vector3 mDxCam;
 			Vector3 mDyCam;
 
+		private:
+			UniquePtr<Sampling::Distribution2D>	mpApertureDistribution;
+
 		public:
+			Camera();
+
 			void Init(const Vector3& pos,
 				const Vector3& tar,
 				const Vector3& up,
@@ -43,11 +52,14 @@ namespace EDX
 				const float nearClip = 1.0f,
 				const float farClip = 1000.0f,
 				const float blurRadius = 0.0f,
-				const float focalDist = 0.0f);
+				const float focalDist = 0.0f,
+				const float vignette = 3.0f);
 
 			void Resize(int width, int height);
-			void GenerateRay(const CameraSample& sample, Ray* pRay, const bool forcePinHole = false) const;
-			void GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const;
+			bool GenerateRay(const CameraSample& sample, Ray* pRay, const bool forcePinHole = false) const;
+			bool GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const;
+
+			void SetApertureFunc(const char* path);
 
 			float GetCircleOfConfusionRadius() const
 			{
@@ -70,6 +82,7 @@ namespace EDX
 				ret.NearClip = mNearClip;
 				ret.FarClip = mFarClip;
 				ret.FocusPlaneDist = mFocalPlaneDist;
+				ret.Vignette = 3.0f - mVignetteFactor;
 
 				return ret;
 			}

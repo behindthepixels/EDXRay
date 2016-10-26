@@ -44,6 +44,12 @@ namespace EDX
 		class BuildTask;
 		class QueuedBuildTask;
 		enum class BSDFType;
+
+		namespace Sampling
+		{
+			class Distribution1D;
+			class Distribution2D;
+		}
 	}
 
 	class RandomGen;

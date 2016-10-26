@@ -48,7 +48,8 @@ namespace EDX
 				mJobDesc.CameraParams.NearClip,
 				mJobDesc.CameraParams.FarClip,
 				mJobDesc.CameraParams.CalcCircleOfConfusionRadius(),
-				mJobDesc.CameraParams.FocusPlaneDist);
+				mJobDesc.CameraParams.FocusPlaneDist,
+				mJobDesc.CameraParams.Vignette);
 
 			Filter* pFilter;
 			switch (mJobDesc.FilterType)
@@ -140,9 +141,11 @@ namespace EDX
 						pSampleBuf->imageY += y;
 
 						RayDifferential ray;
-						mpCamera->GenRayDifferential(*pSampleBuf, &ray);
-
-						Color L = mpIntegrator->Li(ray, mpScene.Get(), pSampler, random, memory);
+						Color L = Color::BLACK;
+						if (mpCamera->GenRayDifferential(*pSampleBuf, &ray))
+						{
+							L = mpIntegrator->Li(ray, mpScene.Get(), pSampler, random, memory);
+						}
 
 						mpFilm->AddSample(pSampleBuf->imageX, pSampleBuf->imageY, L);
 						memory.FreeAll();

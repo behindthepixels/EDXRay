@@ -286,8 +286,16 @@ namespace EDX
 			{
 				if (mpCamera->GetCircleOfConfusionRadius() > 0.0f)
 				{
+					Vector2 screenCoord = 2.0f * Vector2(ptImage.x, ptImage.y) / Vector2(mpCamera->GetFilmSizeX(), mpCamera->GetFilmSizeY()) - Vector2::UNIT_SCALE;
+					screenCoord.x *= mpCamera->mRatio;
+					screenCoord.y *= -1.0f;
+
 					float U, V;
 					Sampling::ConcentricSampleDisk(random.Float(), random.Float(), &U, &V);
+
+					if (Math::Length(Vector2(screenCoord.x + U, screenCoord.y + V)) > mpCamera->mVignetteFactor)
+						return Color::BLACK;
+
 					U *= mpCamera->GetCircleOfConfusionRadius();
 					V *= mpCamera->GetCircleOfConfusionRadius();
 

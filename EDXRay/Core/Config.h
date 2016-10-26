@@ -57,6 +57,7 @@ namespace EDX
 				CameraParams.FocusPlaneDist = float(Math::EDX_INFINITY);
 				CameraParams.FocalLengthMilliMeters = 50.0f;
 				CameraParams.FStop = 22.0f;
+				CameraParams.Vignette = 0.0f;
 
 				IntegratorType = EIntegratorType::BidirectionalPathTracing;
 				SamplerType = ESamplerType::Random;

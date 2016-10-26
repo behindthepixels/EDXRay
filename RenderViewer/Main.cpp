@@ -218,9 +218,20 @@ void OnRender(Object* pSender, EventArgs args)
 				gpPreview->GetCamera().Resize(pJobDesc->ImageWidth, pJobDesc->ImageHeight);
 			}
 			EDXGui::Slider<float>("F-Stop", &pJobDesc->CameraParams.FStop, 1.0f, 22.0f);
+			EDXGui::Slider<float>("Vignette", &pJobDesc->CameraParams.Vignette, 0.0f, 3.0f);
 			EDXGui::Text("Focus Distance: %.2fm", gpPreview->GetCamera().GetFocusDistance());
 			EDXGui::CheckBox("Set Focus Distance", gpPreview->mSetFocusDistance);
 			EDXGui::CheckBox("Lock Camera", gpPreview->mLockCameraMovement);
+			if (EDXGui::Button("Aperture Shape"))
+			{
+				char filePath[MAX_PATH];
+				char directory[MAX_PATH];
+				sprintf_s(directory, MAX_PATH, "%s../../Media", Application::GetBaseDirectory());
+				if (Application::GetMainWindow()->OpenFileDialog(directory, "", "", filePath))
+				{
+					gpPreview->GetCamera().SetApertureFunc(filePath);
+				}
+			}
 
 			EDXGui::CloseHeaderSection();
 		}
