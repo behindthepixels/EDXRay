@@ -38,14 +38,7 @@ namespace EDX
 						mCDF[i] = mCDF[i - 1] + mPDF[i - 1] * invSize;
 
 					mIntegralVal = mCDF[size];
-					if (mIntegralVal == 0.0f)
-					{
-						for (auto i = 1; i < mCDF.LinearSize(); i++)
-							mCDF[i] = i / float(size);
-
-						mIntegralVal = 1.0f;
-					}
-					else
+					if (mIntegralVal > 0.0f)
 					{
 						for (auto i = 1; i < mCDF.LinearSize(); i++)
 							mCDF[i] /= mIntegralVal;
