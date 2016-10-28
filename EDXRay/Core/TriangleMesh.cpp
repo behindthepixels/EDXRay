@@ -63,6 +63,9 @@ namespace EDX
 			Vector3 e2 = vt3 - vt1;
 			pDiffGeom->mGeomNormal = Math::Normalize(Math::Cross(e2, e1));
 
+			if (pDiffGeom->mNormal == Vector3::ZERO)
+				pDiffGeom->mNormal = pDiffGeom->mGeomNormal;
+
 			if (pDiffGeom->mpBSDF->GetTexture() || pDiffGeom->mpBSDF->GetNormalMap())
 			{
 				const Vector2& texcoord1 = GetTexCoordAt(vId1);
