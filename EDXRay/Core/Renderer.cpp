@@ -207,6 +207,7 @@ namespace EDX
 		{
 			mTaskSync.SetAbort(true);
 			QueuedThreadPool::Instance()->JoinAllThreads();
+			mTasks.Clear();
 		}
 
 		void Renderer::SetJobDesc(const RenderJobDesc& jobDesc)
