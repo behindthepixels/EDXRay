@@ -3,9 +3,11 @@
 #include "EDXPrerequisites.h"
 
 #include "Config.h"
-#include "../ForwardDecl.h"
-#include "Core/SmartPointer.h"
 #include "TaskSynchronizer.h"
+#include "../ForwardDecl.h"
+
+#include "Core/SmartPointer.h"
+#include "Windows/Timer.h"
 
 namespace EDX
 {
@@ -27,6 +29,10 @@ namespace EDX
 			TaskSynchronizer mTaskSync;
 			Array<UniquePtr<QueuedRenderTask>> mTasks;
 
+			// Timer
+			Timer mTimer;
+			float mFrameTime;
+
 		public:
 			Renderer();
 			~Renderer();
@@ -44,10 +50,25 @@ namespace EDX
 			void StopRenderTasks();
 
 			Film* GetFilm();
-			RenderJobDesc* GetJobDesc() { return &mJobDesc; }
-			Scene* GetScene() { return mpScene.Get(); }
-			Camera* GetCamera() { return mpCamera.Get(); }
+			RenderJobDesc* GetJobDesc()
+			{
+				return &mJobDesc; 
+			}
+			Scene* GetScene()
+			{
+				return mpScene.Get();
+			}
+			Camera* GetCamera()
+			{
+				return mpCamera.Get();
+			}
+			float GetFrameTime() const
+			{
+				return mFrameTime;
+			}
+
 			void SetJobDesc(const RenderJobDesc& jobDesc);
+
 		};
 	}
 }

@@ -578,7 +578,7 @@ namespace EDX
 				return false;
 			}
 			// Apply Russian Roulette if non-specular surface was hit
-			if (nonSpecularBounce)
+			if (nonSpecularBounce && pathState.PathLength > 3)
 			{
 				float fRRProb = Math::Min(1.0f, pathState.Throughput.Luminance());
 				if (random.Float() < fRRProb)

@@ -25,6 +25,15 @@ namespace EDX
 
 			Color L;
 
+			bool requireMIS = false;
+			if (scatter.IsSurfaceScatter()) // Handle surface scattering
+			{
+				const DifferentialGeom& diffGeom = static_cast<const DifferentialGeom&>(scatter);
+				const BSDF* pBSDF = diffGeom.mpBSDF;
+
+				requireMIS = (pBSDF->GetScatterType() & BSDF_GLOSSY);
+			}
+
 			// Sample light sources
 			{
 				Vector3 lightDir;
@@ -58,7 +67,7 @@ namespace EDX
 					if (!f.IsBlack() && visibility.Unoccluded(pScene))
 					{
 						Color transmittance = visibility.Transmittance(pScene, pSampler);
-						if (pLight->IsDelta())
+						if (pLight->IsDelta() || !requireMIS)
 						{
 							L += f * Li * transmittance / lightPdf;
 							return L;
@@ -72,7 +81,7 @@ namespace EDX
 
 			// Sample BSDF or medium
 			{
-				if (!pLight->IsDelta())
+				if (!pLight->IsDelta() && requireMIS)
 				{
 					Vector3 lightDir;
 					Color f;

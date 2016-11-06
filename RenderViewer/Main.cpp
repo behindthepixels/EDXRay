@@ -147,6 +147,7 @@ void OnRender(Object* pSender, EventArgs args)
 		EDXGui::Text("Image Res: %i, %i", pJobDesc->ImageWidth, pJobDesc->ImageHeight);
 		EDXGui::Text("Samples per Pixel: %i", gpRenderer->GetFilm() ? gpRenderer->GetFilm()->GetSampleCount() : 0);
 		EDXGui::Text("(%.2f, %.2f, %.2f)", gCursorColor.r, gCursorColor.g, gCursorColor.b);
+		EDXGui::Text("Frame Time: %.2fs", gpRenderer->GetFrameTime());
 		if (EDXGui::Button(!gRendering ? "Render" : "Stop Rendering"))
 		{
 			gRendering = !gRendering;
@@ -222,6 +223,8 @@ void OnRender(Object* pSender, EventArgs args)
 			EDXGui::Text("Focus Distance: %.2fm", gpPreview->GetCamera().GetFocusDistance());
 			EDXGui::CheckBox("Set Focus Distance", gpPreview->mSetFocusDistance);
 			EDXGui::CheckBox("Lock Camera", gpPreview->mLockCameraMovement);
+			EDXGui::Text("Pos: %.2f, %.2f, %.2f", gpPreview->GetCamera().mPos.x, gpPreview->GetCamera().mPos.y, gpPreview->GetCamera().mPos.z);
+			EDXGui::Text("Target: %.2f, %.2f, %.2f", gpPreview->GetCamera().mTarget.x, gpPreview->GetCamera().mTarget.y, gpPreview->GetCamera().mTarget.z);
 			if (EDXGui::Button("Aperture Shape"))
 			{
 				char filePath[MAX_PATH];

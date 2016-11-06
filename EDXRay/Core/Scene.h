@@ -6,6 +6,13 @@
 #include "Math/Matrix.h"
 #include "../ForwardDecl.h"
 
+#define USE_EMBREE 1 && _WIN64 // Only supports embree in x64
+
+#if USE_EMBREE
+#define EMBREE_STATIC_LIB
+#include "embree2/rtcore.h"
+#endif // USE_EMBREE
+
 namespace EDX
 {
 	namespace RayTracer
@@ -23,8 +30,15 @@ namespace EDX
 			Matrix						mSceneScale;
 			Matrix						mSceneScaleInv;
 
+#if USE_EMBREE
+			// Embree
+			RTCDevice mpEmbreeDevice = nullptr;
+			RTCScene mpEmbreeScene = nullptr;
+#endif // USE_EMBREE
+
 		public:
 			Scene();
+			~Scene();
 
 			// Tracing methods
 			bool Intersect(const Ray& ray, Intersection* pIsect) const;
@@ -51,7 +65,7 @@ namespace EDX
 				if (lightId == lightCount)
 					lightId = lightCount - 1;
 
-				if(pPdf)
+				if (pPdf)
 					*pPdf = 1.0f / float(lightCount);
 
 				return GetLight(lightId);

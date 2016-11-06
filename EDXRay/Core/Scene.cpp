@@ -10,6 +10,10 @@
 
 #include "Graphics/ObjMesh.h"
 
+#if USE_EMBREE
+#include "embree2/rtcore_ray.h"
+#endif
+
 namespace EDX
 {
 	namespace RayTracer
@@ -20,12 +24,53 @@ namespace EDX
 		{
 		}
 
+		Scene::~Scene()
+		{
+#if USE_EMBREE
+			if(mpEmbreeDevice)
+				rtcDeleteDevice(mpEmbreeDevice);
+
+			if (mpEmbreeScene)
+				rtcDeleteScene(mpEmbreeScene);
+#endif
+		}
+
 		bool Scene::Intersect(const Ray& ray, Intersection* pIsect) const
 		{
 			Ray transformedRay = TransformRay(ray, mSceneScaleInv);
 
+#if USE_EMBREE
+			RTCRay embreeRay;
+			embreeRay.org[0] = transformedRay.mOrg.x;
+			embreeRay.org[1] = transformedRay.mOrg.y;
+			embreeRay.org[2] = transformedRay.mOrg.z;
+			embreeRay.dir[0] = transformedRay.mDir.x;
+			embreeRay.dir[1] = transformedRay.mDir.y;
+			embreeRay.dir[2] = transformedRay.mDir.z;
+			embreeRay.tnear = transformedRay.mMin;
+			embreeRay.tfar = transformedRay.mMax;
+			embreeRay.time = 0.0f;
+			embreeRay.mask = -1;
+			embreeRay.geomID = RTC_INVALID_GEOMETRY_ID;
+			embreeRay.primID = RTC_INVALID_GEOMETRY_ID;
+			embreeRay.instID = RTC_INVALID_GEOMETRY_ID;
+
+			rtcIntersect(mpEmbreeScene, embreeRay);
+
+			if (embreeRay.geomID == RTC_INVALID_GEOMETRY_ID)
+				return false;
+
+			pIsect->mPrimId = embreeRay.geomID;
+			pIsect->mTriId = embreeRay.primID;
+			pIsect->mDist = embreeRay.tfar;
+			pIsect->mU = embreeRay.u;
+			pIsect->mV = embreeRay.v;
+
+#else
 			if (!mAccel->Intersect(transformedRay, pIsect))
 				return false;
+
+#endif // USE_EMBREE
 
 			ray.mMax = pIsect->mDist;
 
@@ -36,7 +81,28 @@ namespace EDX
 		{
 			Ray transformedRay = TransformRay(ray, mSceneScaleInv);
 
+#if USE_EMBREE
+			RTCRay embreeRay;
+			embreeRay.org[0] = transformedRay.mOrg.x;
+			embreeRay.org[1] = transformedRay.mOrg.y;
+			embreeRay.org[2] = transformedRay.mOrg.z;
+			embreeRay.dir[0] = transformedRay.mDir.x;
+			embreeRay.dir[1] = transformedRay.mDir.y;
+			embreeRay.dir[2] = transformedRay.mDir.z;
+			embreeRay.tnear = transformedRay.mMin;
+			embreeRay.tfar = transformedRay.mMax;
+			embreeRay.time = 0.0f;
+			embreeRay.geomID = RTC_INVALID_GEOMETRY_ID;
+			embreeRay.primID = RTC_INVALID_GEOMETRY_ID;
+			embreeRay.instID = RTC_INVALID_GEOMETRY_ID;
+
+			rtcOccluded(mpEmbreeScene, embreeRay);
+
+			return embreeRay.geomID != RTC_INVALID_GEOMETRY_ID;
+#else
 			return mAccel->Occluded(transformedRay);
+
+#endif // USE_EMBREE
 		}
 
 		void Scene::PostIntersect(const Ray& ray, DifferentialGeom* pDiffGeom) const
@@ -57,7 +123,21 @@ namespace EDX
 
 		BoundingBox Scene::WorldBounds() const
 		{
+#if USE_EMBREE
+			RTCBounds embreeBounds;
+			rtcGetBounds(mpEmbreeScene, embreeBounds);
+
+			BoundingBox worldBounds = BoundingBox(
+					Vector3(embreeBounds.lower_x, embreeBounds.lower_y, embreeBounds.lower_z),
+					Vector3(embreeBounds.upper_x, embreeBounds.upper_y, embreeBounds.upper_z)
+				);
+
+			return Matrix::TransformBBox(worldBounds, mSceneScale);
+
+#else
 			return Matrix::TransformBBox(mAccel->WorldBounds(), mSceneScale);
+
+#endif // USE_EMBREE
 		}
 
 		void Scene::AddPrimitive(Primitive* pPrim)
@@ -93,8 +173,55 @@ namespace EDX
 				mLights.Add(UniquePtr<Light>(pLight));
 		}
 
+#if USE_EMBREE
+		void AlphaTest(void* userPtr, RTCRay& ray)
+		{
+			Primitive* prim = (Primitive*)userPtr;
+			
+			if (prim->GetBSDF(ray.primID)->GetTexture()->HasAlpha())
+			{
+				const TriangleMesh* mesh = prim->GetMesh();
+				const Vector2& texcoord1 = mesh->GetTexCoordAt(3 * ray.primID);
+				const Vector2& texcoord2 = mesh->GetTexCoordAt(3 * ray.primID + 1);
+				const Vector2& texcoord3 = mesh->GetTexCoordAt(3 * ray.primID + 2);
+
+				const Vector2 texCoord = (1.0f - ray.u - ray.v) * texcoord1 +
+					ray.u * texcoord2 +
+					ray.v * texcoord3;
+
+				if (prim->GetBSDF(ray.primID)->GetTexture()->Sample(texCoord, nullptr, TextureFilter::Nearest).a == 0)
+					ray.geomID = RTC_INVALID_GEOMETRY_ID; // reject hit
+			}
+		}
+#endif // USE_EMBREE
+
 		void Scene::InitAccelerator()
 		{
+			_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+			_MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+
+#if USE_EMBREE
+			mpEmbreeDevice = rtcNewDevice(nullptr);
+			mpEmbreeScene = rtcDeviceNewScene(mpEmbreeDevice, RTC_SCENE_STATIC | RTC_SCENE_INCOHERENT | RTC_SCENE_HIGH_QUALITY, RTC_INTERSECT1);
+
+			for (auto& it : mPrimitives)
+			{
+				uint geomID = rtcNewTriangleMesh(
+					mpEmbreeScene,
+					RTC_GEOMETRY_STATIC,
+					it->GetMesh()->GetTriangleCount(),
+					it->GetMesh()->GetVertexCount());
+
+				rtcSetBuffer(mpEmbreeScene, geomID, RTC_VERTEX_BUFFER, it->GetMesh()->GetPositionBuffer(), 0, sizeof(Vector3));
+				rtcSetBuffer(mpEmbreeScene, geomID, RTC_INDEX_BUFFER, it->GetMesh()->GetIndexBuffer(), 0, 3 * sizeof(uint));
+
+				rtcSetIntersectionFilterFunction(mpEmbreeScene, geomID, (RTCFilterFunc)&AlphaTest);
+				rtcSetOcclusionFilterFunction(mpEmbreeScene, geomID, (RTCFilterFunc)&AlphaTest);
+				rtcSetUserData(mpEmbreeScene, geomID, it.Get());
+			}
+
+			rtcCommit(mpEmbreeScene);
+#else
 			if (mDirty)
 			{
 				mAccel = MakeUnique<BVH2>();
@@ -110,6 +237,7 @@ namespace EDX
 
 				mDirty = false;
 			}
+#endif // USE_EMBREE
 		}
 
 		void Scene::SetScale(const float scale)

@@ -119,6 +119,7 @@ namespace EDX
 				mpCamera->Resize(width, height);
 			if (mpFilm)
 				mpFilm->Resize(width, height);
+
 			mTaskSync.Init(width, height);
 		}
 
@@ -176,6 +177,8 @@ namespace EDX
 					mpFilm->IncreSampleCount();
 					mpFilm->ScaleToPixel();
 					mTaskSync.ResetTasks();
+
+					mFrameTime = mTimer.GetElapsedTime();
 				}
 
 				if (mTaskSync.Aborted())

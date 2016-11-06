@@ -135,7 +135,7 @@ namespace EDX
 				}
 
 				// Russian Roulette
-				if (bounce > 5)
+				if (bounce > 3)
 				{
 					float RR = Math::Min(1.0f, pathThroughput.Luminance());
 					if (random.Float() > RR)
