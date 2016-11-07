@@ -533,8 +533,11 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 	if (args.Action == MouseAction::Move)
 	{
 		auto jobDesc = gpRenderer->GetJobDesc();
+
+		int x = Math::Clamp(args.x, 0, jobDesc->ImageWidth - 1);
+		int y = Math::Clamp(args.y, 0, jobDesc->ImageHeight - 1);
 		gCursorColor = gpRenderer->GetFilm() ?
-			gpRenderer->GetFilm()->GetPixelBuffer()[args.x + (jobDesc->ImageHeight - args.y - 1) * jobDesc->ImageWidth] :
+			gpRenderer->GetFilm()->GetPixelBuffer()[x + (jobDesc->ImageHeight - y - 1) * jobDesc->ImageWidth] :
 			Color::BLACK;
 	}
 
