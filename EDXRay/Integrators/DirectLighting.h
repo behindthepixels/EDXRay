@@ -9,25 +9,21 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		class DirectLightingIntegrator : public Integrator
+		class DirectLightingIntegrator : public TiledIntegrator
 		{
 		private:
 			uint mMaxDepth;
-			SampleOffsets* mpLightSampleOffsets;
-			SampleOffsets* mpBSDFSampleOffsets;
 
 		public:
-			DirectLightingIntegrator(int depth)
-				: mMaxDepth(depth)
-				, mpLightSampleOffsets(nullptr)
-				, mpBSDFSampleOffsets(nullptr)
+			DirectLightingIntegrator(int depth, const RenderJobDesc& jobDesc, const TaskSynchronizer& taskSync)
+				: TiledIntegrator(jobDesc, taskSync)
+				, mMaxDepth(depth)
 			{
 			}
 			~DirectLightingIntegrator();
 
 		public:
 			Color Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryPool& memory) const;
-			void RequestSamples(const Scene* pScene, SampleBuffer* pSamples);
 		};
 	}
 }

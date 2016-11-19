@@ -11,7 +11,7 @@ namespace EDX
 		void SobolSampler::GenerateSamples(
 			const int pixelX,
 			const int pixelY,
-			SampleBuffer* pSamples,
+			CameraSample* pSamples,
 			RandomGen& random)
 		{
 			Assert(pSamples);
@@ -21,17 +21,6 @@ namespace EDX
 			pSamples->lensU = SobolSample(mSobolIndex, mDimension++);
 			pSamples->lensV = SobolSample(mSobolIndex, mDimension++);
 			pSamples->time = SobolSample(mSobolIndex, mDimension++);
-
-			for (auto i = 0; i < pSamples->count1D; i++)
-			{
-				pSamples->p1D[i] = SobolSample(mSobolIndex, mDimension++);
-			}
-
-			for (auto i = 0; i < pSamples->count2D; i++)
-			{
-				pSamples->p2D[i].u = SobolSample(mSobolIndex, mDimension++);
-				pSamples->p2D[i].v = SobolSample(mSobolIndex, mDimension++);
-			}
 		}
 
 		void SobolSampler::AdvanceSampleIndex()
@@ -74,13 +63,9 @@ namespace EDX
 			return ret;
 		}
 
-		Sampler* SobolSampler::Clone() const
+		UniquePtr<Sampler> SobolSampler::Clone(const int seed) const
 		{
-			auto ret = new SobolSampler(mResolution, mLogTwoResolution, mScramble);
-			ret->GetSampleBuffer().count1D = mSample.count1D;
-			ret->GetSampleBuffer().count2D = mSample.count2D;
-
-			return ret;
+			return MakeUnique<SobolSampler>(mResolution, mLogTwoResolution, mScramble, mSampleIndex);
 		}
 
 		uint64 SobolSampler::EnumerateSampleIndex(const uint pixelX, const uint pixelY) const

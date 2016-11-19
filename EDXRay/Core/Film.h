@@ -27,6 +27,8 @@ namespace EDX
 			DimensionalArray<2, Pixel>	mAccumulateBuffer;
 			UniquePtr<Filter> mpFilter;
 
+			mutable CriticalSection mCS;
+
 			static const float INV_GAMMA;
 
 		public:
@@ -43,7 +45,7 @@ namespace EDX
 
 			virtual void AddSample(float x, float y, const Color& sample);
 			virtual void Splat(float x, float y, const Color& sample);
-			void ScaleToPixel();
+			void ScaleToPixel(const float splatScale = 0.0f);
 			inline void IncreSampleCount() { mSampleCount++; }
 
 			const Color* GetPixelBuffer() const { return mPixelBuffer.Data(); }

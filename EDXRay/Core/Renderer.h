@@ -21,13 +21,12 @@ namespace EDX
 			UniquePtr<Integrator> mpIntegrator;
 			UniquePtr<Sampler>	mpSampler;
 			UniquePtr<Film>	mpFilm;
-			UniquePtr<SampleBuffer> mpSampleBuf;
 
 			RenderJobDesc	mJobDesc;
 
 			// Tile-based multi-threading
 			TaskSynchronizer mTaskSync;
-			Array<UniquePtr<QueuedRenderTask>> mTasks;
+			UniquePtr<QueuedRenderTask> mTask;
 
 			// Timer
 			Timer mTimer;
@@ -38,18 +37,13 @@ namespace EDX
 			~Renderer();
 
 			void InitComponent();
-
 			void Resize(int width, int height);
-
-			void RenderFrame(Sampler* pSampler, RandomGen& random, MemoryPool& memory);
-			void RenderImage(int threadId, RandomGen& random, MemoryPool& memory);
 
 			void BakeSamples();
 
 			void QueueRenderTasks();
 			void StopRenderTasks();
 
-			Film* GetFilm();
 			RenderJobDesc* GetJobDesc()
 			{
 				return &mJobDesc; 
@@ -62,6 +56,19 @@ namespace EDX
 			{
 				return mpCamera.Get();
 			}
+			Sampler* GetSampler()
+			{
+				return mpSampler.Get();
+			}
+			Film* GetFilm()
+			{
+				return mpFilm.Get();
+			}
+			Integrator* GetIntegrator()
+			{
+				return mpIntegrator.Get();
+			}
+
 			float GetFrameTime() const
 			{
 				return mFrameTime;

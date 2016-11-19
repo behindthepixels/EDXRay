@@ -6,13 +6,72 @@
 #include "DifferentialGeom.h"
 #include "BSDF.h"
 #include "Sampler.h"
+#include "Film.h"
+#include "Config.h"
 #include "Graphics/Color.h"
 #include "../Core/Ray.h"
+
+#include <ppl.h>
+using namespace concurrency;
 
 namespace EDX
 {
 	namespace RayTracer
 	{
+		void TiledIntegrator::Render(const Scene* pScene, const Camera* pCamera, Sampler* pSampler, Film* pFilm) const
+		{
+			for (int spp = 0; spp < mJobDesc.SamplesPerPixel; spp++)
+			{
+				int numTiles = mTaskSync.GetNumTiles();
+
+				parallel_for(0, numTiles, [&](int i)
+				{
+					const RenderTile& tile = mTaskSync.GetTile(i);
+
+					// Clone a sampler for this tile
+					UniquePtr<Sampler> pTileSampler(pSampler->Clone(spp * numTiles + i));
+
+					RandomGen random;
+					MemoryPool memory;
+
+					for (auto y = tile.minY; y < tile.maxY; y++)
+					{
+						for (auto x = tile.minX; x < tile.maxX; x++)
+						{
+							if (mTaskSync.Aborted())
+								return;
+
+							pTileSampler->StartPixel(x, y);
+							CameraSample camSample;
+							pTileSampler->GenerateSamples(x, y, &camSample, random);
+							camSample.imageX += x;
+							camSample.imageY += y;
+
+							RayDifferential ray;
+							Color L = Color::BLACK;
+							if (pCamera->GenRayDifferential(camSample, &ray))
+							{
+								L = Li(ray, pScene, pTileSampler.Get(), random, memory);
+							}
+
+							pFilm->AddSample(camSample.imageX, camSample.imageY, L);
+							memory.FreeAll();
+						}
+					}
+				});
+
+				pSampler->AdvanceSampleIndex();
+
+				pFilm->IncreSampleCount();
+				pFilm->ScaleToPixel();
+
+				if (mTaskSync.Aborted())
+					break;
+
+				//mFrameTime = mTimer.GetElapsedTime();
+			}
+		}
+
 		Color Integrator::EstimateDirectLighting(const Scatter& scatter,
 			const Vector3& outDir,
 			const Light* pLight,
@@ -146,7 +205,7 @@ namespace EDX
 			return L;
 		}
 
-		Color Integrator::SpecularReflect(const Integrator* pIntegrator,
+		Color Integrator::SpecularReflect(const TiledIntegrator* pIntegrator,
 			const Scene* pScene,
 			Sampler* pSampler,
 			const RayDifferential& ray,
@@ -194,7 +253,7 @@ namespace EDX
 			return color;
 		}
 
-		Color Integrator::SpecularTransmit(const Integrator* pIntegrator,
+		Color Integrator::SpecularTransmit(const TiledIntegrator* pIntegrator,
 			const Scene* pScene,
 			Sampler* pSampler,
 			const RayDifferential& ray,

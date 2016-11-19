@@ -11,7 +11,7 @@ namespace EDX
 		void RandomSampler::GenerateSamples(
 			const int pixelX,
 			const int pixelY,
-			SampleBuffer* pSamples,
+			CameraSample* pSamples,
 			RandomGen& random)
 		{
 			Assert(pSamples);
@@ -21,17 +21,6 @@ namespace EDX
 			pSamples->lensU = random.Float();
 			pSamples->lensV = random.Float();
 			pSamples->time = random.Float();
-
-			for (auto i = 0; i < pSamples->count1D; i++)
-			{
-				pSamples->p1D[i] = random.Float();
-			}
-
-			for (auto i = 0; i < pSamples->count2D; i++)
-			{
-				pSamples->p2D[i].u = random.Float();
-				pSamples->p2D[i].v = random.Float();
-			}
 		}
 
 		void RandomSampler::AdvanceSampleIndex()
@@ -57,13 +46,9 @@ namespace EDX
 			return Sample(mRandom);
 		}
 
-		Sampler* RandomSampler::Clone() const
+		UniquePtr<Sampler> RandomSampler::Clone(const int seed) const
 		{
-			auto ret = new RandomSampler();
-			ret->GetSampleBuffer().count1D = mSample.count1D;
-			ret->GetSampleBuffer().count2D = mSample.count2D;
-
-			return ret;
+			return MakeUnique<RandomSampler>(seed);
 		}
 	}
 }

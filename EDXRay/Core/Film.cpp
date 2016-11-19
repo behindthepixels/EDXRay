@@ -44,6 +44,8 @@ namespace EDX
 
 		void Film::AddSample(float x, float y, const Color& sample)
 		{
+			ScopeLock scopeLock(&mCS);
+
 			x -= 0.5f;
 			y -= 0.5f;
 			int minX = Math::CeilToInt(x - mpFilter->GetRadius());
@@ -72,6 +74,8 @@ namespace EDX
 
 		void Film::Splat(float x, float y, const Color& sample)
 		{
+			ScopeLock scopeLock(&mCS);
+
 			int X = Math::FloorToInt(x);
 			int Y = Math::FloorToInt(y);
 			X = Math::Clamp(X, 0, mWidth - 1);
@@ -83,9 +87,15 @@ namespace EDX
 			pixel.splat += sample;
 		}
 
-		void Film::ScaleToPixel()
+		void Film::ScaleToPixel(const float inSplatScale)
 		{
-			parallel_for(0, mHeight, [this](int y)
+			ScopeLock scopeLock(&mCS);
+
+			float splatScale = inSplatScale > 0.0f ?
+				inSplatScale :
+				mSampleCount;
+
+			parallel_for(0, mHeight, [this, splatScale](int y)
 			{
 				for (int x = 0; x < mWidth; x++)
 				{
@@ -93,7 +103,8 @@ namespace EDX
 					pixel.color.r = Math::Max(0.0f, pixel.color.r);
 					pixel.color.g = Math::Max(0.0f, pixel.color.g);
 					pixel.color.b = Math::Max(0.0f, pixel.color.b);
-					mPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / pixel.weight + pixel.splat / float(mSampleCount), INV_GAMMA);
+
+					mPixelBuffer[y * mWidth + x] = Math::Pow(pixel.color / (pixel.weight + float(Math::EDX_EPSILON)) + pixel.splat / splatScale, INV_GAMMA);
 				}
 			});
 		}

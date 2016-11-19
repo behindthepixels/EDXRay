@@ -127,6 +127,17 @@ namespace EDX
 				}
 			}
 
+			const RenderTile& GetTile(const int index) const
+			{
+				Assert(index < mTiles.Size());
+				return mTiles[index];
+			}
+
+			int GetNumTiles() const
+			{
+				return mTiles.Size();
+			}
+
 			void ResetTasks()
 			{
 				mCurrentTileIdx = 0;

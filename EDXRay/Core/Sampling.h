@@ -47,7 +47,7 @@ namespace EDX
 
 				float SampleContinuous(float u, float* pPdf, int* pOffset = nullptr) const
 				{
-					const int index = Algorithm::UpperBound(mCDF.Data(), int(mCDF.LinearSize()), u);
+					const int index = Algorithm::UpperBound(mCDF.Data(), int(mCDF.LinearSize()), u, Algorithm::LessEQ<float>());
 					int offset = Math::Clamp(index - 1, 0, mSize - 1);
 					if (pPdf)
 						*pPdf = mPDF[offset] / mIntegralVal;
@@ -61,12 +61,17 @@ namespace EDX
 
 				int SampleDiscrete(float u, float* pPdf) const
 				{
-					const int index = Algorithm::UpperBound(mCDF.Data(), int(mCDF.LinearSize()), u);
+					const int index = Algorithm::UpperBound(mCDF.Data(), int(mCDF.LinearSize()), u, Algorithm::LessEQ<float>());
 					int offset = Math::Max(0, index - 1);
 					if (pPdf)
 						*pPdf = mPDF[offset] / (mIntegralVal * mSize);
 
 					return offset;
+				}
+
+				float GetIntegral() const
+				{
+					return mIntegralVal;
 				}
 			};
 

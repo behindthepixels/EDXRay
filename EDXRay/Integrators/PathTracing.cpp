@@ -147,14 +147,5 @@ namespace EDX
 
 			return L;
 		}
-
-		void PathTracingIntegrator::RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf)
-		{
-			Assert(pSampleBuf);
-
-			mpLightSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
-			mpBSDFSampleOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
-			mpScatterOffsets = SampleOffsets(mMaxDepth, pSampleBuf);
-		}
 	}
 }

@@ -42,25 +42,8 @@ namespace EDX
 			return L;
 		}
 
-		void DirectLightingIntegrator::RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf)
-		{
-			Assert(pSampleBuf);
-
-			auto numLights = pScene->GetLights().Size();
-			mpLightSampleOffsets = new SampleOffsets[numLights];
-			mpBSDFSampleOffsets = new SampleOffsets[numLights];
-
-			for (auto i = 0; i < numLights; i++)
-			{
-				mpLightSampleOffsets[i] = SampleOffsets(pScene->GetLights()[i]->GetSampleCount(), pSampleBuf);
-				mpBSDFSampleOffsets[i] = SampleOffsets(pScene->GetLights()[i]->GetSampleCount(), pSampleBuf);
-			}
-		}
-
 		DirectLightingIntegrator::~DirectLightingIntegrator()
 		{
-			Memory::SafeDeleteArray(mpLightSampleOffsets);
-			Memory::SafeDeleteArray(mpBSDFSampleOffsets);
 		}
 	}
 }

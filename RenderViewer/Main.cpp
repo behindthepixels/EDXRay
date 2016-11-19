@@ -32,6 +32,8 @@ Previewer*	gpPreview = nullptr;
 bool gRendering = false;
 Color gCursorColor;
 
+bool gRenderGui = true;
+
 void OnInit(Object* pSender, EventArgs args)
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -65,16 +67,16 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh4->LoadMesh("../../Media/OceanMesh2.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3::ZERO, Vector3(1, 10, 1), Vector3(0.0f, 180.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/OceanMesh1.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3(-13000, -5, 0), Vector3(50, 500, 50), Vector3(0.0f, 180.0f, 0.0f));
 
-	//Primitive* pPlane1 = new Primitive;
-	//Primitive* pPlane2 = new Primitive;
-	//Primitive* pPlane3 = new Primitive;
-	//Primitive* pPlane4 = new Primitive;
-	//Primitive* pPlane5 = new Primitive;
-	//pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
-	//pPlane2->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 10.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(180.0f, 0.0f, 0.0f));
-	//pPlane3->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.6f, 0.6f), Vector3(5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
-	//pPlane4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.6f, 0.6f, 0.9f), Vector3(-5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
-	//pPlane5->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 5.0f, -5.0f), Vector3::UNIT_SCALE, Vector3(90.0f, 0.0f, 0.0f));
+	Primitive* pPlane1 = new Primitive;
+	Primitive* pPlane2 = new Primitive;
+	Primitive* pPlane3 = new Primitive;
+	Primitive* pPlane4 = new Primitive;
+	Primitive* pPlane5 = new Primitive;
+	pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
+	pPlane2->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 10.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(180.0f, 0.0f, 0.0f));
+	pPlane3->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.3f, 0.3f), Vector3(5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
+	pPlane4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.3f, 0.3f, 0.9f), Vector3(-5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
+	pPlane5->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 5.0f, -5.0f), Vector3::UNIT_SCALE, Vector3(90.0f, 0.0f, 0.0f));
 
 	//pScene->AddPrimitive(pPlane1);
 	//pScene->AddPrimitive(pPlane2);
@@ -92,8 +94,8 @@ void OnInit(Object* pSender, EventArgs args)
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 7.9f, 0.0f), Color(200.0f)));
 
 	//Primitive* pAreaLight = new Primitive;
-	//pAreaLight->LoadPlane(3.5f, BSDFType::Diffuse, Color(0.2f), Vector3(6.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
-	//pScene->AddLight(new AreaLight(pAreaLight, Color(30.0f)));
+	//pAreaLight->LoadPlane(2.5f, BSDFType::Diffuse, Color(0.2f), Vector3(0.0f, 9.99f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 180.0f));
+	//pScene->AddLight(new AreaLight(pAreaLight, Color(15.0f)));
 
 	//Primitive* pAreaLight2 = new Primitive;
 	//pAreaLight2->LoadPlane(3.5f, BSDFType::Diffuse, Color(0.2f), Vector3(-15.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
@@ -137,6 +139,9 @@ void OnRender(Object* pSender, EventArgs args)
 	}
 	else
 		gpPreview->OnRender();
+
+	if (!gRenderGui)
+		return;
 
 	EDXGui::BeginFrame();
 	EDXGui::BeginDialog(LayoutStrategy::DockRight);
@@ -547,6 +552,9 @@ void OnMouseEvent(Object* pSender, MouseEventArgs args)
 
 void OnKeyboardEvent(Object* pSender, KeyboardEventArgs args)
 {
+	if (args.key == 'u')
+		gRenderGui = !gRenderGui;
+
 	if (EDXGui::HandleKeyboardEvent(args))
 		return;
 

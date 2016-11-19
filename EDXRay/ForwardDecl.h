@@ -10,6 +10,7 @@ namespace EDX
 		class Scene;
 		class Film;
 		class Integrator;
+		class TiledIntegrator;
 		class Light;
 		class EnvironmentLight;
 		class PointLight;
@@ -19,9 +20,7 @@ namespace EDX
 		class Ray;
 		class RayDifferential;
 		struct CameraSample;
-		struct SampleBuffer;
 		struct Sample;
-		struct SampleOffsets;
 		class Sampler;
 		class RayDifferential;
 		class Scatter;
@@ -39,6 +38,7 @@ namespace EDX
 		class BVH2;
 		class BVH4;
 		class Triangle4;
+		class TaskSynchronizer;
 		class RenderTask;
 		class QueuedRenderTask;
 		class BuildTask;

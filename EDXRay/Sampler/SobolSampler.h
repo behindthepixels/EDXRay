@@ -34,8 +34,8 @@ namespace EDX
 				Assert(1 << mLogTwoResolution == mResolution);
 			}
 
-			SobolSampler(const int resolution, const int log2Res, const uint64 scramble)
-				: mSampleIndex(0)
+			SobolSampler(const int resolution, const int log2Res, const uint64 scramble, const uint64 sampleIndex = 0)
+				: mSampleIndex(sampleIndex)
 				, mSobolIndex(0)
 				, mDimension(0)
 				, mResolution(resolution)
@@ -47,7 +47,7 @@ namespace EDX
 			void GenerateSamples(
 				const int pixelX,
 				const int pixelY,
-				SampleBuffer* pSamples,
+				CameraSample* pSamples,
 				RandomGen& random) override;
 			void AdvanceSampleIndex() override;
 
@@ -56,7 +56,7 @@ namespace EDX
 			Vector2 Get2D() override;
 			Sample GetSample() override;
 
-			Sampler* Clone() const override;
+			UniquePtr<Sampler> Clone(const int seed) const override;
 
 		private:
 			uint64 EnumerateSampleIndex(const uint pixelX, const uint pixelY) const;

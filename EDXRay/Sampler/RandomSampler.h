@@ -13,10 +13,17 @@ namespace EDX
 			RandomGen mRandom;
 
 		public:
+			RandomSampler() = default;
+
+			RandomSampler(const int seed)
+				: mRandom(seed)
+			{
+			}
+
 			void GenerateSamples(
 				const int pixelX,
 				const int pixelY,
-				SampleBuffer* pSamples,
+				CameraSample* pSamples,
 				RandomGen& random) override;
 			void AdvanceSampleIndex() override;
 
@@ -25,7 +32,7 @@ namespace EDX
 			Vector2 Get2D() override;
 			Sample GetSample() override;
 
-			Sampler* Clone() const override;
+			UniquePtr<Sampler> Clone(const int seed) const override;
 		};
 	}
 }

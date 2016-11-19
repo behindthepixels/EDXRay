@@ -9,17 +9,15 @@ namespace EDX
 {
 	namespace RayTracer
 	{
-		class PathTracingIntegrator : public Integrator
+		class PathTracingIntegrator : public TiledIntegrator
 		{
 		private:
 			uint mMaxDepth;
-			SampleOffsets mpLightSampleOffsets;
-			SampleOffsets mpBSDFSampleOffsets;
-			SampleOffsets mpScatterOffsets;
 
 		public:
-			PathTracingIntegrator(int depth)
-				: mMaxDepth(depth)
+			PathTracingIntegrator(int depth, const RenderJobDesc& jobDesc, const TaskSynchronizer& taskSync)
+				: TiledIntegrator(jobDesc, taskSync)
+				, mMaxDepth(depth)
 			{
 			}
 			~PathTracingIntegrator()
@@ -28,7 +26,6 @@ namespace EDX
 
 		public:
 			Color Li(const RayDifferential& ray, const Scene* pScene, Sampler* pSampler, RandomGen& random, MemoryPool& memory) const;
-			void RequestSamples(const Scene* pScene, SampleBuffer* pSampleBuf);
 		};
 	}
 }

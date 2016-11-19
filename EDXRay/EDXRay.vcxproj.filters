@@ -162,6 +162,9 @@
     <ClInclude Include="Core\BSSRDF.h">
       <Filter>Source Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Integrators\MultiplexedMLT.h">
+      <Filter>Source Files\Integrators</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -238,6 +241,9 @@
     </ClCompile>
     <ClCompile Include="Core\BSSRDF.cpp">
       <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Integrators\MultiplexedMLT.cpp">
+      <Filter>Source Files\Integrators</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
