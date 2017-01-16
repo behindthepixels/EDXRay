@@ -50,7 +50,7 @@ EDXRay is currently only built and tested only on Windows platform. Developer us
 - Fisheye Camera
 - Realistic Camera Parameters
 - Arbitrarily Shaped Bokeh
-- Vignette and Cat Eye 
+- Vignette and Cateye effect
 
 ### Sampler
 - Independent Sampler
