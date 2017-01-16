@@ -2,7 +2,7 @@
 layout: default
 ---
 
-![](assets/FishEye_SanMiguel1.jpg)
+![](assets/pictures/San Miguel 2nd Fl .jpg)
 
 **EDXRay** is a physically based render independently developed by [Edward Liu](http://behindthepixels.info/). It is built with modern C++. Aside from many low level optimizations, parallelism is exploited on both thread level and instruction level so it's highly performant. It includes many state of the art algorithms published in recent years in light transport simulation, material modelling, sampling and reconstruction, camera models as well as participating media.
 
