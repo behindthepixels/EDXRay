@@ -2,122 +2,55 @@
 layout: default
 ---
 
-Text can be **bold**, _italic_, or ~~strikethrough~~.
+![](assets/FishEye_SanMiguel1.jpg)
 
-[Link to another page](another-page).
+**EDXRay** is a physically based render independently developed by [Edward Liu](http://behindthepixels.info/). It is built with modern C++. Aside from many low level optimizations, parallelism is exploited on both thread level and instruction level so it's highly performant. It includes many state of the art algorithms published in recent years in light transport simulation, material modelling, sampling and reconstruction, camera models as well as participating media.
 
-There should be whitespace between paragraphs.
+The source code of EDXRay is highly self-contained and does not depend on any external library other than [EDXUtil](https://github.com/EDXGraphics/EDXUtil), which is a utility library developed by Edward Liu.
 
-There should be whitespace between paragraphs. We recommend including a README, or a file with information about your project.
+EDXRay is currently only built and tested only on Windows platform. Developer using Visual Studio 2015 should be able to build the source code immediately after syncing. Porting to Linux or macOS should not be difficult since it there is no external dependency.
 
-# [](#header-1)Header 1
+## List of Features
+### Integrators
+- Volumetric Path Tracing
+- Bidirectional Path Tracing with Multiple Importance Sampling
+- Multiplexed Metroplis Light Transport
 
-This is a normal paragraph following a header. GitHub is a code hosting platform for version control and collaboration. It lets you and others work together on projects from anywhere.
+### Materials
+- Lambertion Diffuse
+- Smooth Conductor
+- Smooth Dielectric
+- Rough Conductor
+- Rough Dielectric
+- Disney BRDF
+  - Layered Material with Up to 2 Specular Coats
+  - Cloth
+- Subsurface Scattering
+  - Normalized Diffusion
+  - Participating Media
+- Normal Map
+- Roughness Map
+- Alpha Test
 
-## [](#header-2)Header 2
+### Acceleration Structure
+- Optimized BVH traversal and Triangle Intersection with SSE
+- Multi-threaded BVH Construction
+- [Embree](https://embree.github.io/) can be optionally used (Introduce external dependency)
 
-> This is a blockquote following a header.
->
-> When something is important enough, you do it even if the odds are not in your favor.
+### Light Source
+- Point Light
+- Directional Light
+- Polygonal Area Light
+- Procedural Sky Light with Hosek Model
+- HDR Probe
 
-### [](#header-3)Header 3
+### Camera Models
+- Thin Lens Model
+- Fisheye Camera
+- Realistic Camera Parameters
+- Arbitrarily Shaped Bokeh
+- Vignette and Cat Eye 
 
-```js
-// Javascript code with syntax highlighting.
-var fun = function lang(l) {
-  dateformat.i18n = require('./lang/' + l)
-  return true;
-}
-```
-
-```ruby
-# Ruby code with syntax highlighting
-GitHubPages::Dependencies.gems.each do |gem, version|
-  s.add_dependency(gem, "= #{version}")
-end
-```
-
-#### [](#header-4)Header 4
-
-*   This is an unordered list following a header.
-*   This is an unordered list following a header.
-*   This is an unordered list following a header.
-
-##### [](#header-5)Header 5
-
-1.  This is an ordered list following a header.
-2.  This is an ordered list following a header.
-3.  This is an ordered list following a header.
-
-###### [](#header-6)Header 6
-
-| head1        | head two          | three |
-|:-------------|:------------------|:------|
-| ok           | good swedish fish | nice  |
-| out of stock | good and plenty   | nice  |
-| ok           | good `oreos`      | hmm   |
-| ok           | good `zoute` drop | yumm  |
-
-### There's a horizontal rule below this.
-
-* * *
-
-### Here is an unordered list:
-
-*   Item foo
-*   Item bar
-*   Item baz
-*   Item zip
-
-### And an ordered list:
-
-1.  Item one
-1.  Item two
-1.  Item three
-1.  Item four
-
-### And a nested list:
-
-- level 1 item
-  - level 2 item
-  - level 2 item
-    - level 3 item
-    - level 3 item
-- level 1 item
-  - level 2 item
-  - level 2 item
-  - level 2 item
-- level 1 item
-  - level 2 item
-  - level 2 item
-- level 1 item
-
-### Small image
-
-![](https://assets-cdn.github.com/images/icons/emoji/octocat.png)
-
-### Large image
-
-![](https://guides.github.com/activities/hello-world/branching.png)
-
-
-### Definition lists can be used with HTML syntax.
-
-<dl>
-<dt>Name</dt>
-<dd>Godzilla</dd>
-<dt>Born</dt>
-<dd>1952</dd>
-<dt>Birthplace</dt>
-<dd>Japan</dd>
-<dt>Color</dt>
-<dd>Green</dd>
-</dl>
-
-```
-Long, single-line code blocks should not wrap. They should horizontally scroll if they are too long. This line should be long enough to demonstrate this.
-```
-
-```
-The final element.
-```
+### Sampler
+- Independent Sampler
+- Sobol Sequence with Screen Space Index Enumeration
