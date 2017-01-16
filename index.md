@@ -59,4 +59,37 @@ EDXRay is currently only built and tested only on Windows platform. Developer us
 ## Gallery
 
 ![](assets/pictures/BokehLens.jpg)
-*A scene rendered with simulated depth of field, vignette and cateye effect*
+*Simulated depth of field, vignette and cateye effect*
+
+![](assets/pictures/FishEye_SanMiguel1.jpg)
+*Simulated super wide fish eye lens*
+
+![](assets/pictures/San Miguel 2.jpg)
+*Focal length 14mm wide angle shot*
+
+![](assets/pictures/San Miguel 2.jpg)
+*Simulated super wide fish eye camera*
+
+![](assets/pictures/MaterialPreviewFloor.jpg)
+*Wooden floor modeled with Disney BRDF*
+
+![](assets/pictures/MaterialPreviewRoughDielectricScratched.jpg)
+*Rough glass modeled GGX*
+
+![](assets/pictures/MaterialPreviewRoughConductorBump2.jpg)
+*Rough metal modeled GGX*
+
+![](assets/pictures/MaterialPreviewCarPaint.jpg)
+*Car paint modeled with Disney BRDF*
+
+![](assets/pictures/Gold.jpg)
+*Gold*
+
+![](assets/pictures/ClearJade2.jpg)
+*Jade modeled with participating media*
+
+![](assets/pictures/Jade Dragon 3.jpg)
+*Jade dragon modeled with normalized diffusion*
+
+![](assets/pictures/BudhaSSS.jpg)
+*Side by side comparison between normalized diffusion (left) and participating media (right)*
