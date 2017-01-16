@@ -11,6 +11,7 @@ section {
   width:720px;
   float:right;
   padding-bottom:50px;
+  text-align: justify;
 }
 
 @media print, screen and (max-width: 960px) {
@@ -24,6 +25,7 @@ section {
     float:none;
     position:static;
     width:auto;
+    text-align: justify;
   }
 
   header {
@@ -35,6 +37,7 @@ section {
     border-width:1px 0;
     padding:20px 0;
     margin:0 0 20px;
+  text-align: justify;
   }
 
   header a small {
