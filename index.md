@@ -27,7 +27,7 @@ EDXRay is currently built and tested only on Windows platform. Developer using V
   - Layered Material with Up to 2 Specular Coats
   - Cloth
 - Subsurface Scattering
-  - Normalized Diffusion
+  - BSSRDF based on Normalized Diffusion
   - Participating Media
 - Normal Map
 - Roughness Map
@@ -99,11 +99,11 @@ EDXRay is currently built and tested only on Windows platform. Developer using V
 
 ---
 ![](assets/pictures/Jade Dragon 3.jpg)  
-*Jade dragon modeled with normalized diffusion*
+*Jade dragon modeled with BSSRDF*
 
 ---
 ![](assets/pictures/BudhaSSS.jpg)  
-*Side by side comparison between normalized diffusion (left) and participating media (right)*
+*Side by side comparison between BSSRDF (left) and participating media (right)*
 
 ---
 ![](assets/pictures/Smoke.jpg)  
