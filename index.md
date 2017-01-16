@@ -11,6 +11,7 @@ The source code of EDXRay is highly self-contained and does not depend on any ex
 EDXRay is currently only built and tested only on Windows platform. Developer using Visual Studio 2015 should be able to build the source code immediately after syncing. Porting to Linux or macOS should not be difficult since it there is no external dependency.
 
 ## List of Features
+
 ### Integrators
 - Volumetric Path Tracing
 - Bidirectional Path Tracing with Multiple Importance Sampling
