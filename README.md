@@ -6,7 +6,7 @@ Please go to [behindthepixels.info/EDXRay/](http://behindthepixels.info/EDXRay/)
 
 The source code of EDXRay is highly self-contained and does not depend on any external library other than [EDXUtil](https://github.com/EDXGraphics/EDXUtil), which is a utility library developed by Edward Liu.
 
-EDXRay is currently only built and tested only on Windows platform. Developer using Visual Studio 2015 should be able to build the source code immediately after syncing. Porting to Linux or macOS should not be difficult since it there is no external dependency.
+EDXRay is currently built and tested only on Windows platform. Developer using Visual Studio 2015 should be able to build the source code immediately after syncing. Porting to Linux or macOS should not be difficult since it there is no external dependency.
 
 ## List of Features
 
