@@ -55,3 +55,8 @@ EDXRay is currently only built and tested only on Windows platform. Developer us
 ### Sampler
 - Independent Sampler
 - Sobol Sequence with Screen Space Index Enumeration
+
+## Gallery
+
+![](assets/pictures/BokehLens.jpg)
+*A scene rendered with simulated depth of field, vignette and cateye effect*
