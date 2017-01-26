@@ -29,7 +29,7 @@ namespace EDX
 		{
 		public:
 			BoxFilter()
-				: Filter(0.5f)
+				: Filter(0.25f)
 			{
 			}
 
