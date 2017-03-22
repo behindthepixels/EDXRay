@@ -4,9 +4,9 @@ layout: default
 
 ![](assets/pictures/San Miguel 2nd Fl .jpg)
 
-**EDXRay** is a physically based render independently developed by [Edward Liu](http://behindthepixels.info/). It is built with modern C++. Aside from many low level optimizations, parallelism is exploited on both thread level and instruction level so it's highly performant. It includes many state of the art algorithms published in recent years in light transport simulation, material modelling, sampling and reconstruction, camera models as well as participating media.
+**EDXRay** is a physically based render independently developed by [Edward Liu](http://behindthepixels.io/). It is built with modern C++. Aside from many low level optimizations, parallelism is exploited on both thread level and instruction level so it's highly performant. It includes many state of the art algorithms published in recent years in light transport simulation, material modelling, sampling and reconstruction, camera models as well as participating media.
 
-The source code of EDXRay is highly self-contained and does not depend on any external library other than [EDXUtil](https://github.com/EDXGraphics/EDXUtil), which is a utility library developed by Edward Liu.
+The source code of EDXRay is highly self-contained and does not depend on any external library other than [EDXUtil](https://github.com/behindthepixels/EDXUtil), which is a utility library developed by Edward Liu.
 
 EDXRay is currently built and tested only on Windows platform. Developer using Visual Studio 2015 should be able to build the source code immediately after syncing. Porting to Linux or macOS should not be difficult since it there is no external dependency.
 
