@@ -1,6 +1,6 @@
 # EDXRay
 
-Please go to [behindthepixels.info/EDXRay/](http://behindthepixels.info/EDXRay/) for more detailed introduction.
+Please go to [behindthepixels.io/EDXRay/](http://behindthepixels.io/EDXRay/) for more detailed introduction.
 
 **EDXRay** is a physically based render independently developed by [Edward Liu](http://behindthepixels.info/). It is built with modern C++. Aside from many low level optimizations, parallelism is exploited on both thread level and instruction level so it's highly performant. It includes many state of the art algorithms published in recent years in light transport simulation, material modelling, sampling and reconstruction, camera models as well as participating media.
 
