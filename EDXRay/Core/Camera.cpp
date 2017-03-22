@@ -132,6 +132,21 @@ namespace EDX
 
 		bool Camera::GenRayDifferential(const CameraSample& sample, RayDifferential* pRay) const
 		{
+			//Vector2 ndcCoord = Vector2(
+			//	2.0f * sample.imageX / float(mFilmResX) - 1.0f,
+			//	2.0f * sample.imageY / float(mFilmResY) - 1.0f
+			//);
+
+			//ndcCoord.x *= mRatio;
+
+			//float r = Math::Length(ndcCoord);
+			//float theta = Math::ToRadians(r * mFOV);
+			//float sinTheta = Math::Sin(theta);
+			//float cosTheta = Math::Cos(theta);
+			//float phi = Math::Atan2(-ndcCoord.y, ndcCoord.x);
+
+			//Vector3 dir = Math::SphericalDirection(sinTheta, cosTheta, phi, -Math::Cross(mDir, mUp), mDir, mUp);
+
 			Vector3 camCoord = Matrix::TransformPoint(Vector3(sample.imageX, sample.imageY, 0.0f), mRasterToCamera);
 
 			pRay->mOrg = Vector3::ZERO;
