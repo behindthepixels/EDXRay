@@ -112,8 +112,12 @@ namespace EDX
 				float dwh_dwi = 1.0f / (4.0f * Math::AbsDot(wi, wh));
 				float specPdf = microfacetPdf * dwh_dwi;
 
-				pdf += specPdf;
-				pdf += BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI);
+				float normalRef = Math::Lerp(0.0f, 0.08f, mSpecular);
+				float ODotH = Math::Dot(wo, wh);
+				float probSpec = Fresnel_Schlick(ODotH, normalRef);
+
+				pdf += specPdf * probSpec;
+				pdf += BSDFCoordinate::AbsCosTheta(wi) * float(Math::EDX_INV_PI) * (1 - probSpec);
 
 				if (mClearCoat > 0.0f)
 				{

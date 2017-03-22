@@ -55,17 +55,18 @@ namespace EDX
 
 			if (!sampleCoat)
 			{
+				float microfacetPdf;
+				float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
+				roughness = Math::Clamp(roughness, 0.02f, 1.0f);
+
+				wh = GGX_SampleVisibleNormal(wo, remappedSample.u, remappedSample.v, &microfacetPdf, roughness * roughness);
+
 				float normalRef = Math::Lerp(0.0f, 0.08f, mSpecular);
 				float ODotH = Math::Dot(wo, wh);
 				float probSpec = Fresnel_Schlick(ODotH, normalRef);
 
 				if (remappedSample.w <= probSpec)
 				{
-					float microfacetPdf;
-					float roughness = GetValue(mRoughness.Get(), diffGeom, TextureFilter::Linear);
-					roughness = Math::Clamp(roughness, 0.02f, 1.0f);
-
-					wh = GGX_SampleVisibleNormal(wo, remappedSample.u, remappedSample.v, &microfacetPdf, roughness * roughness);
 					wi = Math::Reflect(-wo, wh);
 					*pSampledTypes = ScatterType(BSDF_REFLECTION | BSDF_GLOSSY);
 				}
