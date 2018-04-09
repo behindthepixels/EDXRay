@@ -38,7 +38,7 @@ namespace EDX
 
 				if (!pScene->Intersect(pathRay, &diffGeomLocal))
 				{
-					if (pScene->GetEnvironmentMap())
+					if (pScene->GetEnvironmentLight())
 					{
 						cameraPathState.PathLength++;
 
@@ -46,7 +46,7 @@ namespace EDX
 							HittingLightSource(pScene,
 								pathRay,
 								diffGeomLocal,
-								pScene->GetEnvironmentMap(),
+								pScene->GetEnvironmentLight(),
 								cameraPathState,
 								random);
 					}

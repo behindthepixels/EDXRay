@@ -9,6 +9,7 @@
 #include "../Integrators/PathTracing.h"
 #include "../Integrators/BidirectionalPathTracing.h"
 #include "../Integrators/MultiplexedMLT.h"
+#include "../Integrators/RLPathTracing.h"
 #include "../Sampler/RandomSampler.h"
 #include "../Sampler/SobolSampler.h"
 #include "../Tracer/BVH.h"
@@ -103,7 +104,7 @@ namespace EDX
 				mpIntegrator.Reset(new MultiplexedMLTIntegrator(mJobDesc.MaxPathLength, mpCamera.Get(), mpFilm.Get(), mJobDesc, mTaskSync));
 				break;
 			case EIntegratorType::StochasticPPM:
-				mpIntegrator.Reset(new BidirPathTracingIntegrator(mJobDesc.MaxPathLength, mpCamera.Get(), mpFilm.Get(), mJobDesc, mTaskSync));
+				mpIntegrator.Reset(new RLPathTracingIntegrator(mJobDesc.MaxPathLength, 1 << 16, mJobDesc, mTaskSync));
 				break;
 			}
 

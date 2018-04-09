@@ -106,12 +106,40 @@ namespace EDX
 				float* pPdf = nullptr,
 				float* pDirectPdf = nullptr) const override
 			{
+				if (Sampling::DirectionInCone(dir, -mDirection, mConeCosMax))
+				{
+					float dirPdf = Sampling::UniformConePDF(mConeCosMax);
+					if (pPdf)
+					{
+						Vector3 center;
+						float radius;
+						mpScene->WorldBounds().BoundingSphere(&center, &radius);
+
+						*pPdf = Sampling::ConcentricDiscPdf() / (radius * radius) * dirPdf;
+					}
+
+					if (pDirectPdf)
+						*pDirectPdf = dirPdf;
+
+					return mIntensity;
+				}
+
 				return Color::BLACK;
 			}
 
 			float Pdf(const Vector3& pos, const Vector3& dir) const override
 			{
-				return 0.0f;
+				if (Sampling::DirectionInCone(dir, -mDirection, mConeCosMax))
+				{
+					return Sampling::UniformConePDF(mConeCosMax);
+				}
+				else
+					return 0.0f;
+			}
+
+			bool IsEnvironmentLight() const override
+			{
+				return true;
 			}
 
 			bool IsDelta() const override

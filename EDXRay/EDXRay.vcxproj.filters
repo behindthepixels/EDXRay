@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Source Files\Core">
       <UniqueIdentifier>{bda4358e-f2c0-4f4b-8612-029f03d70a5e}</UniqueIdentifier>
     </Filter>
@@ -36,6 +32,10 @@
     </Filter>
     <Filter Include="Source Files\Media">
       <UniqueIdentifier>{032da907-c37e-4477-acaf-ea51ed258faa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -165,6 +165,12 @@
     <ClInclude Include="Integrators\MultiplexedMLT.h">
       <Filter>Source Files\Integrators</Filter>
     </ClInclude>
+    <ClInclude Include="Core\SpatialHashMap.h">
+      <Filter>Source Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Integrators\RLPathTracing.h">
+      <Filter>Source Files\Integrators</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Renderer.cpp">
@@ -243,6 +249,9 @@
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Integrators\MultiplexedMLT.cpp">
+      <Filter>Source Files\Integrators</Filter>
+    </ClCompile>
+    <ClCompile Include="Integrators\RLPathTracing.cpp">
       <Filter>Source Files\Integrators</Filter>
     </ClCompile>
   </ItemGroup>

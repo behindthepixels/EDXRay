@@ -292,7 +292,7 @@ namespace EDX
 
 				if (!pScene->Intersect(pathRay, &diffGeomCam))
 				{
-					pEnvLight = pScene->GetEnvironmentMap();
+					pEnvLight = pScene->GetEnvironmentLight();
 					if (pEnvLight)
 						cameraPathState.PathLength++;
 

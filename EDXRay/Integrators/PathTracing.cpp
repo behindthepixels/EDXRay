@@ -46,8 +46,8 @@ namespace EDX
 						}
 						else
 						{
-							if (pScene->GetEnvironmentMap())
-								L += pathThroughput * pScene->GetEnvironmentMap()->Emit(-pathRay.mDir);
+							if (pScene->GetEnvironmentLight())
+								L += pathThroughput * pScene->GetEnvironmentLight()->Emit(-pathRay.mDir);
 						}
 					}
 

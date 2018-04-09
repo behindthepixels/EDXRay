@@ -16,19 +16,29 @@ namespace EDX
 			private:
 				Array1f mPDF;
 				Array1f mCDF;
-				int mSize;
+				int mSize = INDEX_NONE;
 				float mIntegralVal;
 				friend class Distribution2D;
 
 			public:
+				Distribution1D() = default;
+
 				Distribution1D(const float* pFunc, int size)
+				{
+					SetFunction(pFunc, size);
+				}
+
+				void SetFunction(const float* pFunc, int size)
 				{
 					Assert(pFunc);
 					Assert(size > 0);
 
-					mSize = size;
-					mPDF.Init(size);
-					mCDF.Init(size + 1);
+					if (size != mSize)
+					{
+						mSize = size;
+						mPDF.Init(size);
+						mCDF.Init(size + 1);
+					}
 
 					mPDF.SetData(pFunc);
 
@@ -94,7 +104,7 @@ namespace EDX
 
 					float* pMarginalFunc = new float[sizeY];
 					for (auto i = 0; i < sizeY; i++)
-						pMarginalFunc[i] = mConditional[i]->mIntegralVal;
+						pMarginalFunc[i] = mConditional[i]->GetIntegral();
 					mpMarginal = MakeUnique<Distribution1D>(pMarginalFunc, sizeY);
 
 					Memory::SafeDeleteArray(pMarginalFunc);
@@ -113,11 +123,11 @@ namespace EDX
 				{
 					int iu = Math::Clamp(u * mConditional[0]->mSize, 0, mConditional[0]->mSize - 1);
 					int iv = Math::Clamp(v * mpMarginal->mSize, 0, mpMarginal->mSize - 1);
-					if (mConditional[iv]->mIntegralVal * mpMarginal->mIntegralVal == 0.0f)
+					if (mConditional[iv]->GetIntegral() * mpMarginal->GetIntegral() == 0.0f)
 						return 0.f;
 
 					return (mConditional[iv]->mPDF[iu] * mpMarginal->mPDF[iv]) /
-						(mConditional[iv]->mIntegralVal * mpMarginal->mIntegralVal);
+						(mConditional[iv]->GetIntegral() * mpMarginal->GetIntegral());
 				}
 			};
 
@@ -194,7 +204,7 @@ namespace EDX
 			{
 				return Math::Max(0.0f, cos) * float(Math::EDX_INV_PI);
 			}
-			inline float CosineHemispherePDF(const Vector3 norm, const Vector3& vec)
+			inline float CosineHemispherePDF(const Vector3& norm, const Vector3& vec)
 			{
 				return Math::Max(0.0f, Math::Dot(norm, vec)) * float(Math::EDX_INV_PI);
 			}
@@ -204,6 +214,10 @@ namespace EDX
 					return 1.0f;
 
 				return 1.0f / (2.0f * float(Math::EDX_PI) * (1.0f - cosThetaMax));
+			}
+			inline bool DirectionInCone(const Vector3& dir, const Vector3& coneDir, const float cosThetaMax)
+			{
+				return Math::Dot(dir, coneDir) > cosThetaMax;
 			}
 
 			inline float PowerHeuristic(int nf, float pdf, int ng, float gPdf)

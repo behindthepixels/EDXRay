@@ -55,7 +55,7 @@ namespace EDX
 			const Array<UniquePtr<Primitive>>& GetPrimitives() const { return mPrimitives; }
 			const Array<UniquePtr<Light>>& GetLights() const { return mLights; }
 			const Light* GetLight(const uint id) const { return mLights[id].Get(); }
-			const Light* GetEnvironmentMap() const { return mEnvMap; }
+			const Light* GetEnvironmentLight() const { return mEnvMap; }
 			uint GetNumLight() const { return mLights.Size(); }
 
 			const Light* ChooseLightSource(const float lightIdSample, float* pPdf) const

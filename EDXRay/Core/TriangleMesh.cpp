@@ -66,6 +66,9 @@ namespace EDX
 			if (pDiffGeom->mNormal == Vector3::ZERO)
 				pDiffGeom->mNormal = pDiffGeom->mGeomNormal;
 
+			if (Math::Dot(ray.mDir, pDiffGeom->mNormal) > 0.0f)
+				pDiffGeom->mNormal = -pDiffGeom->mNormal;
+
 			if (pDiffGeom->mpBSDF->GetTexture() || pDiffGeom->mpBSDF->GetNormalMap())
 			{
 				const Vector2& texcoord1 = GetTexCoordAt(vId1);

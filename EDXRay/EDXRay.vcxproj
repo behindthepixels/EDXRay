@@ -39,6 +39,7 @@
     <ClInclude Include="Core\Sampler.h" />
     <ClInclude Include="Core\Sampling.h" />
     <ClInclude Include="Core\Scene.h" />
+    <ClInclude Include="Core\SpatialHashMap.h" />
     <ClInclude Include="Core\TaskSynchronizer.h" />
     <ClInclude Include="Core\TriangleMesh.h" />
     <ClInclude Include="ForwardDecl.h" />
@@ -46,6 +47,7 @@
     <ClInclude Include="Integrators\DirectLighting.h" />
     <ClInclude Include="Integrators\MultiplexedMLT.h" />
     <ClInclude Include="Integrators\PathTracing.h" />
+    <ClInclude Include="Integrators\RLPathTracing.h" />
     <ClInclude Include="Lights\AreaLight.h" />
     <ClInclude Include="Lights\DirectionalLight.h" />
     <ClInclude Include="Lights\EnvironmentLight.h" />
@@ -83,6 +85,7 @@
     <ClCompile Include="Integrators\DirectLighting.cpp" />
     <ClCompile Include="Integrators\MultiplexedMLT.cpp" />
     <ClCompile Include="Integrators\PathTracing.cpp" />
+    <ClCompile Include="Integrators\RLPathTracing.cpp" />
     <ClCompile Include="Lights\SkyLight\ArHosekSkyModel.cpp" />
     <ClCompile Include="Media\Homogeneous.cpp" />
     <ClCompile Include="Sampler\RandomSampler.cpp" />

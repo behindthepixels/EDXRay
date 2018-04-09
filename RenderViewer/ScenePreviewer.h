@@ -244,7 +244,7 @@ namespace EDX
 
 			void RenderEnvMap()
 			{
-				if (auto* pMap = dynamic_cast<const EnvironmentLight*>(mpScene->GetEnvironmentMap()))
+				if (auto* pMap = dynamic_cast<const EnvironmentLight*>(mpScene->GetEnvironmentLight()))
 				{
 					if (mpCachedEnvLight != pMap)
 					{

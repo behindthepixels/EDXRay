@@ -35,7 +35,7 @@ namespace EDX
 			}
 			else
 			{
-				if (auto envMap = pScene->GetEnvironmentMap())
+				if (auto envMap = pScene->GetEnvironmentLight())
 					L += envMap->Emit(-ray.mDir);
 			}
 
