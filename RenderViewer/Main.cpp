@@ -50,11 +50,11 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh->LoadMesh("../../Media/cornell-box/cornellbox.obj", Vector3(0, 0, 0), 3.0f * Vector3::UNIT_SCALE, Vector3(0, 180, 0));
 	//pMesh->LoadMesh("../../Media/cornell_windowed_separated/cornell_windowed_separated.obj", Vector3(0, 0, 0), 0.1f * Vector3::UNIT_SCALE, Vector3(0, 90, 0));
 	//pMesh->LoadMesh("../../Media/san-miguel/san-miguel.obj", Vector3(-5, 0, -10), Vector3::UNIT_SCALE, Vector3(0, 0, 0));
-	pMesh->LoadMesh("../../Media/AIUE_V02_003/AIUE_V02_003.obj", BSDFType::Diffuse, 0.85f * Color::WHITE, Vector3::ZERO, 0.05f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
+	//pMesh->LoadMesh("../../Media/AIUE_V02_003/AIUE_V02_003.obj", BSDFType::Diffuse, 0.85f * Color::WHITE, Vector3::ZERO, 0.05f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadMesh("../../Media/AIUE_V02_002/AIUE_V02_002.obj", Vector3::ZERO, 0.05f * Vector3::UNIT_SCALE, Vector3(0, 0, 0));
 	//pMesh->LoadSphere(1.5f, BSDFType::Diffuse, Color::WHITE, 32, 16, Vector3(0.0f, 3.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/venusm.obj", BSDFType::RoughDielectric, Color(0.7f, 0.37f, 0.3f), Vector3(1.5f, 0.88f, 0.0f), 0.001f * Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 0.0f));
-	//pMesh2->LoadMesh("../../Media/dragon.obj", BSDFType::RoughDielectric, Color(0.2f, 0.5f, 0.3f), Vector3(0.0f, 1.4f, 0.0f), 5.0f * Vector3::UNIT_SCALE, Vector3(0.0f, 110.0f, 0.0f), true);
+	pMesh2->LoadMesh("../../Media/dragon.obj", BSDFType::RoughDielectric, Color(0.2f, 0.5f, 0.3f), Vector3(0.0f, 1.4f, 0.0f), 5.0f * Vector3::UNIT_SCALE, Vector3(0.0f, 110.0f, 0.0f), true);
 	//pMesh2->LoadMesh("../../Media/budha.obj", BSDFType::Glass, Color(0.7f, 0.37f, 0.3f), Vector3(0.0f, 0.0f, 0.0f), 0.8f * Vector3::UNIT_SCALE, Vector3(0.0f, 45.0f, 180.0f), true);
 	//pMesh3->LoadMesh("../../Media/budha.obj", BSDFType::Glass, Color(0.7f, 0.37f, 0.3f), Vector3(7.3f, 0.0f, 7.3f), 0.8f * Vector3::UNIT_SCALE, Vector3(0.0f, 45.0f, 180.0f), true);
 	//pMesh2->LoadMesh("../../Media/splash.obj", BSDFType::Glass, Color(1.0f, 1.0f, 1.0f), Vector3(4.95f, 0.06f, -4.95f), 9.9f * Vector3::UNIT_SCALE, Vector3(0.0f, 45.0f, 0.0f));
@@ -70,30 +70,30 @@ void OnInit(Object* pSender, EventArgs args)
 	//pMesh4->LoadMesh("../../Media/OceanMesh2.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3::ZERO, Vector3(1, 10, 1), Vector3(0.0f, 180.0f, 0.0f));
 	//pMesh2->LoadMesh("../../Media/OceanMesh1.obj", BSDFType::RoughDielectric, Color(1.0f), Vector3(-13000, -5, 0), Vector3(50, 500, 50), Vector3(0.0f, 180.0f, 0.0f));
 
-	//Primitive* pPlane1 = new Primitive;
+	Primitive* pPlane1 = new Primitive;
 	//Primitive* pPlane2 = new Primitive;
 	//Primitive* pPlane3 = new Primitive;
 	//Primitive* pPlane4 = new Primitive;
 	//Primitive* pPlane5 = new Primitive;
-	//pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
+	pPlane1->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f), Vector3(0.0f, 0.0f, 0.0f), Vector3::UNIT_SCALE, Vector3::ZERO);
 	//pPlane2->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 10.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(180.0f, 0.0f, 0.0f));
 	//pPlane3->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.3f, 0.3f), Vector3(5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, 90.0f));
 	//pPlane4->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.3f, 0.3f, 0.9f), Vector3(-5.0f, 5.0f, 0.0f), Vector3::UNIT_SCALE, Vector3(0.0f, 0.0f, -90.0f));
 	//pPlane5->LoadPlane(10.0f, BSDFType::Diffuse, Color(0.9f, 0.9f, 0.9f), Vector3(0.0f, 5.0f, -5.0f), Vector3::UNIT_SCALE, Vector3(90.0f, 0.0f, 0.0f));
 
-	//pScene->AddPrimitive(pPlane1);
+	pScene->AddPrimitive(pPlane1);
 	//pScene->AddPrimitive(pPlane2);
 	//pScene->AddPrimitive(pPlane3);
 	//pScene->AddPrimitive(pPlane4);
 	//pScene->AddPrimitive(pPlane5);
 
-	pScene->AddPrimitive(pMesh);
-	//pScene->AddPrimitive(pMesh2);
+	//pScene->AddPrimitive(pMesh);
+	pScene->AddPrimitive(pMesh2);
 	//pScene->AddPrimitive(pMesh3);
 	//pScene->AddPrimitive(pMesh4);
-	//pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
+	pScene->AddLight(new EnvironmentLight("../../Media/uffizi-large.hdr", pScene, 1.0f));
 	//pScene->AddLight(new EnvironmentLight(Color(3.0f), Color(0.2f), 40.0f, pScene, -60.0f));
-	pScene->AddLight(new DirectionalLight(Vector3(10.0f, 7.5f, -5.0f), Color(5000.0f), pScene, 1.0f));
+	//pScene->AddLight(new DirectionalLight(Vector3(10.0f, 7.5f, -5.0f), Color(5000.0f), pScene, 1.0f));
 	//pScene->AddLight(new PointLight(Vector3(0.0f, 7.9f, 0.0f), Color(200.0f)));
 
 	Primitive* pAreaLight = new Primitive;
